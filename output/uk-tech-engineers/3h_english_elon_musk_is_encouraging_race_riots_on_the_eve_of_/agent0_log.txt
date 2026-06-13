@@ -1,0 +1,68 @@
+=== Iteration 1 ===
+[Framer]
+SELF-REVIEW PASSES:
+
+**REVIEW 1:** My first instinct would be to mock Musk as a generic tech billionaire stirring trouble — too obvious, too international. The sharper angle is the *specific* awkwardness for British software engineers: these are people who work in an industry that is *overwhelmingly* staffed by immigrants and visa workers, who probably sit next to someone on a skilled worker visa right now, and whose industry would collapse without immigration. The uncomfortable truth is that Musk's audience for this rhetoric *includes* people whose livelihoods depend on the very people being targeted. That's the squirm.
+
+**REVIEW 2:** Checking requirements — WORDPLAY SCAN needed. "SpaceX IPO" + race riots: the word "launch" does double duty (rocket launch / launching a riot / launching an IPO). Also "Starlink" vs "spark" of unrest. "Valuation" vs "radicalisation" — too thin. Best wordplay: Musk is attempting to achieve "escape velocity" from accountability. Also "seed round" / "riot round." The Belfast angle: Belfast has a very specific, loaded history with civil unrest — the Troubles — which British software engineers would absolutely know and which makes Musk's cheerleading tone-deaf in a historically specific, not just generic, way. Must include this.
+
+**REVIEW 3:** The material improvement: I haven't yet connected the IPO timing *directly* to the satirical frame. The truly uncomfortable truth is that Musk may be *financially incentivised* to create news noise around the IPO period, and British tech workers — who understand hype cycles, vaporware, and pre-IPO pump behaviour intimately from their own industry — would recognise this pattern immediately. The joke lands harder if it's framed as a *product launch* with riots as the marketing campaign.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Elon Musk, a man who has rebranded a social media platform, a car company, and the concept of free speech all within the same fiscal quarter, has now apparently added "Belfast community organiser" to his LinkedIn. On the eve of SpaceX's IPO — a financial event requiring the kind of calm, institutional confidence that is traditionally incompatible with personally amplifying race riots — Musk has been cheerleading anti-immigration unrest in a city that already has, shall we say, a well-documented institutional memory of what happens when outside parties decide to lob rhetoric into local tensions and then log off. For British software engineers, who share their open-plan offices with roughly forty percent of the Indian subcontinent on skilled worker visas and have built their entire deployment pipelines on the labour of people Musk's new friends would prefer to deport, this represents what the industry might call a *critical dependency conflict*. The truly uncomfortable detail — the one that should make everyone's standup meeting slightly awkward on Monday morning — is that they understand exactly what pre-IPO hype engineering looks like. They've shipped it.
+
+REFERENCES:
+- The Troubles established, with considerable historical weight, that Northern Ireland is not an ideal venue for well-meaning outsiders to beta-test their political opinions; British engineers will clock this immediately and wince accordingly.
+- The UK tech industry's reliance on Tier 2 and Skilled Worker visa holders is so structurally total that any given microservices architecture in London is, in effect, a UN peacekeeping mission — making the irony of applauding anti-immigration sentiment almost geometrically perfect.
+- Musk's previous "free speech" acquisition of Twitter/X, which British tech workers watched with the specific professional horror of someone who recognises a botched refactor being praised as a redesign, established his pattern of reframing chaos as disruption.
+- The pre-IPO noise cycle — generating attention, controversy, and name recognition immediately before a public offering — is a tactic so familiar to anyone who has worked near a Series C startup that it barely needs explaining; the only novel element here is the use of civil unrest as the growth channel.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+The angle is sharp, but it stops one step short of greatness. It correctly identifies the audience's cynical recognition of a pre-IPO hype cycle, but it misidentifies that as the *most* resonant critique. For an engineer, the ultimate sin isn't being a cynical capitalist; it's being a bad engineer.
+
+The current angle frames Musk's actions as a business tactic. A more potent angle for this audience would frame it as a catastrophic *category error* in engineering methodology.
+
+**PROPOSED ALTERNATIVE ANGLE:**
+Elon Musk, a man who famously applies "first principles thinking" to physics, appears to be applying "move fast and break things" to a city with a recent history of being, well, broken. For British software engineers, the horror isn't just the familiar cynicism of a pre-IPO hype cycle. The true professional offense is watching the world's most famous engineer treat a fragile human society as a staging environment for a chaos engineering experiment.
+
+He is not merely amplifying unrest for financial gain; he is stress-testing a community, A/B testing radical rhetoric, and optimizing for the metric of "engagement" while ignoring the system's primary function: social cohesion. This isn't a botched refactor; it's running chaos monkey scripts on a hospital's life-support system. It's a fundamental, almost willful, misunderstanding of the system under test, and it's an intellectual failure that any engineer who has ever had to write a post-mortem for a production outage will recognize with a cold dread.
+
+**FLAGGED REFERENCES:**
+- **The "botched refactor" reference:** This is good, but it can be made lethal. A botched refactor is about incompetence. A chaos engineering experiment run on the wrong system is about recklessness and a god complex. Reframe it to highlight the *misapplication of a valid engineering concept* (stress-testing) to a domain where the failure state is not a 404 error, but human violence.
+- **The "civil unrest as the growth channel" reference:** This is excellent but can be paired with a more technical concept. Frame it as "optimizing for a perverse metric." Engineers live in fear of this: hitting their KPI for "user clicks" by creating an interface so infuriating that users click everywhere in a rage. Musk is optimizing for the "engagement" of a riot, and this audience will understand the profound technical and ethical failure that represents.
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 2 ===
+[Framer]
+SELF-REVIEW PASSES:
+
+**REVIEW 1:** The proposed alternative angle is strong, but I risk making it too comfortable — a knowing nod between engineers about bad methodology. The sharper, more squirm-inducing position is that British software engineers *invented* this methodology. "Move fast and break things," chaos engineering, A/B testing human behaviour — these aren't Musk's sins alone. They're the industry's sins, and the audience *exported* them. The most uncomfortable truth isn't "Musk is a bad engineer." It's "Musk is doing exactly what the industry taught him to do, at a scale and in a context where the failure state has a body count."
+
+**REVIEW 2:** Checking every requirement — WORDPLAY SCAN. "Chaos Monkey" is a real AWS/Netflix tool; running it on Belfast is the core metaphor. "Staging environment" vs. "the actual Troubles." "Post-mortem" does lethal double duty — a technical document AND a literal outcome of civil violence. This must be foregrounded, not buried. JOKE TYPE: this is deadpan, but the post-mortem wordplay pushes it toward wordplay territory. Keep deadpan — the wordplay should land *within* deadpan delivery, not redirect the register. INCONVENIENCE check: does it make the audience squirm? Only if I make explicit that they recognise the methodology because they *use* it — that's the knife that needs twisting.
+
+**REVIEW 3:** Material improvement remaining: the Belfast/Troubles specificity is still underleveraged as engineering metaphor. Belfast isn't just "a fragile city" — it is a system that took decades of careful, painstaking, boring, incremental work (the Good Friday Agreement, power-sharing, confidence-building measures) to reach a stable state. An engineer would call this a *legacy system*. You do not run chaos scripts on a legacy system that took 30 years to stabilise. That's the specific, technically precise, historically loaded image that will make this audience set down their coffee.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Elon Musk, the world's most prominent advocate for first-principles thinking, has apparently derived from first principles that a city which spent thirty years and considerable international diplomatic effort reaching a fragile operational stability is, in fact, an excellent candidate for chaos engineering. For British software engineers, the professional horror here is precise and nauseating: Belfast is not a greenfield deployment. It is a legacy system — brittle, load-bearing, almost impossibly difficult to have stabilised — and Musk is running Chaos Monkey scripts on it the week before his IPO, optimising for the one metric every competent engineer knows will get you fired: engagement, divorced entirely from system health. The industry has a word for the document you write after this kind of intervention. It is called a post-mortem. In this context, that word is doing considerably more work than usual. The truly unbearable part — the part that should make every sprint planning session this week slightly harder to get through — is that "move fast and break things" is not Musk's invention. It is the industry's founding catechism. He has simply had the intellectual honesty to apply it to a domain where the things that break are not load balancers.
+
+REFERENCES:
+- Chaos Monkey, the Netflix tool designed to randomly terminate production services to test system resilience, is a concept every engineer in the room will know; the joke is that it was designed with the explicit understanding that you run it on systems *built to survive it*, not on thirty-year-old peace agreements.
+- The Good Friday Agreement is, in engineering terms, a marvel of iterative negotiation, backward-compatibility constraints, and graceful degradation design — the kind of system you document obsessively and *never* touch without a full rollback plan, which is presumably why Musk did not read it.
+- "Optimising for a perverse metric" is a lived professional trauma for any engineer who has watched a product team celebrate click-through rates on a button that users were clicking in frustrated confusion; Musk's engagement-maximising amplification of riot rhetoric is this failure mode, running in production, with push notifications enabled.
+- The post-mortem — the ritual technical document in which engineers are required to establish root cause, contributing factors, and lessons learned after a system failure — is the industry's closest approximation of accountability; the British engineer's cold recognition is that nobody scheduled one.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

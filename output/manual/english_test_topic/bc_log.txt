@@ -1,0 +1,79 @@
+=== Iteration 1 ===
+[Satirist]
+## SELF-REVIEW
+
+**REVIEW 1:** My first instinct would be to produce a generic "Gata at a chalkboard" image with a mild observation about infrastructure funding. That's too obvious — the sharper position is to make the satire land specifically on the *engineering community's* relationship with foresight vs. hindsight: they knew, they wrote it down, and the memo outlived the bridge. The joke isn't the collapse — it's the filing cabinet.
+
+**REVIEW 2:** Re-examining every requirement:
+- ✅ Gata's full character description must appear verbatim in the image prompt
+- ✅ Visual style: greyscale background, Gata in full colour (Selective Color)
+- ✅ Setting: 1970s newsroom
+- ✅ Board: dark chalkboard, "ON THE SPOT" heading, masking tape attachments
+- ✅ No copyrighted artist references
+- ✅ No human clothes/accessories on Gata
+- ✅ Output language: English
+- ✅ Tone: dry
+- ✅ Target audience: engineers
+- ⚠️ I need to ensure the cultural references (Sunshine Skyway, Hyatt Regency, Tacoma Narrows) are *woven into* the satire, not just name-dropped
+- ✅ Today's date context: 30 May 2026 — the FSK collapse is now over two years past, meaning the "we're studying it" phase has fully ceded to the "we filed the report" phase
+
+**REVIEW 3:** The material improvement I haven't made yet: the caption. It should not merely *describe* the scene — it should deliver the satirical punch itself, in the voice of an exhausted engineer who has seen this exact sequence before and written a memo about it in 1987. The chalkboard content should do the setup; the caption should close the trap.
+
+---
+
+## CARTOON CONCEPT
+
+**Scene:** Gata sits at a heavy metal desk in a 1970s newsroom. Behind her, a dark chalkboard headed **"ON THE SPOT"** displays a hand-drawn timeline in white chalk:
+
+```
+1940 — Tacoma Narrows: filmed, studied, required viewing
+1967 — Point Pleasant Bridge: memo filed, funding deferred
+1980 — Sunshine Skyway: ship strike → dolphins funded immediately
+1981 — Hyatt Regency: "approved" ≠ "correct" (see: all case studies)
+2024 — Francis Scott Key Bridge: [blank line, just a checkmark]
+────────────────────────────────────────
+PATTERN IDENTIFIED: [arrow pointing to checkmark]
+PATTERN PREDICTED: [arrow pointing to a manila folder taped to the board, labelled "SEE MEMO, DATE REDACTED"]
+```
+
+Attached to the board with masking tape: a single yellowed document — illegible except for the header **"RISK ASSESSMENT — PIER IMPACT PROTECTION"** and a large stamped word: **"NOTED."**
+
+Gata stares directly at the viewer. Expression: the specific exhaustion of someone who has read the memo, written a follow-up memo, and is now being asked to explain the memo to a camera.
+
+**Dry caption at the bottom:**
+
+> *"The bridge wasn't the first draft. It was the final edit after all the safety comments were marked 'out of scope.'"*
+
+---
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard style, high-contrast, dry caption at the bottom. Selective Color style: greyscale background and environment, subject rendered in full colour.
+
+SUBJECT — Gata: a domestic shorthair calico-tabby mix with a white chest, muzzle, and paws; dark grey/black tabby stripes across her body; orange/ginger patches on her back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". She is serious, investigative, slightly tired, and highly intelligent in demeanour. She wears no human clothing, no hat, no glasses, no pen, and no accessories of any kind beyond her collar.
+
+SETTING: A 1970s newspaper newsroom interior. Fluorescent overhead lighting. Heavy metal desks cluttered with papers. Background figures of other staff, rendered in soft greyscale. Gata sits at the foreground desk, rendered in full colour against the greyscale environment.
+
+BOARD: A large dark chalkboard behind Gata. Heading at the top in bold hand-drawn white chalk letters: ON THE SPOT. Below the heading, a hand-drawn chalk timeline in minimalist style:
+
+1940 — Tacoma Narrows: filmed, studied, required viewing
+1967 — Point Pleasant Bridge: memo filed, funding deferred
+1980 — Sunshine Skyway: ship strike → dolphins funded immediately
+1981 — Hyatt Regency: "approved" ≠ "correct" (see: all case studies)
+2024 — Francis Scott Key Bridge: [blank line with a single chalk checkmark]
+A horizontal chalk line beneath the timeline.
+Below the line: PATTERN IDENTIFIED: [chalk arrow pointing to the checkmark]
+Below that: PATTERN PREDICTED: [chalk arrow pointing to a document attached to the board]
+
+Attached to the chalkboard using masking tape — not pins — is a single yellowed paper document. Visible text on the document reads: RISK ASSESSMENT — PIER IMPACT PROTECTION at the top, and a large stamped word in the centre: NOTED.
+
+Gata faces the viewer directly. Her expression conveys the precise exhaustion of someone who has read this document, written a follow-up, and is now being asked to explain it on camera.
+
+CAPTION: Rendered in dry sans-serif text along the bottom of the panel, in English:
+"The bridge wasn't the first draft. It was the final edit after all the safety comments were marked 'out of scope.'"
+
+No copyrighted characters, artists, or intellectual property referenced. Visual style inspired only by mid-century editorial illustration: high contrast, flat tones, heavy outlines.
+</verdict>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

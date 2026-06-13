@@ -1,0 +1,80 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1:** My first instinct would probably be to put Farage at a podium or in front of 10 Downing Street — too obvious, too flattering even in its mockery. The sharper angle is the *moment after* the revolution succeeds: not the triumph, but the spreadsheet. The satire should land on the gulf between the heckler and the administrator, between the entertainer and the actual job. The board should reflect not ambition but the terrifying *in-tray* of governance — the things he can no longer blame on someone else.
+
+**REVIEW 2:** Re-checking every requirement:
+- Gata's full physical description verbatim ✓ needed in prompt
+- No human clothes/accessories on Gata ✓
+- Colour: greyscale background, Gata in full colour (Selective Color) ✓
+- Setting: 1970s newsroom ✓
+- Board: dark chalkboard, "ON THE SPOT" heading, white hand-drawn sketches ✓
+- Attachments: masking tape only, no pins ✓
+- Single-panel satirical cartoon ✓
+- Dry caption at bottom ✓
+- No copyrighted artist/character references ✓
+- Cultural context woven in (Del Boy, Fawlty, the relay race) ✓ — need to make sure the *visual* concept earns these references without naming them explicitly
+- All cartoon text in English ✓
+- Output language: English ✓
+
+**REVIEW 3:** The material improvement: the board shouldn't just show an empty in-tray — it should show the *specific* items Farage's entire career was built on blaming others for, now labelled "YOURS NOW." That's the sharpest possible visual — not a man reaching for power, but a man finally handed the bill for every complaint he ever filed. The caption should carry the Del Boy / relay-race energy without spelling it out. Let the image do the heavy lifting.
+
+---
+
+## 🗞️ GATA NEWSROOM — SATIRICAL CARTOON CONCEPT
+
+**Headline concept:** *"This Time Next Year, We'll All Be Governing"*
+
+---
+
+### PANEL DESCRIPTION
+
+Gata sits bolt-upright on a heavy metal newsroom desk, facing the chalkboard with her characteristic expression of exhausted, gimlet-eyed intelligence. She is mid-investigation, one forepaw resting deliberately on the desk surface as though she has just placed the final piece of evidence.
+
+The chalkboard behind her is headed **"ON THE SPOT"** in large chalk capitals. Below it, a roughly sketched figure — a triumphant man at a lectern, fist raised, mouth open mid-speech — is circled. Radiating out from the circle via chalk arrows are labelled boxes, each attached to the board with masking tape:
+
+- **"NHS WAITING LISTS — NOW YOURS"**
+- **"INTEREST RATES — NOW YOURS"**
+- **"POTHOLES — NOW YOURS"**
+- **"THE SPREADSHEETS — ALL YOURS"**
+- **"BRUSSELS — UNAVAILABLE"**
+- **"THE ESTABLISHMENT — YOU ARE IT"**
+
+In the bottom-left corner of the board, a small sketch of a three-wheeled van parked outside a grand Georgian door, with a "DELIVERIES" sign above it. No label — the image speaks for itself.
+
+The newsroom background is greyscale: hunched background figures at typewriters, fluorescent tube lighting, overflowing ashtrays, stacked paper.
+
+Gata is in full selective colour against the grey.
+
+**Caption (bottom of panel, dry and unhurried):**
+
+> *"After thirty years as the most gifted customer in the restaurant, Britain has apparently offered him the kitchen."*
+
+---
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard style, high-contrast, 1970s British newspaper newsroom setting. Selective Color style: greyscale background and environment, Gata rendered in full colour only.
+
+GATA — domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. Small dark spot on the bridge of her pink nose. Simple dark leather collar with a gold/brass nameplate engraved "GATA". Demeanour: serious, investigative, slightly tired, highly intelligent. No human clothes, no hats, no glasses, no accessories of any kind.
+
+Gata sits bolt-upright on a heavy metal newsroom desk facing a large dark chalkboard. One forepaw rests deliberately flat on the desk surface. Her expression is gimlet-eyed and exhausted — the look of a reporter who has followed this story for thirty years and is unsurprised by where it has ended.
+
+THE CHALKBOARD — headed "ON THE SPOT" in large rough chalk capitals. Below: a hand-drawn chalk sketch of a triumphant figure at a lectern, fist raised, mouth open, circled emphatically. Chalk arrows radiate outward to labelled boxes, each attached to the board with strips of masking tape — no pins anywhere:
+- "NHS WAITING LISTS — NOW YOURS"
+- "INTEREST RATES — NOW YOURS"
+- "POTHOLES — NOW YOURS"
+- "THE SPREADSHEETS — ALL YOURS"
+- "BRUSSELS — UNAVAILABLE"
+- "THE ESTABLISHMENT — YOU ARE IT"
+In the bottom-left corner of the chalkboard: a small chalk sketch of a three-wheeled van parked outside a large Georgian front door, with the words "DELIVERIES?" chalked above it in small uncertain lettering.
+
+NEWSROOM BACKGROUND (greyscale): hunched figures at heavy typewriters, banks of fluorescent tube lighting overhead, stacked paper, overflowing ashtrays, a wall clock. Background is desaturated and recessive — all visual focus on Gata and the board.
+
+DRY CAPTION in plain type at the bottom of the panel:
+"After thirty years as the most gifted customer in the restaurant, Britain has apparently offered him the kitchen."
+
+Style: single-panel editorial cartoon, dry British political satire, high-contrast lighting from overhead fluorescents, charcoal-sketch aesthetic on chalkboard elements, photorealistic Gata in full selective colour. No copyrighted characters or named artistic styles referenced.
+</verdict>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

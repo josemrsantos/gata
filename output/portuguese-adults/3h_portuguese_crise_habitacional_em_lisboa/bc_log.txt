@@ -1,0 +1,30 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — Too obvious / too lenient?**
+My first instinct would be: Gata presents the housing crisis on a board, politicians announce a new programme, punchline is "it doesn't work." Too predictable. Sharper angle: lean into the *deadpan subversion* of the "habituação" idea — the joke isn't that the programme fails, it's that the government has quietly reclassified the problem as solved *by definition*. The arc should be: the crisis exists → the government reframes what counts as a crisis → Lisboa is now officially "accessible" because the lisboetas left. That's the sharper read.
+
+**REVIEW 2 — Did I skip any criterion?**
+- Character description: must be verbatim in every image prompt ✓ (I need to include it in each scene description)
+- Selective color on greyscale background ✓
+- Chalkboard heading "ON THE SPOT" or target-language equivalent — in Portuguese: "EM FOCO" or "NO ALVO" → I'll use "EM FOCO" ✓
+- Attachments with masking tape, never pins ✓
+- No human clothes or accessories on Gata ✓
+- ALL text in Portuguese ✓
+- Beat labels: setup / escalation / punchline ✓
+- Deadpan register, high subversion ✓
+- `<joke_explanation>` block after the JSON ✓
+- Valid JSON inside `<verdict>` tags, no markdown fences ✓
+- Caption: 1–2 sentences in Portuguese ✓
+
+**REVIEW 3 — Material improvement still possible?**
+The three-panel arc needs a tighter comedic spine. The best deadpan joke here is the *bureaucratic redefinition* gag: Panel 1 — the crisis is mapped (lisboetas exported to Setúbal/Barreiro); Panel 2 — the government announces the solution (a new programme with a new name, explicitly noting "não há fórmula mágica"); Panel 3 — the punchline is that Lisboa has now been officially reclassified as *Património Imaterial da Humanidade* — not because of fado, but because actual residents have become immaterial. That's the sharpest, most culturally loaded deadpan subversion available from the brief. Commit to it.
+
+---
+
+<verdict>{"panels":[{"scene":"Panel 1. Wide shot of the 1970s newsroom, greyscale background, fluorescent lights humming overhead, heavy metal desks fading into background. Centre-frame: Gata — a domestic shorthair calico-tabby mix with white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back; small dark spot on the bridge of her pink nose; simple dark leather collar with a gold/brass nameplate engraved 'GATA' — sits upright on a desk, facing a dark chalkboard. Gata is rendered in full colour against the greyscale setting (Selective Color style). The chalkboard heading reads 'EM FOCO' in bold chalk. Below it, a hand-drawn chalk map of greater Lisbon: the city centre is labelled 'LISBOA (museu)' and arrows radiate outward pointing to 'SETÚBAL', 'BARREIRO', 'ENTRONCAMENTO (talvez)'. Stuck to the board with masking tape: a small chalk-drawn label reading 'T1 — 1.400€/mês'. Gata stares at the board with the calm, exhausted expression of someone who has seen this map before. Single-panel satirical cartoon, minimalist charcoal-on-chalkboard style, high-contrast.","caption":"Lisboa, 2026. Os lisboetas continuam a existir — apenas já não em Lisboa. O fenómeno é estudado com grande interesse académico.","beat":"setup"},{"scene":"Panel 2. Same newsroom setting, greyscale background, Gata — a domestic shorthair calico-tabby mix with white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back; small dark spot on the bridge of her pink nose; simple dark leather collar with a gold/brass nameplate engraved 'GATA' — now turns her head slightly toward the viewer, expression unchanged, while a new section of the chalkboard is revealed. A chalk-drawn podium has appeared, behind which stands a rough stick figure in a suit labelled 'MINISTRO Nº 7'. A speech bubble from the stick figure reads: 'NÃO HÁ FÓRMULA MÁGICA.' Below the podium, a stack of chalk-drawn documents labelled from top to bottom: 'PER (1993)', 'PROGRAMA X', 'PROGRAMA Y', 'MAIS HABITAÇÃO (2023)', 'PROGRAMA Z (em breve)'. All attached to the board with masking tape. Gata's tail is slightly lowered. Full colour on greyscale, minimalist charcoal-on-chalkboard style.","caption":"O décimo sétimo programa habitacional da democracia portuguesa foi apresentado esta semana. O nome é diferente. A eficácia será anunciada em breve.","beat":"escalation"},{"scene":"Panel 3. Same newsroom, greyscale background. Gata — a domestic shorthair calico-tabby mix with white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back; small dark spot on the bridge of her pink nose; simple dark leather collar with a gold/brass nameplate engraved 'GATA' — sits perfectly still, facing the camera with a flat, direct gaze. The chalkboard behind her now shows a single large chalk illustration: a UNESCO-style laurel-wreath logo (hand-drawn, minimalist) encircling the words 'LISBOA — PATRIMÓNIO IMATERIAL DA HUMANIDADE'. Below it, in smaller chalk lettering, a footnote attached with masking tape reads: '*os habitantes são a parte imaterial'. The rest of the board is empty. Gata does not react. Full colour on greyscale, minimalist charcoal-on-chalkboard style, high-contrast.","caption":"A candidatura foi aprovada por unanimidade. A comissão de avaliação destacou, em particular, o carácter cada vez mais intangível da população residente.","beat":"punchline"}]}</verdict>
+
+<joke_explanation>O chiste final inverte a lógica do prestígio turístico de Lisboa — a cidade torna-se Património Imaterial precisamente porque os seus habitantes se tornaram literalmente "imateriais", ou seja, invisíveis e ausentes, o que ressoa de forma imediata para um público português familiarizado com a ironia de ver a sua capital celebrada internacionalmente enquanto os seus naturais a abandonam por impossibilidade económica.</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

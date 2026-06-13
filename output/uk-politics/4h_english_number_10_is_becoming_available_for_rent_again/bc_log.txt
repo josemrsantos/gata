@@ -1,0 +1,72 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — Too obvious / too lenient?**
+My first instinct would be to make the joke about revolving-door tenants, which is the obvious read. The sharper position is the one the brief demands: *we are not the landlords we think we are.* The joke shouldn't be about the tenants at all — it should be about us, the supposed "landlords," discovering we never held the freehold. The inconvenience isn't Boris or Liz or Rishi. The inconvenience is that the British public believes it selects the tenant, when in fact it is merely notified of the outcome. That's the squirm.
+
+**REVIEW 2 — Did I skip a criterion?**
+- Selective Color: Gata full colour, everything else greyscale. ✓ Must be explicit in every scene.
+- Gata wears NO human accessories, no clothes, no pen, no glasses. Must check every panel.
+- Chalkboard heading: "ON THE SPOT" — must appear in panel 1 at minimum, ideally throughout.
+- Masking tape on board attachments, never pins. ✓ Must be explicit.
+- The letting agent pun (*to let = to permit/allow*) must be woven in — this is listed as a key audience hook.
+- Liz Truss lettuce reference and Boris Partygate are available for deployment if they deepen the joke — but only if they serve the structural satirical point, not as name-drops.
+- Caption language: English throughout. ✓
+- Comedy style: situational, deadpan, high subversion. The subverted read must be that the audience expected a joke about bad tenants and got a joke about their own powerlessness.
+- Inconvenience test: The most uncomfortable truth is that democratic accountability in the UK is a courtesy, not a mechanism. That must be the punchline's load-bearing weight.
+
+**REVIEW 3 — What material improvement haven't I made yet?**
+The four-panel arc needs a clean dramatic structure: setup (the listing appears), escalation (Gata investigates the "landlord" claim), reversal (she discovers the terms of the "freehold"), punchline (the board reveals the actual tenure arrangement — the public are leaseholders, and the service charge is non-negotiable). I should ensure the chalkboard in the final panel carries the most devastating written line, since that's where the cartoon's text lands hardest. The caption in panel 4 should not explain the joke — it should *extend* the discomfort one beat further.
+
+---
+
+<verdict>{"panels":[{"scene":"Gata sits at a heavy metal desk in a 1970s greyscale newsroom, fluorescent lights overhead, background figures at typewriters. She is in full colour — white chest and muzzle, dark tabby stripes, orange patches, gold 'GATA' collar nameplate. On the dark chalkboard behind her, headed 'ON THE SPOT' in hand-drawn chalk letters, is a rough sketch of a Georgian terraced house with a 'TO LET' sign outside. Pinned with masking tape beside it: a hand-written property listing reading 'ICONIC PERIOD PROPERTY. STRONG LEADERSHIP POTENTIAL. AVAILABLE IMMEDIATELY.' Gata stares at it with the expression of someone who has read this exact document before.","caption":"Number 10 Downing Street has been listed again. The agent describes it as 'full of potential.' The agent always does.","beat":"setup"},{"scene":"Same newsroom. Gata has turned to the chalkboard and, with one paw, circled the words 'TO LET' on the sketch. Beside it, in her own chalk annotation, she has written: 'TO LET = TO PERMIT.' Below that, an arrow pointing to a second chalk note: 'WHO IS PERMITTING THIS?' The background figures continue typing, indifferent. Gata's expression has not changed. She is simply waiting for the audience to catch up.","caption":"The agent's name, it turns out, is also a description of its function. Britain's constitutional arrangements have always been, in the most literal sense, a letting problem.","beat":"escalation"},{"scene":"Gata has pulled a large document from a desk drawer and taped it to the chalkboard with masking tape. It is headed 'FREEHOLD CERTIFICATE' in large chalk letters, but Gata has drawn a thick line through 'FREEHOLD' and written 'LEASEHOLD' above it. Below, in smaller writing: 'LANDLORD: SEE ATTACHED.' The attached note, also taped with masking tape, reads: 'THE AGENT'S ASSOCIATES.' Gata sits back on her haunches, paws folded in front of her, looking directly outward. The newsroom behind her is greyscale and entirely unbothered.","caption":"Viewers are reminded that they hold the freehold. Viewers are further reminded that this reminder is itself part of the tenancy agreement.","beat":"reversal"},{"scene":"Final panel. Gata faces the completed chalkboard. The full diagram now shows: the Georgian house sketch, the 'TO LET' sign, the 'LEASEHOLD' correction, and — newly added, in the largest chalk letters on the board — a timeline reading: '44 DAYS. THEN A LONGER ONE. THEN ANOTHER. LISTING AGAIN: JUNE 2026.' Beneath the timeline, in smaller chalk script: 'DEPOSIT STATUS: SPENT.' Gata has not moved from her serious, exhausted posture. She does not look at the camera. She looks at the board. The newsroom behind her continues in greyscale silence.","caption":"The new applicant comes highly recommended. The deposit — the NHS, the fiscal credibility, the basic expectation of honesty — remains unaccounted for. The agent suggests this is the previous tenant's problem.","beat":"punchline"}]}</verdict>
+
+<joke_explanation>The joke lands because it reframes the audience's assumed role — from empowered democratic landlord to bewildered leaseholder — and then confirms, without mercy, that the deposit they were promised would be returned has already been spent by tenants the agent personally vouched for, meaning the new listing is not an opportunity but a service charge notice.</joke_explanation>
+
+[Critic]
+<verdict>NEEDS REVISION</verdict>
+
+**Rule Violated:** ORIGINALITY (Rule 4).
+
+**Reasoning:** While the structural execution is excellent, the "revolving door of Prime Ministers" and the "NHS/Fiscal credibility" angle is the most common, first-read critique of UK politics. It is the "obvious" satire that every political cartoonist in the UK has already drawn. To meet the Gata standard, we must move past the *personnel* of the tenancy and target the *systemic architecture* of the property itself.
+
+**Concrete Alternative:**
+Instead of focusing on the *tenants* (the PMs) or the *deposit* (the NHS/Economy), focus on the **"Management Fee."** 
+
+The cartoon should pivot to the idea that the "Georgian terraced house" (the State) is actually a shell company owned by a parent corporation that doesn't care who lives in the house, as long as the "Management Fee" (the tax/debt interest/privatization cycle) is paid. 
+
+**Revised Punchline/Beat:**
+In the final panel, Gata should reveal that the "Landlord" isn't a person or a party, but a **"Management Fee"** that increases every time the house is listed. The punchline should be that the "tenants" (the politicians) are actually just the *janitors* hired to clean up the mess so the next "Management Fee" can be collected. This shifts the blame from the politicians (who are just employees) to the structural, uncomfortable truth: the British public isn't being governed; they are being billed for the maintenance of a property they are no longer allowed to renovate.
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 2 ===
+[Satirist]
+**REVIEW 1 — Too obvious / too lenient?**
+The revision brief is sharp: shift from *personnel* (revolving PMs) to *structural architecture* (the management fee as the real constant). My first instinct on the revised brief would be to make the "management fee" a generic stand-in for "capitalism" or "the establishment" — which is itself a tired read. The sharper position: the management fee is *specific and itemised.* It has line items. Debt interest. Privatisation contracts. Consultancy spend. The joke isn't "the system is corrupt" (obvious) — it's that the fee schedule is *publicly available, has always been publicly available, and nobody in the listing ever mentions it.* The inconvenience is not that the fee exists. It is that we keep calling to enquire about the property without ever asking what the management fee is, because the agent has trained us to ask only about the tenant.
+
+**REVIEW 2 — Did I skip a criterion?**
+- Selective Color: Gata full colour, greyscale everything else — must be explicit in all four scene descriptions. ✓
+- No human accessories on Gata — no pen, no glasses, no hat. Must police this in every panel. ✓
+- Chalkboard headed "ON THE SPOT" — must appear, hand-drawn chalk lettering. ✓
+- Masking tape on all board attachments, never pins. ✓
+- Comedy style: situational, deadpan, HIGH SUBVERSION. The subverted read: audience expects a joke about PMs, gets a joke about a fee schedule that predates and postdates every PM ever listed. ✓
+- The "letting agent" structural pun (*to let = to permit*) — still available and should appear, but now in service of the management fee angle, not the tenant angle. ✓
+- Inconvenience test: The most uncomfortable truth is that the political debate about *who* governs is a distraction from the question of *what the governance is for* — and the answer, itemised, is: to service the fee. That must be the punchline's weight. ✓
+- Captions in English. ✓
+- No copyrighted characters or artists referenced. ✓
+
+**REVIEW 3 — What material improvement haven't I made yet?**
+The four-panel arc needs to build the *fee schedule* progressively, so that by panel 4, the board shows something that looks disturbingly like an actual letting agent's fee breakdown — itemised, mundane, bureaucratic — and the horror is in the format, not just the content. The deadpan comedy lives in the fact that it looks like a normal document. Gata should be treating it as a normal document. The caption in panel 4 should not editoralise — it should simply note, in the flattest possible register, that the fee is non-negotiable and pre-dates the current listing. That is the squirm.
+
+---
+
+<verdict>{"panels":[{"scene":"Gata sits at a heavy metal desk in a greyscale 1970s newsroom, fluorescent lights, background figures at typewriters. She is in full colour — white chest and muzzle, dark tabby stripes, orange patches, gold 'GATA' collar nameplate. On the dark chalkboard behind her, headed 'ON THE SPOT' in hand-drawn chalk letters, is a sketch of a Georgian terraced house with a 'TO LET' sign. Taped with masking tape below the sketch is a chalk-drawn 'PROPERTY SUMMARY' box listing: 'TENANT: TBC. CONDITION: VARIABLE. AVAILABLE: AGAIN.' Gata is reading a thick document on her desk. Her expression is professionally neutral.","caption":"Number 10 is available again. The listing, as always, focuses entirely on the incoming tenant. The management fee is not mentioned in the listing.","beat":"setup"},{"scene":"Same greyscale newsroom. Gata has turned to the chalkboard and added a new section beside the property sketch, taped with masking tape: a hand-drawn box headed 'MANAGEMENT FEE (STANDARD).' Inside it, three chalk line items are visible: '1. DEBT INTEREST: ONGOING.' '2. PRIVATISATION CONTRACTS: SEE SCHEDULE.' '3. CONSULTANCY (STRATEGIC): RENEWED AUTOMATICALLY.' Gata's paw rests beside item three. She has underlined 'RENEWED AUTOMATICALLY.' Her expression has not changed.","caption":"The management fee is not set by the tenant. It is not reviewed when the tenant changes. It predates the current listing by several listings.","beat":"escalation"},{"scene":"Gata has taped a second document to the chalkboard with masking tape. It is headed 'TENANT RESPONSIBILITIES' in large chalk letters. The list beneath reads: '1. COLLECT FEE FROM OCCUPANTS. 2. EXPLAIN FEE AS NECESSARY INVESTMENT. 3. VACATE WHEN ASKED. 4. DO NOT RENOVATE STRUCTURAL SYSTEMS.' Gata sits back, paws folded, looking directly outward at the viewer. The background newsroom figures continue typing in greyscale. One background chalk annotation on the board, in smaller lettering, reads: 'NOTE: TENANT IS NOT THE LANDLORD.'","caption":"The tenant's primary function, the document clarifies, is to collect the fee on behalf of the management company and to describe this process as governance.","beat":"reversal"},{"scene":"Final panel. The completed chalkboard now shows the Georgian house sketch, the management fee schedule, the tenant responsibilities list, and — newly taped with masking tape at the centre — a single chalk-drawn card headed 'MANAGEMENT COMPANY (REG.).' The company name field is blank. Below it, in the flattest possible bureaucratic chalk lettering: 'DIRECTORS: NOT LISTED HERE.' 'FEE STRUCTURE: NON-NEGOTIABLE.' 'PROPERTY HISTORY: NOT RELEVANT TO CURRENT LISTING.' Gata sits in front of it, fully in colour against the greyscale room, and looks at the board with the calm of someone who has filed this story before and expects to file it again.","caption":"The new tenant will be announced shortly. The management fee will not be announced. The management fee is never announced. This is described, in the listing, as stability.","beat":"punchline"}]}</verdict>
+
+<joke_explanation>The joke lands because it reframes the entire theatre of British political transition — the resignations, the contests, the carefully managed successions — as middle-management churn inside a property company whose fee schedule is the only constant, exposing the audience's genuine powerlessness not through anger but through the most destabilising register available: a completely normal-looking document.</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+
+The concept is structurally sound, adheres to all Gata Newsroom protocols, and successfully weaponises the "inconvenience" of bureaucratic permanence. By shifting the focus from the "tenant" (the PM) to the "management fee" (the structural extraction), you have successfully subverted the standard political cartoon trope of mocking the individual, instead exposing the systemic indifference of the apparatus itself. The use of the "non-negotiable" fee schedule as the punchline forces the reader to confront the reality that their democratic participation is effectively a tenant-selection process for a property they do not own and whose overheads they are forced to subsidize. The visual progression is clear, the tone is appropriately deadpan, and the Gata character remains a detached, observant anchor. This is ready for production.
+Verdict: APPROVED

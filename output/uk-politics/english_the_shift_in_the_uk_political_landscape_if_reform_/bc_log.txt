@@ -1,0 +1,44 @@
+=== Iteration 1 ===
+[Satirist]
+## SELF-REVIEW
+
+**REVIEW 1:** The obvious angle is "chaos incoming / populist takeover" — that's been done to death. A sharper take leans into the *pattern*: Reform isn't a revolution, it's the latest in a long British tradition of protest parties that promise to burn the system down and then quietly become the system. The sharpest satirical move is to frame Reform's "takeover" not as seismic but as depressingly cyclical — a recycled product relabelled. The chalkboard can show this as a flow diagram of British protest parties all leading to the same dead end, with Reform simply being the newest arrow in the loop.
+
+**REVIEW 2:** Gata must be *actively investigating*, not merely observing. She should be mid-gesture — a paw pointing at a specific, damning detail on the board — suggesting she's caught something the public hasn't noticed yet. The visual joke should land independently: the diagram shows a circular loop of protest parties (UKIP → Brexit Party → Reform UK) with each one labelled "REVOLUTION" on entry and "THE SYSTEM" on exit — and Reform's arrow is already curling back around. The caption confirms what the image implies.
+
+**REVIEW 3:** Yes — this punches up at the political class and at Farage specifically, not at voters. It's accessible: anyone who remembers UKIP will get it immediately. The "revolution that becomes the establishment" joke is universal enough not to require specialist knowledge, and the circular diagram is visually self-explanatory.
+
+---
+
+## CARTOON CONCEPT
+
+**Scene:** Gata stands at the chalkboard in the 1970s newsroom. She has one white paw raised, claw extended, pointing directly at the final arrow in a circular flow diagram she's been piecing together. Her expression is that of a detective who has seen this particular trick before and is mildly offended anyone thought it would work again.
+
+**On the chalkboard (headed "ON THE SPOT"):**
+A hand-drawn circular loop diagram. Each node on the loop reads, in sequence:
+- **"PROTEST PARTY"** → **"COMMON SENSE REVOLUTION"** → **"TAKES POWER"** → **"BECOMES THE SYSTEM"** → *(arrow loops back to "PROTEST PARTY")*
+- Around the outside of the loop, three labels attached with masking-taped paper scraps: **"UKIP"**, **"BREXIT PARTY"**, **"REFORM UK ←YOU ARE HERE"**
+- A small sub-note sketched below: *"(missing screws not included)"*
+
+**Dry caption at the bottom:**
+*"Gata has covered four of these. She's stopped unpacking her bags."*
+
+---
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard style, high-contrast, dry caption at the bottom. Selective Color style: greyscale background and setting, Gata rendered in full colour only.
+
+Setting: 1970s British newspaper newsroom — heavy metal desks, humming fluorescent strip lights, background figures hunched over typewriters, ashtrays, stacks of paper, all in greyscale.
+
+Foreground: Gata — a domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". She never wears human clothes or accessories — no hats, glasses, pens, or clothing of any kind. Her demeanour is serious, investigative, slightly tired, and highly intelligent. She stands upright facing a large dark chalkboard, one white forepaw raised with a single claw extended, pointing directly at a specific arrow on the diagram — the expression of a detective who has seen this trick before.
+
+The chalkboard is dark with hand-drawn white chalk illustrations. At the top, the heading reads: ON THE SPOT. Below it is a circular flow diagram with four nodes connected by arrows forming a closed loop: "PROTEST PARTY" → "COMMON SENSE REVOLUTION" → "TAKES POWER" → "BECOMES THE SYSTEM" → (arrow loops back to "PROTEST PARTY"). Around the outside of the loop, three small paper scraps attached with masking tape (never pins) each label a point on the circle: one reads "UKIP", one reads "BREXIT PARTY", one reads "REFORM UK ← YOU ARE HERE". Below the diagram, a smaller chalk note reads: "(missing screws not included)".
+
+At the very bottom of the image, a dry caption in plain text reads: "Gata has covered four of these. She's stopped unpacking her bags."
+
+Style: sharp British political satire, single-panel cartoon, high contrast, no copyrighted characters or referenced artists, all text in English.
+</verdict>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

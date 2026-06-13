@@ -1,0 +1,72 @@
+communities:
+  - name: uk-tech-engineers
+    target_audience: British software engineers and developers
+    output_language: English
+    tone: dry British wit
+    panels: 3          # optional: number of panels (1-4, default 1)
+    layout: horizontal # optional: horizontal or vertical (default horizontal)
+    topics:
+      - Agile ceremonies that could have been an email
+      - AI is going to replace junior developers, apparently
+      - The eternal JavaScript framework churn
+      - Why every startup is rewriting everything in Rust
+      - The myth of the 10x developer
+      - Spec-driven design was supposed to be for engineers
+      - Microservices were supposed to make things simpler
+    news_sources:
+      - sources: "bbc-news,techcrunch,the-verge"
+        count: 10
+
+  - name: portuguese-adults
+    target_audience: Portuguese adults interested in politics and society
+    output_language: Portuguese
+    tone: sátira política afiada
+    topics:
+      - Crise habitacional em Lisboa
+      - Partidos políticos e as suas promessas eleitorais
+      - O custo de vida em Portugal
+      - Turismo versus residentes locais
+      - A burocracia portuguesa que nunca muda
+      - Jovens portugueses que emigram para pagar renda
+      - O metro de Lisboa em hora de ponta
+
+  - name: us-startup-crowd
+    target_audience: US tech startup founders, engineers, and investors
+    output_language: English
+    tone: sarcastic Silicon Valley cynicism
+    topics:
+      - Venture capital funding rounds with no revenue
+      - Pivoting as a business strategy
+      - The AI bubble is different this time, trust us
+      - Return-to-office mandates from CEOs who work from their yacht
+      - Unicorn valuations in a down market
+      - The ten-slide deck that raised fifty million dollars
+      - Disrupting an industry that did not need disrupting
+    news_sources:
+      - sources: "techcrunch,the-verge,ars-technica,hacker-news"
+        count: 10
+
+  - name: uk-politics
+    target_audience: UK voters and political observers
+    output_language: English
+    tone: sharp British political satire
+    topics:
+      - What happens if Reform UK actually wins an election?
+      - The prospect of Nigel Farage as Prime Minister
+      - Reform's plan for 'common sense' ruling the country
+      - The shift in the UK political landscape if Reform takes power
+      - "A Reform UK cabinet: The ultimate political disruptor"
+    news_sources:
+      - sources: "bbc-news,google-news-uk"
+        count: 10
+
+  - name: portuguese-politics
+    target_audience: Portuguese voters and political observers
+    output_language: Portuguese
+    tone: sátira política direta e incisiva
+    topics:
+      - O cenário de um governo liderado pelo Chega
+      - "André Ventura em São Bento: o que mudaria no dia-a-dia?"
+      - A reação da Europa a um Portugal governado pelo Chega
+      - As propostas do Chega para 'reconstruir' o país no poder
+      - "O Chega no governo: realidade ou ficção política?"

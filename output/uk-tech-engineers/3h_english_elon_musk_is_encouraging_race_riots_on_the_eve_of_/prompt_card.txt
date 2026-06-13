@@ -1,0 +1,20 @@
+
+{
+  "panels": [
+    {
+      "scene": "Gata sits at a heavy metal desk in a 1970s fluorescent-lit newsroom, greyscale background, she in full calico-tabby colour. Behind her, a dark chalkboard headed 'ON THE SPOT' in chalk. On the board, a hand-drawn system architecture diagram labelled 'BELFAST (PROD)' showing interlocking nodes labelled 'GFA v1.0', '30 YRS UPTIME', 'LOAD-BEARING', and 'DO NOT TOUCH'. A strip of masking tape holds a small card reading 'LEGACY SYSTEM — BRITTLE'. Gata stares at the board with the expression of an engineer who has been handed someone else's undocumented codebase.",
+      "caption": "Belfast: thirty years of uptime. Negotiated in production. Backward-compatible with living memory. No unit tests. No rollback plan. Thoroughly not a greenfield deployment.",
+      "beat": "setup"
+    },
+    {
+      "scene": "Same newsroom. Gata has turned to face the viewer directly, one paw resting flat on the desk. The chalkboard now shows a second diagram: a terminal window, hand-drawn in chalk, with the command 'chaos-monkey --target=belfast-prod --metric=engagement --schedule=IPO_EVE' typed on it. A masking-tape card beneath it reads 'OPTIMISING FOR CLICKS'. In the greyscale background, blurry figures at other desks appear to be filling in sprint planning boards without looking up.",
+      "caption": "Chaos Monkey was designed with one explicit precondition: that you run it on systems *built to survive it*. This is, apparently, considered optional.",
+      "beat": "escalation"
+    },
+    {
+      "scene": "Same newsroom. Close in on Gata's face — serious, slightly tired, utterly unsurprised. The chalkboard now shows a standard post-mortem template, hand-drawn: fields for 'ROOT CAUSE', 'CONTRIBUTING FACTORS', 'LESSONS LEARNED', and 'OWNER'. Every field is blank. The OWNER field has a masking-tape label stuck over it reading 'TBD'. A second masking-tape card at the bottom of the board reads 'INDUSTRY COINED THE METHODOLOGY'. Gata's gold nameplate 'GATA' catches the fluorescent light.",
+      "caption": "The industry has a word for the document you file after this. Nobody has scheduled it. The owner field, per established tradition, reads TBD — which is also what we said about accountability when we wrote the original methodology.",
+      "beat": "punchline"
+    }
+  ]
+}

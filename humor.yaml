@@ -1,0 +1,32 @@
+# Per-agent comedy style configuration.
+# Values are interpolated into each agent's system prompt at runtime.
+# Change preferred_style or subversion here to tune register without touching agent code.
+
+agents:
+
+  framer:
+    wordplay_scan: true          # look for puns/wordplay opportunities in the target language
+    joke_types:                  # ordered by preference; Framer selects the best fit for each topic
+      - situational
+      - wordplay
+      - absurdist
+      - deadpan
+    language_register: vernacular  # vernacular | formal | mixed
+    inconvenience: 100             # 0–100: how aggressively the Framer surfaces uncomfortable truths
+
+  satirist:
+    preferred_style: deadpan       # deadpan | absurdist | wordplay | situational
+    avoid:
+      - broad_slapstick
+      - Sexist
+      - Racist
+      - homophobic
+    subversion: high               # low | medium | high — how hard to subvert the obvious reading
+    joke_explanation: true         # include <joke_explanation> block explaining why the joke lands
+    inconvenience: 100               # 0–100: how aggressively the Satirist forces uncomfortable truths
+
+  critic:
+    evaluate_joke_mechanics: false  # verify the chosen joke type is correctly executed
+    flag_if_no_subversion: true    # reject concepts that play the satirical angle straight
+    inconvenience: 100               # 0–100: how aggressively the Critic demands uncomfortable truths
+    dual_satirist: false           # true: Critic becomes a co-creating second Satirist

@@ -1,0 +1,61 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct might be to write a generic obituary-critique. The sharper position is to lean into the bitter irony of the *reformado* who worked their entire life, paid taxes, survived IMF austerity, watched their savings erode — and now must watch a state funeral with full honours for the man they hold responsible. The satire shouldn't just critique Soares; it should weaponise the contrast between his gilded legacy and their diminished pensions.
+
+REVIEW 2: Re-examining requirements — tone must be "sátira conservadora cortante e sem misericórdia — raiva contida." I must not soften this. Output language is Portuguese. References must be cultural touchstones NOT from the news topic itself — so not the 25 de Abril, not the FMI 1977 directly, but surrounding cultural memories the audience *knows*. The Cultural Angle must be one paragraph. References are bullets, one or two sentences each. Structure must be inside `<verdict>` tags exactly as specified.
+
+REVIEW 3: A material improvement: the references should include specific, painful, *visceral* cultural memories this generation holds — things like the nationalizations of 1975, the PREC chaos, the caderneta predial, the "saneamentos," the memory of family businesses seized, the rhetoric of "povo" that somehow never included them. These are not in the news topic but cut deep for this audience. I should also reference the pomp of the funeral itself as the ultimate insult — the state honouring the bill-creator while the bill-payers queue at the Segurança Social.
+
+<verdict>
+CULTURAL ANGLE: Mário Soares morreu aos 92 anos, de causas naturais, no conforto de uma vida longa e condecoradamente subsidiada — e o Estado Português, sempre generoso com o dinheiro dos outros, tratou de lhe organizar um funeral de chefe de Estado com todas as honras que o contribuinte médio nunca pôde dar a si próprio. É a perfeição circular do projeto soarista: o homem que chegou de Paris em 1974 com uma mala de ideias gastadas e um sorriso ensaiado passou as décadas seguintes a construir um país onde quem trabalhou, poupou e obedeceu às regras ficou a pagar — literalmente, com descontos no IRS — o legado de quem nunca se preocupou muito com contas. A classe média que em 1977 foi ao FMI de chapéu na mão pagar o primeiro resgate do socialismo português, que assistiu às nacionalizações como quem vê a casa a arder sem que os bombeiros se apressem, que criou filhos numa economia eternamente "em vias de desenvolvimento," essa classe média viu agora o caixão coberto de flores e dignitários. Ficou, como sempre, do lado de fora — mas desta vez ao menos não lhe mandaram a fatura. Desta vez não.
+
+REFERENCES:
+- O PREC e as nacionalizações de 1975 confiscaram empresas familiares, quintas e poupanças de toda uma geração de pequenos proprietários que nunca viram um tostão de indemnização a sério — o "povo" que o socialismo dizia defender raramente incluía quem tinha um negócio próprio com menos de cem trabalhadores.
+- A geração que ouviu na televisão, em horário nobre, que "o futuro pertence ao socialismo" é a mesma geração que passou décadas a receber cartas da Segurança Social a explicar por que razão a sua reforma era inferior ao que tinha descontado.
+- O resgate do FMI de 1977 foi apresentado como uma turbulência passageira; quem viveu a austeridade que se seguiu sabe que a "turbulência" durou décadas e foi paga com cortes no orçamento familiar, nunca no orçamento do Estado.
+- A palavra "saneamento" ficou gravada na memória de quem viu colegas, chefes ou familiares perderem empregos por razões políticas no pós-25 de Abril — uma depuração que o discurso oficial aprendeu a chamar "democratização" sem nunca mudar de cara.
+- O Cemitério dos Prazeres, onde Soares foi sepultado, é um dos mais distintos de Lisboa — uma última ironia geográfica para um homem que passou a vida política a falar em nome dos que não têm nada, garantindo sempre um lugar reservado para si próprio entre os que têm muito.
+- A geração dos reformados de centro-direita lembra-se de quando a caderneta predial era actualizada com uma regularidade que parecia inversamente proporcional ao estado das estradas — o Estado sabia sempre cobrar, mesmo quando não sabia governar.
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+The angle is sharp and the tone is precise. The references to the "saneamentos" and the "caderneta predial" are particularly effective, grounding grand political narratives in personal, visceral memory. The piece is strong.
+
+However, a material improvement exists.
+
+The reference to the 1977 IMF bailout is accurate but predictable. It targets a moment of crisis, but not the core of the Soares legacy as it is officially celebrated. A more devastating satirical attack would target his most unassailable achievement: Portugal's entry into the European Economic Community (EEC).
+
+For your target audience, the generation of small business owners, farmers, and fishermen, "Europe" was not an abstract triumph of diplomacy. It was a concrete reality of quotas, regulations, and the slow death of traditional industries in exchange for structural funds that fostered dependency. Framing the entry into the EEC not as salvation but as the selling of national sovereignty is a far more potent and original critique for this specific reader.
+
+**ACTIONABLE FEEDBACK:**
+
+Replace the reference to the FMI 1977 with the following, which attacks a more central pillar of the Soares mythos:
+
+*   **A adesão à CEE em 1986 foi vendida como a salvação e a entrada num clube de ricos. Para quem tinha um negócio na agricultura ou nas pescas, no entanto, foi o início do fim — a troca da soberania económica por subsídios que ensinaram o país a estender a mão em vez de arregaçar as mangas.**
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 2 ===
+[Framer]
+REVIEW 1: The feedback is precise — I must replace the 1977 IMF reference in the REFERENCES section with the EEC entry critique. But the sharper position is to not merely swap one reference for another mechanically. The EEC critique must be more visceral and specific than the suggested replacement: I should evoke the *quotas de pesca*, the destruction of the *têxtil do Norte*, the *leite e vinho* dumped or regulated out of existence, and the way the structural funds created a political class of subsidy-managers rather than wealth-creators. The target audience *felt* this in their family businesses, their neighbourhoods, their towns that hollowed out.
+
+REVIEW 2: Checking all requirements — Cultural Angle remains one paragraph, same sharp tone, Portuguese language, conservative satirical register. References remain bullet points of one or two sentences each, cultural touchstones NOT from the news topic. I must remove the 1977 FMI reference from REFERENCES (it appears there AND in the Cultural Angle — I need to decide whether to keep it in the Cultural Angle or soften its prominence, since the feedback specifically targets the REFERENCES section). Re-reading: the feedback says "replace the reference to the FMI 1977" in the references list. The Cultural Angle mention of 1977 can remain as context. I must not repeat the previous structure wholesale — measurable progress required.
+
+REVIEW 3: A material improvement still exists: the new EEC reference should land harder by naming *specific sectors* this audience knew personally — as farmers, fishing families, textile workers from the Norte, small manufacturers who watched Spanish and French competition flood in under single market rules. The suggested replacement text from the feedback is good but slightly abstract. I can make it more concrete and bitter by naming the *quotas de pesca de Bruxelas* that devastated coastal communities, or the milk and wine surpluses destroyed under CAP rules. This gives the reformado reader a flash of recognition — "that happened to my cousin in Matosinhos, to my uncle in Minho."
+
+<verdict>
+CULTURAL ANGLE: Mário Soares morreu aos 92 anos, de causas naturais, no conforto de uma vida longa e condecoradamente subsidiada — e o Estado Português, sempre generoso com o dinheiro dos outros, tratou de lhe organizar um funeral de chefe de Estado com todas as honras que o contribuinte médio nunca pôde dar a si próprio. É a perfeição circular do projeto soarista: o homem que chegou de Paris em 1974 com uma mala de ideias gastadas e um sorriso ensaiado passou as décadas seguintes a construir um país onde quem trabalhou, poupou e obedeceu às regras ficou a pagar — literalmente, com descontos no IRS — o legado de quem nunca se preocupou muito com contas. O maior troféu da sua biografia oficial é a adesão à CEE em 1986, celebrada nos livros de história como redenção europeia; para quem tinha uma traineira no porto de Matosinhos, uma quinta no Minho ou uma fábrica de malha em Guimarães, foi a troca da soberania económica por um formulário de candidatura a subsídios — a lição mais duradoura do soarismo: em vez de produzir, aprende-se a pedir. A classe média que criou filhos numa economia eternamente "em vias de desenvolvimento" viu agora o caixão coberto de flores e dignitários. Ficou, como sempre, do lado de fora — mas desta vez ao menos não lhe mandaram a fatura. Desta vez não.
+
+REFERENCES:
+- A adesão à CEE em 1986 foi vendida como entrada num clube de ricos, mas para os pescadores do litoral significou quotas decididas em Bruxelas por burocratas que nunca tinham visto o Atlântico — e para os agricultores do Minho significou ver leite e vinho regulados até à asfixia enquanto os fundos estruturais ensinavam o país a depender em vez de produzir.
+- O PREC e as nacionalizações de 1975 confiscaram empresas familiares, quintas e poupanças de toda uma geração de pequenos proprietários que nunca viram uma indemnização a sério — o "povo" que o socialismo dizia defender raramente incluía quem tinha um negócio próprio com menos de cem trabalhadores.
+- A geração que ouviu na televisão, em horário nobre, que "o futuro pertence ao socialismo" é a mesma geração que passou décadas a receber cartas da Segurança Social a explicar por que razão a sua reforma era inferior ao que tinha descontado durante quarenta anos de trabalho.
+- A palavra "saneamento" ficou gravada na memória de quem viu colegas, chefes ou familiares perderem empregos por razões políticas no pós-25 de Abril — uma depuração que o discurso oficial aprendeu a chamar "democratização" sem nunca mudar de cara.
+- O Cemitério dos Prazeres, onde Soares foi sepultado, é um dos mais distintos de Lisboa — uma última ironia geográfica para um homem que passou a vida política a falar em nome dos que não têm nada, garantindo sempre um lugar reservado para si próprio entre os que têm muito.
+- A geração dos reformados de centro-direita lembra-se de quando a caderneta predial era actualizada com uma regularidade que parecia inversamente proporcional ao estado das estradas — o Estado sabia sempre cobrar, mesmo quando não sabia governar.
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

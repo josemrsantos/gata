@@ -1,0 +1,45 @@
+
+Single-panel satirical cartoon. Minimalist charcoal-on-chalkboard style, high-contrast, dry British wit. Selective Color technique: greyscale background and environment throughout; Gata rendered in full natural colour only.
+
+SETTING: 1970s newspaper newsroom. Heavy metal desks, stacks of paper, clunky typewriters, harsh overhead fluorescent strip lighting. Several out-of-focus greyscale background figures — journalists, editors — visible in the background, hunched over desks, ignoring the board entirely.
+
+GATA — render with full fidelity to this description, verbatim: Gata is a domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She never wears human clothes or accessories — no hats, glasses, pens, or clothing of any kind.
+
+Gata stands on a heavy metal desk facing a large dark chalkboard. Her posture is composed and still — forepaws on the desk surface, expression flat and unimpressed. She is looking at the board with the quiet exhaustion of someone who has explained this before.
+
+THE CHALKBOARD — dark slate, heading at top in large bold hand-drawn chalk capitals: "ON THE SPOT"
+
+Below the heading, the board is laid out as a mock dependency audit / pull request review checklist, hand-drawn in white chalk in a rough, slightly hasty style. The items are:
+
+A rough chalk sketch of a small rectangular phone charger plug — loosely approximating the shape of a three-pin plug but clearly wrong proportions, slightly wonky, not a BS 1363. Attached to the board with a strip of masking tape.
+
+Next to the sketch, a chalked label reads:
+"DEPENDENCY: phone charger (prod)"
+
+Below that, a hand-drawn checklist in chalk:
+
+☐ Unit tests
+☐ Code review
+☐ Safety certification (BS 1363)
+☐ Vendor verification
+☐ Known manufacturer name
+
+Each box is visibly unchecked — hollow squares.
+
+Below the checklist, a single line in larger chalk lettering:
+
+"VENDOR: XVTRZKPLF"
+
+Below that, underlined twice:
+
+"STATUS: MERGED TO MAIN ✓"
+
+And below that, in smaller chalk lettering:
+
+"Reviewer comment: works on my machine"
+
+A small chalk flame icon — simple, two or three lines — drawn at the bottom right corner of the chalkboard, taped on with masking tape.
+
+AT THE BOTTOM OF THE IMAGE — dry caption in plain text beneath the panel border:
+
+"Trading Standards has issued a product recall. The engineer noted it was the fourteenth phone charged without incident and considered this a sufficient test suite."

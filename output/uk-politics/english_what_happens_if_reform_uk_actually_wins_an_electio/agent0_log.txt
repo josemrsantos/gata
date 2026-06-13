@@ -1,0 +1,61 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct would be to do obvious Farage jokes and "pints and fish fingers" gags. Sharper reading: the satire should be about the *structural impossibility* of Reform actually governing — they've built an entire identity around being the permanently aggrieved outsider. Winning would be their apocalypse scenario. The joke isn't Reform being dangerous; it's Reform being *allergic to responsibility*.
+
+REVIEW 2: Re-examining requirements — I need a CULTURAL ANGLE (one paragraph, satirical framing specific to UK cultural context), REFERENCES (bullet list, touchstones NOT from the news topic itself, one or two sentences each), output in English, sharp British political satire tone. The references must be things the audience already knows — not predictions. I should include things like: the SNP's awkward 16 years in government, UKIP's post-Brexit identity crisis, the "dog catches car" problem, perhaps the Thick of It, British protest parties historically collapsing on contact with power.
+
+REVIEW 3: A material improvement: I should anchor the satire in something distinctly *British* — the national tradition of voting for protest parties specifically BECAUSE they'll never win, the almost constitutional role of "the angry outsider." The sharpest version of this joke is that Reform winning would be like burning down the pub because you were tired of the queue — and then having to *run the pub*. I should also reference Nigel Farage's eight failed election attempts as a cultural reference point the audience knows viscerally.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Reform UK has spent years perfecting the most comfortable position in British politics: the velvet sofa of perpetual opposition, where you may shout about everything and be responsible for nothing. Their entire brand is the indignant man at the bar who knows exactly how to fix the NHS, the schools, the boats, and the bins — right up until someone hands him the keys and says, "crack on, then." A Reform government would face the singular horror of having to *actually do things*, which is precisely what protest parties are constitutionally incapable of. The manifesto costed on the back of a fag packet, the MPs recruited from Facebook comment sections, the cabinet assembled from people whose main qualification is being very, very cross — it would be less a government and more a Channel 5 documentary in real time. Britain has a long and noble tradition of electing people to Westminster to *complain about Westminster*, and Reform represents the purest expression of that art form. Winning, for them, would not be a triumph. It would be a medical emergency.
+
+REFERENCES:
+- UKIP imploded almost immediately after the Brexit referendum delivered their only actual goal — having won the argument, they had no idea what to do with themselves, cycling through leaders at a rate that made the Conservative Party look stable.
+- Nigel Farage stood for Parliament seven times before finally winning a seat in 2024, a record that functioned less as political persistence and more as proof that the country quite liked him on the television but wasn't ready to give him the car keys.
+- The SNP's years in Holyrood demonstrated that governing — bin lorries, ferries that don't float, ferries that aren't built — is significantly harder than promising independence over and over while nothing actually happens.
+- *The Thick of It* established, definitively, that British government is less a machine of power than a chaos engine staffed by panicking people who have no idea what the department actually does — Reform would simply remove the thin veneer of pretending otherwise.
+- The SDP in the 1980s broke away from Labour with enormous fanfare, a "Gang of Four," and a manifesto of common sense centrism — and was subsequently absorbed, digested, and forgotten, because British politics treats insurgents the way a body treats a splinter.
+- Richard Tice's appearances on television news panels have established a reliable genre: the man who has a very confident answer to a question, delivered with the energy of someone who has never once been asked a follow-up.
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+The angle is sharp, resonant, and lands its central satirical point with precision. The "indignant man at the bar" is the perfect frame for the party's allergy to responsibility, and the "Channel 5 documentary" line is inspired. The majority of the references are spot-on.
+
+However, one historical reference can be materially improved to sharpen the argument.
+
+The reference to the SDP in the 1980s is intellectually sound but lacks contemporary satirical venom. The "Gang of Four" were political heavyweights; their failure was a serious political event. A more potent, and frankly more pathetic, parallel exists that better serves your angle of chaotic incompetence.
+
+Replace the SDP reference with this:
+
+-   **Change UK / The Independent Group** was the SDP's tragicomic encore, a splinter group so politically incoherent and personally mismatched that they went from media darlings to electoral dust in a single election cycle, memorably failing to secure their own domain name or agree on a logo. They are the ultimate modern example of a protest movement collapsing into farce upon contact with basic organisational reality.
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 2 ===
+[Framer]
+REVIEW 1: The revision instruction is clear and specific — replace the SDP reference with the Change UK / The Independent Group reference. My first instinct might be to simply swap it in verbatim, but I should integrate it in my own voice while preserving the satirical sharpness and matching the tone of the surrounding references. The provided replacement is good but slightly explanatory in tone — I can sharpen it to match the dry, withering register of the rest.
+
+REVIEW 2: Re-examining all requirements — I must keep everything else identical (the CULTURAL ANGLE paragraph is approved, all other references are approved), only replacing the SDP bullet with the Change UK reference. Output language English, tone sharp British political satire, wrapped in verdict tags with exact structure. I must not accidentally alter any other approved element. I should write the Change UK reference in my own satirical voice rather than copy-pasting the brief's language wholesale.
+
+REVIEW 3: A material improvement: the brief's version of the Change UK reference ends on "organisational reality" which is slightly clinical. I can end on something more contemptuous and funnier — leaning into the logo chaos and the domain name disaster as the perfect emblem of a party that couldn't organise a name before organising a country. That's the sharpest possible version of the joke.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Reform UK has spent years perfecting the most comfortable position in British politics: the velvet sofa of perpetual opposition, where you may shout about everything and be responsible for nothing. Their entire brand is the indignant man at the bar who knows exactly how to fix the NHS, the schools, the boats, and the bins — right up until someone hands him the keys and says, "crack on, then." A Reform government would face the singular horror of having to *actually do things*, which is precisely what protest parties are constitutionally incapable of. The manifesto costed on the back of a fag packet, the MPs recruited from Facebook comment sections, the cabinet assembled from people whose main qualification is being very, very cross — it would be less a government and more a Channel 5 documentary in real time. Britain has a long and noble tradition of electing people to Westminster to *complain about Westminster*, and Reform represents the purest expression of that art form. Winning, for them, would not be a triumph. It would be a medical emergency.
+
+REFERENCES:
+- UKIP imploded almost immediately after the Brexit referendum delivered their only actual goal — having won the argument, they had no idea what to do with themselves, cycling through leaders at a rate that made the Conservative Party look stable.
+- Nigel Farage stood for Parliament seven times before finally winning a seat in 2024, a record that functioned less as political persistence and more as proof that the country quite liked him on the television but wasn't ready to give him the car keys.
+- The SNP's years in Holyrood demonstrated that governing — bin lorries, ferries that don't float, ferries that aren't built — is significantly harder than promising independence over and over while nothing actually happens.
+- *The Thick of It* established, definitively, that British government is less a machine of power than a chaos engine staffed by panicking people who have no idea what the department actually does — Reform would simply remove the thin veneer of pretending otherwise.
+- Change UK — also known as The Independent Group, also known as whatever their logo was supposed to be — went from breathless media coverage to electoral oblivion in a single cycle, a party so organisationally chaotic they couldn't secure their own domain name before announcing themselves as the future of British politics.
+- Richard Tice's appearances on television news panels have established a reliable genre: the man who has a very confident answer to a question, delivered with the energy of someone who has never once been asked a follow-up.
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

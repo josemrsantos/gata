@@ -1,0 +1,61 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1:** My first instinct would be something obvious — Gata pointing at a graph showing rising rents, or a simple visual of a tiny apartment with an enormous price tag. That's too lenient. The sharper position: the most uncomfortable truth isn't that housing is expensive — it's that the *state itself* engineered this crisis and then sells the solution back to the same people it dispossessed. The real joke is that the "policy" is working exactly as designed. The board should expose the circularity: State creates crisis → announces programme to fix crisis → programme benefits no one → State celebrates programme → repeat. That's the structural con.
+
+**REVIEW 2:** Re-checking every requirement:
+- ✅ Gata's full physical description must appear verbatim in the prompt
+- ✅ Selective Color style (Gata in colour, greyscale background)
+- ✅ 1970s newsroom setting
+- ✅ Chalkboard with heading "NA MIRA" (Portuguese equivalent of "ON THE SPOT") — wait, the rule says "always 'ON THE SPOT' (or target-language equivalent)" — I'll use **"EM FOCO"** as the natural Portuguese equivalent
+- ✅ Masking tape on attachments, no pins
+- ✅ No human clothes or accessories on Gata
+- ✅ Dry caption at the bottom, in Portuguese
+- ✅ All cartoon text in Portuguese
+- ✅ Deadpan register
+- ✅ The most uncomfortable truth forced in
+- ✅ No copyrighted references
+- ⚠️ I need to make sure the chalkboard diagram is *specific* and *legible* enough in the prompt description — not just "a diagram" but a described visual joke with labelled elements
+- ✅ `<verdict>` and `<joke_explanation>` tags required
+
+**REVIEW 3:** The material improvement I haven't made yet: the chalkboard diagram should be the *primary joke vehicle*, not just set dressing. The deadpan lands hardest when the visual logic of the board is airtight and self-contained — Gata says nothing, the board does the work, and the caption closes it with a gut-punch. The sharpest version: the board shows a flowchart that begins with "Estado vende imóveis públicos a fundos privados" and loops back to "Estado anuncia programa de emergência habitacional" — a perfect closed circle labelled, dryly, as "Política de Habitação (em funcionamento)". Gata's expression: utterly unsurprised. The caption doesn't explain — it confirms.
+
+---
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard diagram style, high-contrast, deadpan tone. Colour palette: full greyscale background, environment, and all human figures; Gata rendered in full selective colour only.
+
+**SETTING:** A 1970s newspaper newsroom — heavy metal desks, stacks of paper, fluorescent ceiling lights buzzing overhead, background figures of journalists hunched over typewriters, all in greyscale. The scene is lit harshly from above.
+
+**GATA — full character description, reproduce exactly:** Gata is a domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She never wears human clothes or accessories — no hats, glasses, pens, or clothing of any kind. She is rendered in full colour against the greyscale environment (Selective Color technique). She sits squarely in front of the chalkboard, facing the viewer with a flat, unsurprised expression. Her posture is calm, deliberate, and faintly exhausted.
+
+**THE BOARD:** A large dark chalkboard dominates the background directly behind Gata. At the top, in bold hand-drawn chalk letters: **"EM FOCO"**. Below the heading, a hand-drawn circular flowchart — white chalk, loose but legible — with six nodes connected by arrows forming a closed loop. Each node is a small chalk-sketched box with text inside:
+
+1. **"Estado vende imóveis públicos a fundos privados"**
+2. **"Fundos convertem em hotéis de luxo"**
+3. **"Famílias despejadas"**
+4. **"Estado anuncia programa de emergência habitacional"**
+5. **"Programa contestado, insuficiente, celebrado"**
+6. **"Estado vende mais imóveis públicos"** *(arrow returns to node 1)*
+
+In the centre of the loop, inside the circle formed by the arrows, written in slightly larger chalk lettering:
+
+**"POLÍTICA DE HABITAÇÃO"**
+**"(em funcionamento)"**
+
+Attached to the bottom-right corner of the chalkboard with a strip of masking tape: a small torn piece of paper with the chalk-sketched outline of a tiny apartment floor plan, labelled **"T1 — €2.100/mês"**, with a second line below it reading **"(cozinha não incluída)"**.
+
+**CAPTION** (printed below the panel in dry, plain type, in Portuguese):
+*"Gata investiga há três anos. O ciclo também."*
+</verdict>
+
+<joke_explanation>
+O humor corta fundo porque o diagrama não é uma acusação — é uma descrição técnica de um sistema que funciona, e é exactamente esse deadpan que obriga o público português a reconhecer que a crise de habitação não é um falhanço do Estado, é o produto dele: o ciclo fecha-se, a legenda diz "em funcionamento", e Gata não está indignada — está apenas a reportar.
+</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+
+<joke_explanation>
+A proposta atinge o equilíbrio necessário entre a denúncia sistémica e o cinismo exigido. Ao apresentar a crise habitacional não como uma anomalia, mas como um processo industrial cíclico e "em funcionamento", o cartoon subverte a expectativa de que o Estado é um agente de resolução, expondo-o como o motor da própria escassez. A inclusão do detalhe "cozinha não incluída" no T1 adiciona o elemento de desconforto necessário, transformando a indignação política numa realidade quotidiana absurda e palpável para o público português.
+</joke_explanation>
+Verdict: APPROVED

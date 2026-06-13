@@ -1,0 +1,61 @@
+=== Iteration 1 ===
+[Satirist]
+## PASSES DE REVISÃO INTERNA
+
+**REVIEW 1 — O ângulo mais afiado:**
+O instinto inicial seria simplesmente "Gata aponta para um gráfico de calorias" — demasiado óbvio. O ângulo mais cortante é fazer Gata investigar o "escândalo científico" de não citar os palhaços como fonte primária — a indignação académico-palhacística. O gag visual deve ser o diagrama na lousa a mostrar a relação directa entre pastéis de nata e raio de curvatura da barriga, com linguagem pseudo-científica absurda. A piada real é que a ciência chegou atrasada ao que o circo já sabia.
+
+**REVIEW 2 — Critérios em falta:**
+- ✅ Gata descrita verbatim com todos os detalhes físicos
+- ✅ Sem roupas/acessórios humanos
+- ✅ Fundo em tons de cinza, Gata a cores (Selective Color)
+- ✅ Lousa com "ON THE SPOT" — ESPERA: a regra diz "ou equivalente na língua alvo" — em português deve ser **"EM FOCO"** ou equivalente. Uso **"EM FOCO"**.
+- ✅ Fixações com fita-cola, nunca pioneses
+- ✅ Todo o texto no cartoon em português
+- ✅ Sem referências a artistas/personagens com direitos de autor
+- ✅ Tom: humor absurdista de palhaço
+- ✅ Legenda seca no fundo
+- ✅ Referências culturais: Coliseu, bacalhau, calças depois do almoço de domingo, mala que não fecha
+
+**REVIEW 3 — Melhoria material ainda por fazer:**
+O diagrama na lousa deve ter *duas curvas científicas*: uma da barriga do palhaço gordo, outra da barriga do palhaço magro — e o ponto de intersecção deve ser rotulado "CRISE EXISTENCIAL". Isto ancora o gag visual no número clássico palhaço-gordo-persegue-palhaço-magro e transforma o gráfico em sátira em camadas. A legenda deve conter a piada filosófica da gravidade com inveja — é a mais absurda e a mais forte.
+
+---
+
+## OUTPUT FINAL
+
+**CONCEITO DO CARTOON:**
+Gata está sentada na sua secretária de metal pesado da redacção dos anos 70, olhando directamente para o leitor com expressão de esgotamento investigativo. Atrás dela, numa lousa escura, está o diagrama "EM FOCO" com um gráfico pseudo-científico intitulado *"Pastéis de Nata (n) vs. Raio de Curvatura da Barriga (r)"* — duas curvas ascendentes, uma rotulada "PALHAÇO GORDO" e outra "PALHAÇO MAGRO", com o ponto de intersecção marcado como ★ CRISE EXISTENCIAL. Colado com fita-cola na lousa há um recorte de jornal desenhado à mão: *"CIÊNCIA CONFIRMA: COMER ENGORDA"*. Abaixo, em letra pequena e irónica na lousa: *"Fonte: não foram os palhaços. Aparentemente."*
+
+**LEGENDA NO FUNDO DO CARTOON (estilo seco):**
+*"A gravidade não está com inveja. Só está a fazer o seu trabalho — ao contrário dos cientistas."*
+
+---
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard style, high-contrast, dry caption at the bottom. 1970s newspaper newsroom setting: fluorescent overhead lights, heavy metal desks, background figures in greyscale. Selective Color style: greyscale background and environment, Gata rendered in full colour only.
+
+GATA — domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She never wears human clothes or accessories — no hats, glasses, pens, or clothing of any kind. She sits at a heavy metal desk, facing the viewer directly, front paws resting on the desk, expression of exhausted investigative authority.
+
+Behind her: a large dark chalkboard with the heading "EM FOCO" written in bold hand-drawn white chalk letters at the top.
+
+On the chalkboard, hand-drawn in white chalk:
+
+1. A pseudo-scientific graph titled "PASTÉIS DE NATA (n) vs. RAIO DE CURVATURA DA BARRIGA (r)" — two ascending curves, one labelled "PALHAÇO GORDO", one labelled "PALHAÇO MAGRO", with their intersection point marked by a star symbol and the label "★ CRISE EXISTENCIAL".
+
+2. A hand-sketched newspaper clipping attached to the chalkboard with masking tape (never pins), reading: "CIÊNCIA CONFIRMA: COMER ENGORDA" in rough block letters.
+
+3. Below the clipping, in smaller ironic chalk lettering: "Fonte: não foram os palhaços. Aparentemente."
+
+4. A small chalk sketch of a round belly silhouette next to an arrow pointing upward labelled "GRAVIDADE (com inveja?)"
+
+At the very bottom of the image, outside the chalkboard, a dry caption in Portuguese in plain white text against dark background:
+
+"A gravidade não está com inveja. Só está a fazer o seu trabalho — ao contrário dos cientistas."
+
+No copyrighted characters or artist names referenced. All cartoon text in Portuguese.
+</verdict>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

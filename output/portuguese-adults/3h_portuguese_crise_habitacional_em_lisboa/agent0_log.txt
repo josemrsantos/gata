@@ -1,0 +1,30 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct would be to go for the obvious "rents are too high" angle with a generic joke about landlords. That's too surface-level. The sharper angle is the *institutional complicity* — the way successive governments have treated housing as a financial asset while performing concern for residents. The real satire is in the performative outrage of politicians who own multiple properties.
+
+REVIEW 2: Let me re-examine every requirement:
+- Cultural angle: one paragraph ✓ — must be satirical AND specific to Portuguese cultural context, not generic
+- References: bullet list, one-two sentences each, NOT from the news topic itself, deepening the satirical reading ✓
+- Wordplay scan: I need to actively look for puns in Portuguese vernacular — "renda" means both "rent" and "income/yield"; "casa" in "Programa Casa" vs. "estar em casa"; "arrendar" / "render"; "habitação" / "habituação" — that last one is gold: the country has become *habituada* (accustomed) to the crisis rather than solving it.
+- Joke type: must select from the four options and justify
+- Target audience locked, output language locked, tone locked ✓
+- Must not repeat previous positions (first iteration, so N/A)
+
+REVIEW 3: The "habituação" wordplay is strong but I should embed it more surgically. Also, I should anchor references in genuinely Portuguese cultural touchstones — Salazar-era housing mythology, the *Programa Especial de Realojamento* (PER) that took decades, the irony of Lisbon being repeatedly named "best city" by foreign lifestyle magazines while locals flee to Setúbal and Palmela, and the political figure of Costa Silva's "não há fórmula mágica." The sharpest improvement: frame the whole thing around Portugal's talent for *saudade* — turning a structural failure into a nostalgic feeling, which is the most Portuguese thing imaginable.
+
+<verdict>
+CULTURAL ANGLE: Portugal descobriu finalmente o que fazer com a crise habitacional em Lisboa: transformá-la em Património Imaterial da Humanidade. Depois de décadas a exportar fado, pastéis de nata e saudade, o país está agora a exportar os próprios lisboetas — para Setúbal, para o Barreiro, para onde aparecer renda abaixo de mil euros. Os sucessivos governos, vários deles compostos por titulares de múltiplos imóveis arrendados, reúnem-se com regularidade exemplar para anunciar programas habitacionais cujos nomes mudam a cada legislatura mas cuja eficácia se mantém notavelmente constante: nenhuma. O mais brilhante contributo da classe política para o problema foi descobrir que o país não tem problema de habitação — tem um problema de *habituação*: a população simplesmente ainda não se habituou a considerar normal pagar 60% do salário por um T1 com janela para uma viela. Com mais um pouco de comunicação estratégica, isso resolve-se.
+
+REFERENCES:
+- O *Programa Especial de Realojamento* (PER), lançado em 1993 para eliminar as barracas em Lisboa e no Porto "em dez anos", tornou-se um clássico nacional da gestão do tempo — como o metro do Rato, prometido há décadas e sempre "em breve".
+- Lisboa é regularmente eleita "melhor destino europeu" por revistas de viagem internacionais, o que é perfeitamente lógico: é mesmo muito melhor como destino de visita do que como local de residência permanente para quem lá nasceu.
+- A expressão "não há fórmula mágica", atribuída a múltiplos ministros em múltiplas décadas, funciona em Portugal como resposta universal a qualquer crise estrutural, da habitação à saúde, livrando o governante do trabalho de ter uma fórmula de qualquer espécie.
+- O *Mais Habitação*, aprovado em 2023 com grande solenidade, foi parcialmente chumbado, suspenso e retaliado pelos proprietários em menos de um ano — um percurso legislativo que os portugueses reconhecem com a familiaridade de quem já viu este filme várias vezes, só com títulos diferentes.
+- A ideia de que um jovem lisboeta deve "fazer sacrifícios" para comprar casa é dita com a mesma convicção com que a geração anterior comprou apartamentos por seis mil contos — contexto que se omite por uma questão de narrativa.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

@@ -1,0 +1,54 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — First instinct too obvious or too lenient?**
+
+The obvious joke: Starmer waved a flag, defence is underfunded, hypocrisy. Too easy. The sharper position is that the *rebranding itself* was the entire policy — Starmer never had a defence strategy, he had a *distance-from-Corbyn strategy*, and Healey's resignation is not a failure of defence policy but a confirmation that no such policy existed. The suit was the serious part. The sharpest read: the resignation letter is not a political crisis — it is a receipt.
+
+**REVIEW 2 — Have I checked every requirement?**
+
+- Gata's full character description verbatim: must be in the prompt ✓ (will check)
+- Visual style: greyscale background, Gata in full colour, 1970s newsroom, chalkboard headed "ON THE SPOT", masking tape attachments ✓
+- No hats/glasses/pens/clothing on Gata ✓
+- No copyrighted artist references ✓
+- Language: English throughout ✓
+- Deadpan register, high subversion ✓
+- INCONVENIENCE: the most uncomfortable truth must be present — must force the squirm
+- Joke type: deadpan ✓
+- Dry caption at the bottom ✓
+- Cultural context woven in: the pledge card, the ghost of Corbyn, the rebranding as the actual product ✓
+
+The most uncomfortable truth I haven't fully landed yet: Starmer didn't fail to deliver on defence — he delivered exactly what the rebranding required, which was *optics*, and Healey just confirmed it in writing. The squirm is that Labour voters who backed the "serious men" pitch are now holding a receipt that reads: *flag, flag, flag, resignation.*
+
+**REVIEW 3 — What material improvement still exists?**
+
+The board content. Currently I'm imagining something too generic. The strongest cartoon image for the board should be a "before/after" or a single devastating diagram: e.g. a Union Jack drawn in full, with an arrow pointing to it labelled "DEFENCE POLICY (2021–2026)" — and nothing else on the board. The caption should land the Geoffrey Howe "broken bat" tradition but deadpan — something like: *"He batted. The bat was a flag."* Or better: the board simply shows a large, carefully drawn Union Jack, and below it the heading "DEFENCE STRATEGY" — and Gata simply stares at the board. The reader realises simultaneously. That's the deadpan.
+
+The caption should be the receipt: something that makes clear the *suit* was the product, not the policy.
+
+---
+
+<verdict>
+Single-panel satirical cartoon. Minimalist charcoal-on-chalkboard style, high-contrast, dry caption at the bottom. Colour palette: fully greyscale background and environment; Gata rendered in full realistic colour only (Selective Color technique). Setting: 1970s newspaper newsroom — heavy metal desks, fluorescent strip lighting overhead, blurred background figures hunched over typewriters, ashtrays, stacked paper.
+
+Foreground: Gata — a domestic shorthair calico-tabby mix with a white chest, white muzzle, and white paws; dark grey and black tabby stripes across her body; orange and ginger patches on her back and head; a small dark spot on the bridge of her pink nose; a simple dark leather collar with a gold/brass nameplate engraved "GATA" — sits on a heavy metal desk facing a large dark chalkboard. She wears no clothing, no accessories, no hat, no glasses, no pen — nothing. Her expression is flat, serious, and extremely tired. She stares directly at the board with the resigned composure of someone who knew this would happen in 2021.
+
+The chalkboard, headed in large hand-drawn white chalk lettering: "ON THE SPOT"
+
+Below the heading, centred on the board, is a single large, carefully and meticulously hand-drawn chalk Union Jack — detailed, accurate, slightly too large, taking up most of the board's surface. Beneath the Union Jack, in neat chalk block capitals, is a single label: "DEFENCE STRATEGY (2021–2026)". Nothing else is on the board. No diagrams. No bullet points. No spending figures. Just the flag and the label.
+
+Taped to the lower-left corner of the chalkboard with a strip of masking tape is a small torn piece of paper on which is written in small chalk handwriting: "RECEIPT ENCLOSED — J. HEALEY".
+
+Dry caption at the bottom of the panel, in plain sans-serif lettering:
+
+"After three years of proving Labour had changed on defence, the Defence Secretary confirmed it hadn't."
+</verdict>
+
+<joke_explanation>
+The joke lands because the Union Jack — Starmer's most visible and deliberate political signal, the prop he used to bury the ghost of Corbyn and sell the "serious party" pitch to sceptical voters — is revealed, deadpan and without comment, to be the entirety of the defence policy itself, with Healey's resignation note taped on as the itemised receipt; British political audiences will immediately recognise that the rebranding was the product, and that the product has now been returned.
+</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+
+The concept is sharp, the subversion is immediate, and the "inconvenience" is perfectly calibrated: it forces the reader to confront the fact that the "serious" political pivot was never a policy shift, but a branding exercise that has now reached its logical, empty conclusion. The visual of the flag as the sole "strategy" is a devastatingly efficient use of the medium.
+Verdict: APPROVED

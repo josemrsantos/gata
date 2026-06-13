@@ -1,0 +1,79 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — Too obvious / too lenient:**
+My first instinct was probably to draw Gata pointing at a charger labelled "UNCERTIFIED" with a fire warning. That's the obvious read — charger bad, fire possible. The sharper position is the structural irony: the software engineer who applies rigorous validation to *code* has zero runtime checks on physical hardware. The joke should land on the *professional identity*, not the product defect. The charger isn't the punchline — the engineer's selective rigour is. Sharper angle: treat the charger as a dependency that went straight to prod without a code review, written by an unknown vendor, with no unit tests, and whose only logging output is smoke.
+
+**REVIEW 2 — Re-examine every requirement explicitly:**
+- ✅ Gata's full character description must appear verbatim in the image prompt
+- ✅ Visual style: greyscale background, Gata in full colour (Selective Color)
+- ✅ Setting: 1970s newsroom — fluorescent lights, heavy metal desks, background figures
+- ✅ Board: dark chalkboard, "ON THE SPOT" heading, hand-drawn white sketches, masking tape attachments
+- ✅ No pins — masking tape only
+- ✅ No human clothes/accessories on Gata
+- ✅ Output language: English — ALL cartoon text in English
+- ✅ Tone: dry British wit, deadpan, high subversion
+- ✅ Avoid: broad slapstick, sexist, racist, homophobic
+- ✅ Cultural references to weave in: BS 1363 pride, Note 7, Poundland, Trading Standards, "works on my machine"
+- ⚠️ Caption must be at the bottom — verify this is specified in the prompt
+- ⚠️ The board content needs to do real satirical work — check the chalkboard sketches are sharp, not generic
+- ✅ Joke type: deadpan — commit fully, no visual slapstick
+
+**REVIEW 3 — Material improvement still unmade:**
+The chalkboard content is where the joke lives most precisely. I should lean into the *code review / merge request* metaphor explicitly on the board — so the board becomes a mock "dependency audit" or "PR review checklist" for the charger, treating it as untested third-party code merged directly to main. This makes the satirical parallel explicit and visual, and the dry caption can then deliver the subversion. The caption should be the quiet kill shot — not the setup. I'll also ensure the board has a specific "VENDOR: [nine consonants]" detail and "NO TESTS. NO CERT. LGTM." to echo the Friday-deploy energy of "it'll be fine in prod."
+
+---
+
+<verdict>
+Single-panel satirical cartoon. Minimalist charcoal-on-chalkboard style, high-contrast, dry British wit. Selective Color technique: greyscale background and environment throughout; Gata rendered in full natural colour only.
+
+SETTING: 1970s newspaper newsroom. Heavy metal desks, stacks of paper, clunky typewriters, harsh overhead fluorescent strip lighting. Several out-of-focus greyscale background figures — journalists, editors — visible in the background, hunched over desks, ignoring the board entirely.
+
+GATA — render with full fidelity to this description, verbatim: Gata is a domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She never wears human clothes or accessories — no hats, glasses, pens, or clothing of any kind.
+
+Gata stands on a heavy metal desk facing a large dark chalkboard. Her posture is composed and still — forepaws on the desk surface, expression flat and unimpressed. She is looking at the board with the quiet exhaustion of someone who has explained this before.
+
+THE CHALKBOARD — dark slate, heading at top in large bold hand-drawn chalk capitals: "ON THE SPOT"
+
+Below the heading, the board is laid out as a mock dependency audit / pull request review checklist, hand-drawn in white chalk in a rough, slightly hasty style. The items are:
+
+A rough chalk sketch of a small rectangular phone charger plug — loosely approximating the shape of a three-pin plug but clearly wrong proportions, slightly wonky, not a BS 1363. Attached to the board with a strip of masking tape.
+
+Next to the sketch, a chalked label reads:
+"DEPENDENCY: phone charger (prod)"
+
+Below that, a hand-drawn checklist in chalk:
+
+☐ Unit tests
+☐ Code review
+☐ Safety certification (BS 1363)
+☐ Vendor verification
+☐ Known manufacturer name
+
+Each box is visibly unchecked — hollow squares.
+
+Below the checklist, a single line in larger chalk lettering:
+
+"VENDOR: XVTRZKPLF"
+
+Below that, underlined twice:
+
+"STATUS: MERGED TO MAIN ✓"
+
+And below that, in smaller chalk lettering:
+
+"Reviewer comment: works on my machine"
+
+A small chalk flame icon — simple, two or three lines — drawn at the bottom right corner of the chalkboard, taped on with masking tape.
+
+AT THE BOTTOM OF THE IMAGE — dry caption in plain text beneath the panel border:
+
+"Trading Standards has issued a product recall. The engineer noted it was the fourteenth phone charged without incident and considered this a sufficient test suite."
+</verdict>
+
+<joke_explanation>
+The joke lands because it reframes a consumer safety failure entirely in the professional vocabulary of its audience — treating an uncertified charger as an unreviewed dependency merged straight to production — exposing the precise, structural irony that the same engineers who would never approve a PR without tests have been running unsigned, unverified hardware in their homes, and that their defence ("works on my machine") is both the industry's oldest excuse and, in this context, its most combustible one.
+</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

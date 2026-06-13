@@ -1,0 +1,31 @@
+` and `<joke_explanation>` tags required
+
+**REVIEW 3:** The material improvement I haven't made yet: the chalkboard diagram should be the *primary joke vehicle*, not just set dressing. The deadpan lands hardest when the visual logic of the board is airtight and self-contained — Gata says nothing, the board does the work, and the caption closes it with a gut-punch. The sharpest version: the board shows a flowchart that begins with "Estado vende imóveis públicos a fundos privados" and loops back to "Estado anuncia programa de emergência habitacional" — a perfect closed circle labelled, dryly, as "Política de Habitação (em funcionamento)". Gata's expression: utterly unsurprised. The caption doesn't explain — it confirms.
+
+---
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard diagram style, high-contrast, deadpan tone. Colour palette: full greyscale background, environment, and all human figures; Gata rendered in full selective colour only.
+
+**SETTING:** A 1970s newspaper newsroom — heavy metal desks, stacks of paper, fluorescent ceiling lights buzzing overhead, background figures of journalists hunched over typewriters, all in greyscale. The scene is lit harshly from above.
+
+**GATA — full character description, reproduce exactly:** Gata is a domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She never wears human clothes or accessories — no hats, glasses, pens, or clothing of any kind. She is rendered in full colour against the greyscale environment (Selective Color technique). She sits squarely in front of the chalkboard, facing the viewer with a flat, unsurprised expression. Her posture is calm, deliberate, and faintly exhausted.
+
+**THE BOARD:** A large dark chalkboard dominates the background directly behind Gata. At the top, in bold hand-drawn chalk letters: **"EM FOCO"**. Below the heading, a hand-drawn circular flowchart — white chalk, loose but legible — with six nodes connected by arrows forming a closed loop. Each node is a small chalk-sketched box with text inside:
+
+1. **"Estado vende imóveis públicos a fundos privados"**
+2. **"Fundos convertem em hotéis de luxo"**
+3. **"Famílias despejadas"**
+4. **"Estado anuncia programa de emergência habitacional"**
+5. **"Programa contestado, insuficiente, celebrado"**
+6. **"Estado vende mais imóveis públicos"** *(arrow returns to node 1)*
+
+In the centre of the loop, inside the circle formed by the arrows, written in slightly larger chalk lettering:
+
+**"POLÍTICA DE HABITAÇÃO"**
+**"(em funcionamento)"**
+
+Attached to the bottom-right corner of the chalkboard with a strip of masking tape: a small torn piece of paper with the chalk-sketched outline of a tiny apartment floor plan, labelled **"T1 — €2.100/mês"**, with a second line below it reading **"(cozinha não incluída)"**.
+
+**CAPTION** (printed below the panel in dry, plain type, in Portuguese):
+*"Gata investiga há três anos. O ciclo também."*

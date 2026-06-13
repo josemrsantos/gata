@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Explaining the Cartoon: "On the Spot" — Gata Newsroom</title>
+<style>
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    background-color: #f5f2ec;
+    color: #1a1a1a;
+    line-height: 1.75;
+  }
+  h1 {
+    font-size: 1.9rem;
+    border-bottom: 2px solid #1a1a1a;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  h2 {
+    font-size: 1.25rem;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  p {
+    margin-bottom: 1.2rem;
+  }
+  .caption-box {
+    border-left: 4px solid #555;
+    padding: 0.75rem 1.25rem;
+    background-color: #eae7df;
+    margin: 1.5rem 0;
+    font-style: italic;
+  }
+  footer {
+    margin-top: 3rem;
+    font-size: 0.85rem;
+    color: #555;
+    border-top: 1px solid #aaa;
+    padding-top: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<h1>Explaining the Cartoon: "On the Spot"</h1>
+
+<p>
+  This cartoon takes aim at a very specific and quietly hilarious contradiction: British software engineers — people professionally trained to be paranoid about code quality, untested dependencies, and unverified third-party libraries — have apparently been buying cheap, uncertified phone chargers from dodgy retailers, plugging them into the wall without a second thought, and going to sleep. The joke is that the same rigour they apply obsessively to their working life evaporates entirely the moment they are standing in the electrical aisle of a discount shop.
+</p>
+
+<h2>What Is Happening in the Cartoon?</h2>
+
+<p>
+  Gata, the newsroom's calico-tabby reporter, stands at a chalkboard styled as a mock software engineering artefact: a dependency audit and pull request review checklist. In software development, a "pull request" (or PR) is a formal proposal to add new code to a project. Before it is accepted, it typically goes through a checklist — unit tests, a code review by a colleague, verification that all external components are trustworthy. This is standard professional hygiene, taken seriously by almost every developer working today.
+</p>
+
+<p>
+  The joke is that Gata has applied this exact framework to a phone charger. The charger is listed on the board as <em>"DEPENDENCY: phone charger (prod)"</em> — meaning it is a component currently running in production, i.e., plugged in and in active use in someone's home. Every single item on the safety checklist — unit tests, code review, safety certification, vendor verification, known manufacturer name — is visibly unchecked. None of the boxes have been ticked. The charger has not been reviewed. It has not been certified. Nobody knows who made it.
+</p>
+
+<p>
+  The vendor name chalked beneath the checklist reads <strong>XVTRZKPLF</strong> — a string of consonants that resembles nothing so much as a cat walking across a keyboard, and certainly nothing that appears in any reputable manufacturer's catalogue. And yet, at the bottom of the board, in large lettering: <em>"STATUS: MERGED TO MAIN ✓"</em>. The charger has been approved. It is in use. It is, in software terms, live in production.
+</p>
+
+<p>
+  A small chalk flame icon is taped to the corner of the board. It does not require elaboration.
+</p>
+
+<h2>The Caption</h2>
+
+<div class="caption-box">
+  "Trading Standards has issued a product recall. The engineer noted it was the fourteenth phone charged without incident and considered this a sufficient test suite."
+</div>
+
+<p>
+  This is the punchline delivered in deadpan newsroom style. The engineer has been informed, officially, that the charger is dangerous. Their response is empirical in the most catastrophically misapplied sense: it has worked fourteen times, therefore it is fine. In software, a "test suite" is a structured collection of automated checks that verify code behaves correctly across a range of scenarios. Fourteen successful charges is not a test suite. It is an anecdote. The charger does not care about the sample size.
+</p>
+
+<h2>The Central Irony</h2>
+
+<p>
+  The joke works because software engineers, as a professional tribe, are genuinely fastidious about quality gates in their code. They will refuse to merge a colleague's pull request if it lacks tests. They will raise Jira tickets — formal work tracking entries — about edge cases that have a one-in-a-million chance of occurring in real use. They will write defensive code that checks whether a value is null before touching it, just in case. They are, professionally speaking, people who plan for failure.
+</p>
+
+<p>
+  And then they buy a charger with a nine-consonant manufacturer name from a shop where the same aisle also sells knock-off batteries and suspiciously lightweight extension leads, and they consider the matter closed because it was only £3.49 and the cable fits.
+</p>
+
+<h2>The BS 1363 Plug Standard</h2>
+
+<p>
+  The checklist specifically includes <em>"Safety certification (BS 1363)"</em>, which is a reference to the British Standard for domestic plugs and sockets. The BS 1363 three-pin plug — the large, rectangular, slightly awkward-looking plug used throughout the United Kingdom — is, quietly, one of the safest domestic electrical designs in the world. It includes sleeved pins to prevent accidental contact, a fuse inside the plug itself, and a shuttered socket that requires all three pins to be inserted simultaneously. British engineers are, on some level, aware of this. They work in a country whose electrical infrastructure was designed with considerable care. Buying a charger that does not comply with this standard is therefore not merely careless — it is a specific betrayal of something they nominally respect.
+</p>
+
+<h2>The Samsung Galaxy Note 7 Reference</h2>
+
+<p>
+  In 2016, Samsung released the Galaxy Note 7 smartphone, which became famous almost immediately for catching fire. The batteries were faulty and could enter "thermal runaway" — a condition in which heat generation accelerates uncontrollably. The phones were banned from commercial flights. Airlines made specific announcements about them. It became the canonical cautionary tale for consumer electronics behaving thermally in ways their owners had not anticipated. And yet, somehow, the lesson the nation's developers took from this was not "I should check the safety certification of my charging equipment." It was, apparently, nothing at all. The cartoon's small chalk flame icon sits in that tradition.
+</p>
+
+<h2>Poundland and the Value Proposition</h2>
+
+<p>
+  Poundland is a British discount retailer, originally famous for selling everything for one pound. Its electrical aisle represents a specific cultural phenomenon: everyone who picks up a £1.99 USB charger knows, in some abstract sense, that it has not been through the same quality assurance process as a charger sold by a reputable electronics manufacturer. This knowledge is present. It simply does not survive contact with the price tag. The value proposition is emotionally compelling in a way that safety data sheets are not, and so the charger goes into the basket, and eventually into the wall socket, and eventually someone is Googling "why is my kitchen warm at 3am."
+</p>
+
+<h2>Trading Standards and the Quiet Advisory</h2>
+
+<p>
+  The UK's Trading Standards service is responsible for, among other things, issuing product recalls and safety warnings when consumer goods are found to be dangerous. It does this with the gentle, resigned energy of a government body that has long since accepted it will not be the most exciting email in anyone's inbox. Software engineers will recognise this tone: it is the same tone used in internal security advisories that get marked as read and immediately archived. The cartoon's caption, in which the engineer receives a formal recall notice and responds by citing his personal test data, is a precise structural parallel to receiving a security bulletin and replying "we haven't been hacked yet, so."
+</p>
+
+<h2>"Works on My Machine"</h2>
+
+<p>
+  The reviewer comment chalked at the bottom of the board — <em>"works on my machine"</em> — is one of the most durable jokes in software engineering. When a developer cannot reproduce a bug that is clearly visible in production, the defensive fallback is to note that the code worked correctly on their own computer, as though this were a meaningful quality guarantee. It is not. "Works on my machine" has spawned years of industry jokes, Docker containers, and entire categories of DevOps tooling specifically designed to prevent the excuse from being valid. Applying it to a charger is the joke made physical: yes, it has worked on my machine. My machine is my kitchen. The kitchen is currently fine. The kitchen was fine on all fourteen previous occasions. The review is approved.
+</p>
+
+<h2>Why Gata Looks Tired</h2>
+
+<p>
+  Gata's expression in the cartoon is described as flat and unimpressed — the quiet exhaustion of someone who has explained this before. This is the correct emotional register for a journalist covering a story whose punchline is that highly educated professionals have applied exceptional rigour to their work and almost none to their domestic electrical safety. She is not angry. She is not surprised. She has simply prepared the board, laid out the evidence, and is waiting for the room to notice that every single checkbox is empty and the vendor name is not a word in any human language.
+</p>
+
+<p>
+  She will be waiting for some time.
+</p>
+
+<footer>
+  Gata Newsroom — Cartoon Explanation Series. This page is intended for readers unfamiliar with British software engineering culture or consumer electrical safety standards.
+</footer>
+
+</body>
+</html>

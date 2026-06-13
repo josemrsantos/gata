@@ -1,0 +1,54 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1:** The obvious first instinct is a cartoon about a letter — maybe Gata holding or pointing at a letter. That's too literal. The sharper angle is the *GitHub issue / "not my repo"* framing from the brief. The real joke isn't "they wrote a letter" — it's that the letter *is itself* a form of automation: outsourcing the problem to a third party with no SLA and no expectation of resolution. The board should visualise the causal chain they're pretending doesn't exist, and Gata should be deadpan in the face of it. The chalkboard should do the heavy lifting.
+
+**REVIEW 2:** Re-checking every requirement:
+- Gata's full physical description ✓ (must be verbatim in prompt)
+- No human clothes/accessories ✓
+- Selective colour — Gata in full colour, background greyscale ✓
+- 1970s newsroom setting ✓
+- Chalkboard headed "ON THE SPOT" ✓
+- Masking tape for attachments, never pins ✓
+- All cartoon text in English ✓
+- Dry caption at the bottom ✓
+- No copyrighted character references ✓
+- Deadpan register, high subversion ✓
+- Developer-specific references (Jira/GitHub/PR framing) — need to weave into board text ✓
+- British "strongly worded letter" ritual as joke substrate ✓
+- Clubcard / data harvesting irony — can be worked into board ✓
+
+One thing I nearly skipped: the caption must be *dry British wit* and must subvert the obvious read. The obvious read is "look, hypocrites wrote a letter." The subverted read is: *the letter is itself a perfectly executed automation — it routes the problem downstream with zero human labour and no obligation to resolve.* That's the caption.
+
+**REVIEW 3:** The board itself is the richest real estate. I can make the chalkboard show a *commit history* or *PR timeline* — "replace checkout staff (merged 2017)," "automate fulfilment (merged 2021)," "write to government (open, unassigned)" — which will land with developers who recognise the pattern of shipping the cause and filing the concern. That's materially sharper than a generic cause-and-effect diagram. I should also make sure Gata's posture is *specific* — not just "standing there" but doing something that signals investigative weariness, e.g., one paw resting on the desk, staring at the board with the expression of someone who has read this codebase before.
+
+---
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard style, high-contrast, dry caption at the bottom. 1970s newspaper newsroom setting: heavy metal desks, fluorescent overhead lights, background figures rendered in greyscale. Selective Color style — all background and environment in greyscale; only Gata rendered in full colour.
+
+GATA — domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. Small dark spot on the bridge of her pink nose. Simple dark leather collar with a gold/brass nameplate engraved "GATA". Serious, investigative, slightly tired, highly intelligent demeanour. No human clothes, hats, glasses, pens, or accessories of any kind. She stands with one forepaw resting on the edge of the desk, facing the chalkboard, head turned slightly toward the viewer with the flat expression of someone who has read this codebase before and already knows how it ends.
+
+THE BOARD: Large dark chalkboard, hand-drawn white chalk sketches and text. Heading at the top in bold underlined chalk lettering: ON THE SPOT. The board shows a mock commit log in rough chalk handwriting, styled like a simplified git history, reading top to bottom:
+
+  ✓ MERGED — "remove checkout staff (2017)"
+  ✓ MERGED — "automate warehouse fulfilment (2020)"
+  ✓ MERGED — "Clubcard ML pricing — no rollback (2022)"
+  ✓ MERGED — "replace shelf staff with app (2023)"
+  ! OPEN — "youth unemployment" [assignee: Government] [label: not our repo]
+
+Below the commit log, attached with masking tape, a small chalk-sketched rectangle representing a letter, labelled: STRONGLY WORDED LETTER — status: sent. priority: critical. resolution: someone else's.
+
+A small chalk arrow points from the merged commits down to the open issue, labelled: "root cause identified."
+
+DRY CAPTION at the bottom of the panel, in plain text below the image:
+
+"M&S, Sainsbury's, and Tesco CEOs raise a ticket with the government regarding youth unemployment. The ticket has been open since the PRs that caused it were merged. It is unassigned. There is no SLA. They consider this a mitigation strategy."
+</verdict>
+
+<joke_explanation>
+British software engineers will instantly recognise the exact organisational manoeuvre being satirised — shipping the cause under a reasonable-sounding ticket, then filing a high-priority issue downstream with no assignee and no intention of owning the fix — because most of them have either been asked to do it, or have watched a senior stakeholder do it to them.
+</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

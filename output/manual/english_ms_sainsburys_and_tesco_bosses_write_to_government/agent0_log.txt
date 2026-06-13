@@ -1,0 +1,24 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct would probably be to lean on the obvious "tech vs retail" angle or make a lazy joke about self-checkouts replacing workers. That's too surface-level. The sharper reading is about the *irony* of retail bosses — who have been aggressively automating checkouts, warehouses, and logistics — now writing sternly worded letters to the government about youth unemployment, as if they had nothing to do with it. For a British dev audience, the richer joke is about the letter itself: the classic British corporate passive-aggressive open letter, the ultimate displacement activity, written by the very people whose Jira boards are full of "automate X" tickets.
+
+REVIEW 2: Let me check every requirement. ✅ CULTURAL ANGLE — one paragraph. ✅ REFERENCES — bullet list, one or two sentences each, NOT from the news topic, are cultural touchstones. ✅ WORDPLAY SCAN — I need to actively look for puns. Let me try: "letter of redundancy" (a letter about redundancy that is itself redundant). "Automated response" — the bosses send a letter that is itself an automated/formulaic gesture. "Git blame" — assigning blame elsewhere. "Technical debt" — the social cost they've deferred. "Merge request" — requesting the government merge their problem into public policy. ✅ JOKE TYPE selected. ✅ Output language English, dry British wit, target audience British software engineers. ✅ No changing of locked fields.
+
+REVIEW 3: A material improvement: I should make the cultural references *specifically* resonate with British devs — not just generic tech humour. Think: Agile ceremonies as a parallel (writing a letter instead of fixing the backlog), the M&S Percy Pig brand as a throwaway, the classic British "strongly worded letter" as a known cultural artefact, Tesco's Clubcard data-mining capabilities (they *know* exactly what's happening in the economy), and the Amazon warehouse automation that British devs will know accelerated retail's own automation arms race. Also: the wordplay "letter of redundancy" is genuinely sharp and should anchor the piece. I should also reference that British devs will recognise the irony of being the *authors* of the very automation pipelines that caused this — a meta-layer.
+
+<verdict>
+CULTURAL ANGLE: Three of Britain's most aggressive adopters of self-checkout machines, warehouse robotics, and algorithmic demand forecasting have written a *letter* to the government expressing grave concern about youth unemployment — which is, in the industry, known as "raising a ticket with someone else's team." The CEOs of M&S, Sainsbury's, and Tesco have essentially filed a GitHub issue labelled "youth unemployment: not our repo," having spent the last decade merging PRs titled "replace aisle staff with app," "automate fulfilment centre," and "Clubcard ML pricing optimisation." For British developers — many of whom have, at some point, built exactly this kind of labour-displacing system under a perfectly reasonable-sounding Jira ticket — there is something exquisitely familiar about watching the people who commissioned the automation now authoring a strongly worded letter to the government as their primary mitigation strategy. It is, in effect, a letter of redundancy about redundancy.
+
+REFERENCES:
+- The British "strongly worded letter" is a cherished national ritual — the preferred response to any crisis one wishes to acknowledge without actually doing anything about; Paddington Bear's hard stare made physical.
+- Tesco's Clubcard has been quietly harvesting behavioural data on the British public since 1995; the idea that Tesco's boardroom is *surprised* by economic trends affecting its own customers requires a quite heroic suspension of disbelief.
+- M&S spent years as the cautionary tale of a retailer that refused to modernise, then course-corrected so aggressively with tech and automation that it became the cautionary tale in the other direction — a classic big rewrite that nuked the legacy system along with the staff.
+- Amazon's fulfilment centre expansion across the UK, widely covered in the British tech press, effectively set the automation benchmark that every supermarket logistics team was then asked to match — meaning many of the engineers who built those systems did so under competitive pressure from a single American dependency.
+- The "not my problem, raise it with the government" instinct will be immediately recognisable to any developer who has ever watched a senior stakeholder escalate a bug caused by their own requirements as though it were an external incident.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

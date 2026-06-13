@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explained: Amazon's Water Usage and the Sprint Retrospective from Hell — Gata Newsroom</title>
+<style>
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    background-color: #f9f7f2;
+    color: #1a1a1a;
+    line-height: 1.75;
+  }
+  h1 {
+    font-size: 1.9rem;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+    border-bottom: 3px solid #1a1a1a;
+    padding-bottom: 0.75rem;
+  }
+  h2 {
+    font-size: 1.15rem;
+    margin-top: 2rem;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #3a3a3a;
+  }
+  p {
+    margin-top: 0;
+    margin-bottom: 1.1rem;
+  }
+  .kicker {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #666;
+    margin-bottom: 0.3rem;
+  }
+  .panel-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    border-left: 3px solid #ccc;
+    padding-left: 0.6rem;
+    margin-bottom: 0.3rem;
+    margin-top: 1.5rem;
+  }
+  blockquote {
+    border-left: 4px solid #1a1a1a;
+    margin: 1.5rem 0;
+    padding: 0.4rem 1.2rem;
+    background-color: #eeecea;
+    font-style: italic;
+  }
+  footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ccc;
+    font-size: 0.8rem;
+    color: #888;
+  }
+</style>
+</head>
+<body>
+
+<p class="kicker">Gata Newsroom — Cartoon Explained</p>
+
+<h1>2.5 Billion Gallons, Three Sprint Panels, and a Data Lake That Turned Out to Be Quite Literal</h1>
+
+<p>The cartoon is a three-panel satirical strip featuring Gata — the Newsroom's resident reporter, a calico-tabby cat of considerable composure and rapidly diminishing faith in humanity — sitting at a heavy metal desk in a greyscale 1970s newsroom. She does not move across any of the three panels. She does not need to. Each panel features a chalkboard behind her on which a new piece of information is presented, with increasing weariness, for your consideration.</p>
+
+<p>If you work in software development and use Amazon Web Services, this cartoon is, on some level, about you. It is not your fault. That is not going to make it funnier.</p>
+
+<h2>What Actually Happened</h2>
+
+<p>Amazon published figures revealing that its data centres — the vast warehouse-scale buildings that physically run AWS, the cloud platform powering an enormous proportion of the internet — consumed approximately 2.5 billion gallons of water in a single year. This water is used primarily for cooling: keeping server hardware from overheating requires an extraordinary and continuous supply of cold water, which is subsequently returned to the environment considerably warmer than it arrived.</p>
+
+<p>Amazon did not lead with an apology. Amazon led with context. The context was that Microsoft and Google use even more water, proportionally speaking, and that Amazon is therefore doing rather well, all things considered. The company framed this as a marker of efficiency. The cartoon frames it as something else.</p>
+
+<h2>Why the Units Matter (Panel One)</h2>
+
+<p>The first panel introduces the figure: 2.5 billion gallons. On the chalkboard, taped below the hand-drawn water droplet, is a small note reading: <em>"*that's litres if you live in a country that has moved on."</em></p>
+
+<p>Britain adopted the metric system — at least in most official and scientific contexts — decades ago. Reporting a water consumption figure in gallons to a British audience in 2026 is the kind of unit choice that will, before the reader has even processed the scale of the number, produce a small, tight irritation familiar to any developer who has been handed API documentation in imperial units. It is not a catastrophic error. It is just slightly, persistently wrong, in the way that only an organisation of sufficient size and confidence can manage without apparent embarrassment.</p>
+
+<p>For context: 2.5 billion gallons is approximately 9.5 billion litres. To put that another way, it is roughly 9.5 trillion millilitres, or the volume of water that a significant number of British councils told their residents they absolutely could not spray on their lawns during the summer of 2022.</p>
+
+<h2>The 2022 Hosepipe Bans</h2>
+
+<p>In August 2022, during what was technically a drought despite the country's general meteorological reputation, several UK water companies imposed hosepipe bans. Millions of households were told not to water their gardens, wash their cars, or fill paddling pools. Public messaging urged shorter showers, fuller washing machine loads, and a general posture of civic frugality toward water consumption.</p>
+
+<p>The satirical contrast the cartoon is exploiting is not subtle, and it is not meant to be. The same year that British families were asked to let their grass go brown for the common good, the infrastructure quietly running their streaming services, cloud storage, and corporate Slack workspaces was consuming water at a scale that renders individual household use essentially invisible. The hosepipe ban is mentioned not to assign individual blame — data centres are real infrastructure with real thermal management requirements — but because the juxtaposition has a particular texture for a British audience. It is the texture of being told to pack a sandwich before a meeting where catered lunch has been ordered for the leadership team.</p>
+
+<h2>The OKR Sprint Retrospective Energy (Panel Two)</h2>
+
+<p>The second panel is where the joke goes properly corporate. The chalkboard now shows a bar chart: three bars, labelled Microsoft, Google, and Amazon. Amazon's bar is the shortest — marginally. Below it, a banner on masking tape reads: <em>"Q4 WIN: USED SLIGHTLY LESS WATER THAN THE OTHERS."</em> Below that: <em>"ACTION: CELEBRATE. CARRY FORWARD TO NEXT SPRINT."</em></p>
+
+<p>OKRs — Objectives and Key Results — are a performance management framework used widely in the technology industry. Sprint retrospectives are recurring meetings in Agile software development where a team reflects on the previous work cycle, identifies what went well, and decides what to improve. In practice, particularly in larger organisations, these meetings have a well-documented tendency to frame mild underperformance as a kind of achievement. Missing a target by less than you missed it last time can, in the right PowerPoint, become a trajectory of improvement.</p>
+
+<p>Amazon's "we use water more efficiently than our competitors" framing maps onto this energy with uncomfortable precision. It is not a lie. It is a true statement presented in a way that converts "we used 9.5 billion litres of water" into something that sounds like progress. Gata's expression in this panel is described as that of someone reading their own company's OKR summary at 4:47pm on a Friday. If you have attended such a meeting, you will understand the expression without needing it described further.</p>
+
+<h2>The Waterfall Punchline (Panel Three)</h2>
+
+<p>The third panel is the punchline, and it is the one that requires the most background to land properly.</p>
+
+<p>The chalkboard now shows a diagram: a large funnel at the top labelled <em>"YOUR MICROSERVICES"</em>, with water cascading downward in a classic waterfall shape, pooling into a body of water at the bottom labelled <em>"DATA LAKE (LITERAL)"</em>. The masking-tape note reads: <em>"METHODOLOGY: WATERFALL. ALWAYS HAS BEEN."</em></p>
+
+<p>This requires unpacking two pieces of industry jargon.</p>
+
+<p>Waterfall methodology is the traditional, sequential approach to software development — design everything upfront, build it in phases, deliver at the end. It was the dominant methodology for decades. The modern software industry, beginning roughly in the early 2000s with the publication of the Agile Manifesto, declared waterfall essentially obsolete and replaced it — in theory, and with varying degrees of sincerity — with iterative, flexible Agile approaches. Every British development team has, at some point, said it works in Agile. Whether it actually does is a separate and largely liturgical question.</p>
+
+<p>A data lake, meanwhile, is a genuine enterprise architecture term, used without irony in planning meetings and architecture documents, referring to a large centralised repository where raw data is stored in its native format until it is needed. The term is used earnestly. It has been used earnestly for years. By people in the same industry that, it now emerges, has been quite literally filling things with water.</p>
+
+<p>The cartoon's final panel collapses these two metaphors into each other. The water cascading from your microservices down through a waterfall into a data lake is both a technical diagram of how cloud infrastructure actually works thermally and a simultaneous indictment of an industry that uses the language of water management as metaphor while declining to apply similar creativity to the literal water management problem. Gata's expression in this panel is described as one of "complete, serene acceptance." She has understood something. It has not helped.</p>
+
+<h2>The Warehouse Workers</h2>
+
+<p>There is a background note in the cartoon's cultural framing that deserves mention, even if it does not appear on the chalkboard. Amazon's UK warehouse working conditions have been extensively reported in the British press. Among the documented concerns have been pressures on workers around toilet breaks — a situation that has attracted considerable union activity and media coverage. The revelation that the same company's server buildings are cooled with billions of gallons of water lands, for a British audience aware of this coverage, with a particular dryness. The servers are well-hydrated. The broader institutional picture is left, as Gata would say, for the reader to complete.</p>
+
+<h2>Why Gata Doesn't Move</h2>
+
+<p>Across all three panels, Gata remains at her desk. She does not gesticulate. She does not lean in or look outraged. She simply presents the information as it arrives and endures it. This is a deliberate stylistic choice: British satirical humour, at its most effective, does not shout. It presents. It trusts that the facts, laid out with sufficient clarity and the right amount of contextual framing, are self-evidently absurd. Gata's stillness is the stillness of someone who has made peace with the world being like this, while simultaneously making clear — through the quality of her calm — that she finds it completely unacceptable.</p>
+
+<p>She is, in other words, every British software engineer who has sat through a sprint retrospective where the team celebrated missing a deadline by three weeks instead of four, then went home to a hosepipe-ban notice through the letterbox, then deployed something to AWS before bed.</p>
+
+<blockquote>The industry that calls its storage infrastructure "data lakes" has, it turns out, been filling them quite literally. It would like a gold star for only using this much.</blockquote>
+
+<p>Gata has noted your request for a gold star. She has carried it forward to next sprint. It is not prioritised.</p>
+
+<footer>
+  <p>Gata Newsroom — Cartoon Explanation Page. All figures cited are as reported in Amazon's own published sustainability data. Unit conversion from gallons to litres performed without resentment, but not without comment.</p>
+</footer>
+
+</body>
+</html>

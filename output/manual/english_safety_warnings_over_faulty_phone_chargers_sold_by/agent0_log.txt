@@ -1,0 +1,26 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct might lean too heavily on generic "tech worker" stereotypes (e.g., messy desks, too many devices). The sharper angle is specifically about *software engineers* — people who understand failure modes, debug things for a living, and have a particular relationship with hardware they consider beneath their intellectual dignity. The real satirical bite is that they *should* know better, and yet here they are, buying a £3.99 charger from Argos. The irony of someone who writes production-grade safety checks in code plugging in an uncertified charger is the sharper read.
+
+REVIEW 2: Checking all requirements — Cultural angle: ✓ needs to be one paragraph, satirical, audience-specific. References: ✓ must be cultural touchstones NOT in the news topic, one or two sentences each. Wordplay scan: I need to actively look for puns. "Charge" has obvious potential — "fully charged," "charged with negligence." "Fault" — both a bug and an electrical fault. "Null pointer" → "null safety." "Race condition" → the race to the cheapest charger. The overlap between *software bugs* and *electrical faults* is genuinely rich territory. JOKE TYPE: must be selected and included. Output language English, tone dry British wit — ✓.
+
+REVIEW 3: The wordplay opportunity I haven't fully exploited: in software, a "safety warning" is something engineers routinely dismiss as a compiler warning — they suppress it and ship anyway. That's the sharpest satirical mirror: these are people who *mute deprecation warnings* in their IDEs daily, and now they're surprised that ignoring a different kind of warning has consequences. Also, "unhandled exception" → an electrical arc is quite literally an unhandled exception in physical hardware. I should weave this in more precisely. The references should include specific, recognisable British tech/retail touchstones — Poundland chargers, the BS 1363 plug standard (a point of quiet national pride), and the infamous exploding Samsung Note 7.
+
+---
+
+<verdict>
+CULTURAL ANGLE: The nation's software engineers — professionals who spend their working hours writing defensive code, obsessing over null checks, and raising Jira tickets about theoretical edge cases that will never occur in production — have apparently been plugging unvalidated, uncertified chargers directly into the mains and going to bed. These are people who would never merge a PR without a code review, yet they have been cheerfully running hardware with no error handling, no safety certification, and an unknown manufacturer name that appears to be nine consonants arranged by a cat walking across a keyboard. The chargers, sourced from major UK retailers who presumably also passed some form of quality gate, represent what engineers would technically classify as an *unhandled exception in the physical layer* — one whose catch block is, regrettably, a kitchen fire at 3am. The deepest irony is structural: the same engineer who suppresses compiler warnings before a Friday deploy, mutters "it'll be fine in prod," and closes fourteen browser tabs of Stack Overflow answers they didn't fully read, is now being asked to take seriously a *safety* warning. At least this one doesn't require a restart to apply.
+
+REFERENCES:
+- The BS 1363 plug standard — Britain's famously robust, rectangular three-pin plug — is a quiet point of national engineering pride, regularly cited as one of the safest domestic plug designs in the world, which makes buying a charger that violates it feel like a particularly personal betrayal.
+- The Samsung Galaxy Note 7's 2016 recall, in which the device was banned from flights for spontaneously combusting, is the canonical reference point for consumer electronics going thermally rogue — and yet somehow did not cause the nation's developers to start reading the small print on charger packaging.
+- Poundland's electrical aisle has long occupied a specific cultural position in the British psyche: everyone knows, on some level, that a £1.99 USB charger is not subject to the same QA pipeline as a medical device, and yet the value proposition remains emotionally compelling at the point of purchase.
+- The UK's Trading Standards office issues product recalls with the quiet, apologetic energy of a government department that has long since made peace with not being listened to — a tone software engineers will recognise from reading internal security advisories.
+- "Works on my machine" is the engineering industry's most durable defence against quality concerns, and there is a pleasing structural parallel in the charger owner who notes that it has, in fact, charged seventeen phones without incident, and considers this a statistically significant sample size.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

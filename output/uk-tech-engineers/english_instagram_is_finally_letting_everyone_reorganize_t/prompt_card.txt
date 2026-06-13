@@ -1,0 +1,28 @@
+
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard style, high-contrast, 1970s newspaper newsroom setting. Fluorescent strip lights overhead. Heavy metal desks visible in the greyscale background, with indistinct background figures hunched over typewriters. Everything in the background and environment is rendered in desaturated greyscale.
+
+Gata — a domestic shorthair calico-tabby mix — stands in full colour in the foreground, facing the chalkboard with her back three-quarters to the viewer, head turned slightly toward the camera in a composed, investigative expression. She has a white chest, muzzle, and paws; dark grey/black tabby stripes across her body; orange/ginger patches on her back and flanks. A small dark spot sits on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". She wears no human clothing, no hat, no glasses, no accessories of any kind. Her demeanour is serious, slightly tired, and highly intelligent.
+
+The chalkboard behind her is dark green-black. Hand-drawn in white chalk at the top in block capitals: "ON THE SPOT". Below the heading, two items are attached to the board with small torn pieces of masking tape:
+
+First item — a rough chalk sketch of a JIRA-style ticket stub, hand-lettered inside it:
+"TICKET #4471
+ALLOW PHOTO REORDER
+Priority: P2 — Nice to Have
+Status: IN BACKLOG
+Opened: March 2019"
+
+Second item — a small chalk-sketched index card, hand-lettered:
+"Resolution:
+array.splice(fromIndex, 1)
+array.splice(toIndex, 0, item)
+// est. 1.5 days
+// press release: pending"
+
+At the very bottom of the chalkboard, in smaller chalk lettering, a single dry aside:
+"(The <details> element filed a sympathy card. It took eleven years.)"
+
+Dry caption printed below the panel in plain serif type:
+"Meta confirmed Tuesday that users may now freely reorder photographs on their profile grid. The engineering team was unavailable for comment, as there was no reason for them to be available for comment."
+
+Colour palette: full selective-colour treatment — Gata rendered in warm realistic colour against a fully greyscale environment. Chalkboard text in bright white chalk. Overall aesthetic: dry, composed, institutional. No slapstick. No exaggerated expressions. Gata's expression is the face of someone who has read the press release twice and found it, on balance, worse the second time.

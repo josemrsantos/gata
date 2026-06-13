@@ -1,0 +1,204 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1:** My first instinct might be to simply draw Gata pointing at a list of Agile ceremonies with a label saying "could have been an email." That's the obvious read — the joke is in the title, essentially. Sharper position: the cartoon should *subvert* the obvious. The joke shouldn't be "these meetings are pointless" (everyone knows that) — it should be something more specific and deadpan, something that implicates the *email* too. What if the email that could have replaced all the ceremonies is itself now in a backlog? Or what if the board shows the email *has been scheduled as a ceremony*? That's the subversion — Agile has consumed even its own antidote.
+
+**REVIEW 2:** Re-examining every requirement:
+- ✅ Gata full character description verbatim — must appear in prompt
+- ✅ Colour palette: greyscale background, Gata in full colour (Selective Color)
+- ✅ 1970s newsroom setting
+- ✅ Dark chalkboard with "ON THE SPOT" heading, hand-drawn white sketches
+- ✅ Masking tape attachments — NO pins
+- ✅ No human clothes or accessories on Gata
+- ✅ No copyrighted artist/character references
+- ✅ All cartoon text in English
+- ✅ Dry British wit, deadpan, high subversion
+- ✅ Cultural context woven in (Church of England / liturgy parallel, queue/backlog, performative process)
+- ⚠️ The joke type must be *deadpan with high subversion* — I need to make sure the caption doesn't state the obvious but lands sideways
+- ✅ Output: image prompt in `<verdict>` tags + `<joke_explanation>`
+
+**REVIEW 3:** A material improvement: the chalkboard content itself can do more satirical heavy lifting. Instead of listing ceremonies vs. emails generically, the board could show a single entry: **"EMAIL: Could Have Been A Meeting (Sprint 47 — still in backlog)"** — this collapses the joke into itself. The ceremonies *spawned a meeting about the email that was supposed to replace them*, and even that meeting is unfinished. This is tighter, more specific, and trusts the audience (British software engineers) to clock the recursive absurdity without it being explained to them. The caption should be bone-dry and not telegraph the joke.
+
+---
+
+<verdict>
+Single-panel satirical cartoon. Minimalist charcoal-on-chalkboard style, high-contrast, dry caption at the bottom. Selective Color treatment: greyscale background environment, Gata rendered in full natural colour.
+
+SETTING: A 1970s newspaper newsroom interior. Heavy metal desks, stacks of paper, analogue telephones, fluorescent strip lighting casting a flat institutional glow. Background figures — blurred, greyscale, indistinct — sit at desks suggesting a working office. The atmosphere is tired and institutional.
+
+GATA — include all of the following verbatim: Gata is a domestic shorthair calico-tabby mix with a white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on her back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She wears no human clothes or accessories of any kind — no hats, glasses, pens, or clothing.
+
+Gata sits squarely in front of the chalkboard, facing the viewer, expression flat and unimpressed — the face of someone who has attended this particular ceremony before and retains no illusions about it.
+
+THE CHALKBOARD: Dark chalkboard surface, hand-drawn in rough white chalk. At the top, the heading reads: "ON THE SPOT"
+
+Below the heading, a hand-drawn column chart or liturgical calendar grid — deliberately resembling both a church rota and a sprint board — lists the following, each in rough chalk capitals:
+
+  DAILY STANDUP — 45 min
+  SPRINT PLANNING — 3 hrs
+  REFINEMENT — 90 min
+  RETROSPECTIVE — 60 min
+  ─────────────────
+  TOTAL: 6 hrs/fortnight
+
+To the right of the grid, attached with a torn strip of masking tape, is a small hand-drawn rectangle representing an email draft — labelled:
+
+  DRAFT
+  "UPDATE: ALL OF THE ABOVE"
+  Saved: Sprint 1
+  Last opened: never
+
+Below the email rectangle, also attached with masking tape, a small sticky note in rough chalk reads:
+
+  REVIEW THIS EMAIL
+  → Agenda item, Sprint 48
+  → Carried over from Sprint 47
+  → (Originally Sprint 12)
+
+No pins anywhere. All attachments use masking tape only.
+
+CAPTION at the bottom of the panel, in plain text below the image border:
+
+  "The email that could have replaced the meetings was itself assigned a ticket, placed in the backlog, and has not been refined."
+
+Visual style: single-panel editorial cartoon. Charcoal and chalk aesthetic. High contrast. No colour except Gata. No copyrighted characters or artists referenced. Clean, spare composition with deliberate institutional bleakness.
+</verdict>
+
+<joke_explanation>
+The joke lands because it collapses the premise into itself — the email that was supposed to *replace* the Agile ceremonies has been captured by the Agile process, converted into a ticket, and is now silently decaying in the backlog exactly like every other good intention in Sprint history, which any British developer will recognise as the only plausible outcome.
+</joke_explanation>
+
+[Critic]
+<verdict>NEEDS REVISION</verdict>
+
+**Rule Violated:** Rule 2 (VISUAL-FIRST) and Rule 7 (JOKE MECHANICS).
+
+**Reasoning:** The current caption is "explaining" the joke rather than letting the image carry the weight. By explicitly stating that the email was assigned a ticket and not refined, you are narrating the visual rather than using the caption to provide a deadpan, subverted punchline. The image is strong, but the caption currently acts as a summary of the visual data rather than a comedic pivot.
+
+**Concrete Alternative:**
+Keep the visual exactly as described, but change the caption to something that ignores the "explanation" and instead highlights the absurdity of the situation with a dry, British, deadpan observation.
+
+**Revised Caption:**
+*"We’ve successfully scheduled a meeting to discuss why we aren't sending the email."*
+
+This forces the viewer to look at the board, see the "Review this email" ticket, and immediately grasp the recursive failure without the caption holding their hand.
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 2 ===
+[Satirist]
+<verdict>
+Single-panel satirical cartoon. Minimalist charcoal-on-chalkboard style, high-contrast, dry caption at the bottom. Selective Color treatment: greyscale background environment, Gata rendered in full natural colour.
+
+SETTING: A 1970s newspaper newsroom interior. Heavy metal desks, stacks of paper, analogue telephones, fluorescent strip lighting casting a flat institutional glow. Background figures — blurred, greyscale, indistinct — sit at desks suggesting a working office. The atmosphere is tired and institutional.
+
+GATA — include all of the following verbatim: Gata is a domestic shorthair calico-tabby mix with a white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on her back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She wears no human clothes or accessories of any kind — no hats, glasses, pens, or clothing.
+
+Gata sits squarely in front of the chalkboard, facing the viewer, expression flat and unimpressed — the face of someone who has attended this particular ceremony before and retains no illusions about it.
+
+THE CHALKBOARD: Dark chalkboard surface, hand-drawn in rough white chalk. At the top, the heading reads: "ON THE SPOT"
+
+Below the heading, a hand-drawn column chart or liturgical calendar grid — deliberately resembling both a church rota and a sprint board — lists the following, each in rough chalk capitals:
+
+  DAILY STANDUP — 45 min
+  SPRINT PLANNING — 3 hrs
+  REFINEMENT — 90 min
+  RETROSPECTIVE — 60 min
+  ─────────────────
+  TOTAL: 6 hrs/fortnight
+
+To the right of the grid, attached with a torn strip of masking tape, is a small hand-drawn rectangle representing an email draft — labelled:
+
+  DRAFT
+  "UPDATE: ALL OF THE ABOVE"
+  Saved: Sprint 1
+  Last opened: never
+
+Below the email rectangle, also attached with masking tape, a small sticky note in rough chalk reads:
+
+  REVIEW THIS EMAIL
+  → Agenda item, Sprint 48
+  → Carried over from Sprint 47
+  → (Originally Sprint 12)
+
+No pins anywhere. All attachments use masking tape only.
+
+CAPTION at the bottom of the panel, in plain text below the image border:
+
+  "We've successfully scheduled a meeting to discuss why we aren't sending the email."
+
+Visual style: single-panel editorial cartoon. Charcoal and chalk aesthetic. High contrast. No colour except Gata. No copyrighted characters or artists referenced. Clean, spare composition with deliberate institutional bleakness.
+</verdict>
+
+<joke_explanation>
+The caption lands because it performs the exact failure it describes — announcing a bureaucratic achievement in the confident register of a sprint review whilst the board behind Gata silently confirms that the achievement is indistinguishable from the original problem, which is the one joke every British developer has already lived through at least twice this fortnight.
+</joke_explanation>
+
+[Critic]
+<verdict>NEEDS REVISION</verdict>
+
+**Rule Violated:** Rule 4 (Originality).
+
+**Rationale:** The "meetings about meetings" or "Agile is just bureaucracy" trope is the most common, low-hanging fruit in software engineering satire. It is the "obvious first-read" of the topic and lacks the bite required for a Gata Newsroom critique.
+
+**Concrete Alternative:** Instead of mocking the *existence* of the meetings, target the *performative nature of the metrics* used to justify them. 
+
+**Proposed Fix:** Keep the visual setup, but change the chalkboard content to a "Velocity vs. Value" graph where the lines are identical, and Gata is staring at a "Burn-down chart" that is actually just a drawing of a literal candle burning down to nothing. The caption should be: *"The good news is we’ve hit our velocity targets; the bad news is the product is now entirely composed of Jira tickets."* This shifts the satire from "meetings are boring" (passive) to "the system is actively consuming the output it was designed to produce" (Gata integrity/challenging the subject).
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 3 ===
+[Satirist]
+**REVIEW 1:** The proposed fix is stronger — targeting metrics-as-ritual rather than meetings-as-boring. But my first instinct might be to illustrate *both* the velocity graph and the burndown candle, which risks cluttering the board and diluting the single sharpest visual joke. The burndown candle is the stronger image — it does more work alone. The velocity/value graph risks being too abstract to read instantly in a single panel. Sharper position: commit fully to the candle as the centrepiece, let it carry the visual weight, and use the Jira ticket observation differently — not as "the product is made of tickets" but as something that implicates the *developer* in the absurdity rather than just the process.
+
+**REVIEW 2:** Re-examining every requirement:
+- ✅ Gata full character description verbatim in prompt
+- ✅ Selective Color — greyscale background, Gata in full colour
+- ✅ 1970s newsroom setting
+- ✅ "ON THE SPOT" heading on dark chalkboard, hand-drawn white chalk sketches
+- ✅ Masking tape only — no pins
+- ✅ No clothes or accessories on Gata
+- ✅ No copyrighted references
+- ✅ All cartoon text in English
+- ✅ Deadpan, high subversion — caption must not explain the joke
+- ⚠️ The proposed caption ("the product is now entirely composed of Jira tickets") still has a slight explaining quality — it narrates the conclusion. A deadpan caption should *observe* rather than *conclude*. Something that lands sideways, trusting the audience.
+- ✅ British software engineer audience — Jira, velocity, burndown are all immediately legible to them
+
+**REVIEW 3:** A material improvement: the candle burndown is visually rich but needs one more layer to avoid being merely "burndown chart = burnout" (which is itself a known trope). The sharpest version: the candle has burned all the way down, the chart shows 100% completion, and a small label reads "DEFINITION OF DONE ✓" — meaning the system has correctly identified its own exhaustion as successful delivery. The caption should then be something that plays on the Church of England / liturgical parallel from the cultural brief, since we've moved away from that entirely and it's one of the sharpest angles available.
+
+---
+
+<verdict>
+Single-panel satirical cartoon. Minimalist charcoal-on-chalkboard style, high-contrast, dry caption at the bottom. Selective Color treatment: greyscale background environment, Gata rendered in full natural colour.
+
+SETTING: A 1970s newspaper newsroom interior. Heavy metal desks, stacks of paper, analogue telephones, fluorescent strip lighting casting a flat institutional glow. Background figures — blurred, greyscale, indistinct — sit at desks suggesting a working office. The atmosphere is tired and institutional.
+
+GATA — include all of the following verbatim: Gata is a domestic shorthair calico-tabby mix with a white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on her back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She wears no human clothes or accessories of any kind — no hats, glasses, pens, or clothing.
+
+Gata sits squarely in front of the chalkboard, facing the viewer. Her expression is entirely neutral — not disgusted, not amused — the expression of someone reviewing evidence that has long since stopped surprising her.
+
+THE CHALKBOARD: Dark chalkboard surface, hand-drawn in rough white chalk. At the top, the heading reads: "ON THE SPOT"
+
+The board is dominated by two adjacent hand-drawn visuals:
+
+LEFT VISUAL — a rough chalk line graph labelled "VELOCITY vs. VALUE" at the top. Two lines are plotted across the same axes. Both lines are identical — they rise together, dip together, and end at precisely the same point. One line is labelled "VELOCITY" and the other "VALUE". There is no legend explaining the coincidence. No annotation. The lines simply agree with each other completely, which is the problem.
+
+RIGHT VISUAL — a hand-drawn burndown chart. The vertical axis is labelled "WORK REMAINING". The horizontal axis is labelled "SPRINTS". The burndown line descends correctly toward zero — but at the base of the chart, where the line meets zero, there is a drawing of a candle burned completely to nothing, just a puddle of wax and a dead wick. Above the melted candle, attached with a strip of masking tape, a small hand-drawn label reads:
+
+  DEFINITION OF DONE ✓
+
+No other annotations. No pins anywhere. All attachments use masking tape only.
+
+CAPTION at the bottom of the panel, in plain text below the image border:
+
+  "Velocity was excellent throughout."
+
+Visual style: single-panel editorial cartoon. Charcoal and chalk aesthetic. High contrast. No colour except Gata. No copyrighted characters or artists referenced. Clean, spare composition with deliberate institutional bleakness.
+</verdict>
+
+<joke_explanation>
+The caption lands because it delivers a genuine sprint review verdict — technically accurate, utterly hollow — while the board quietly confirms that the only thing successfully delivered was the process itself, which is the one outcome Agile was specifically designed to prevent.
+</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

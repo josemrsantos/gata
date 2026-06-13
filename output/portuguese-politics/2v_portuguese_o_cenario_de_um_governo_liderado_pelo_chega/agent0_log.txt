@@ -1,0 +1,27 @@
+=== Iteration 1 ===
+[Framer]
+**REVIEW 1:** A primeira instinção seria fazer uma piada fácil sobre o André Ventura ser populista ou racista — isso é demasiado óbvio e não provoca desconforto real. O ângulo mais afiado é forçar o público a confrontar que **eles próprios** criaram as condições para o Chega chegar ao poder, através de décadas de abstenção, desconfiança nos partidos tradicionais e normalização do discurso de "é tudo uma tromba". O desconforto tem de ser dirigido ao espelho, não apenas ao palco.
+
+**REVIEW 2:** Verificando os critérios — preciso de: CULTURAL ANGLE (um parágrafo), REFERENCES (lista de bullet points com touchstones culturais NÃO presentes no tópico), WORDPLAY SCAN (procurar jogos de palavras em português vernacular), JOKE TYPE (escolher o tipo certo), tom de sátira política direta e incisiva, e forçar a verdade mais desconfortável. O wordplay: "Chega" em português significa literalmente "enough/it arrives" — o partido que diz "chega de..." ao tudo, chegou mesmo. Também: "governo de Chega" soa como "governar de chega-te para lá", ou seja, governar por exclusão. Há material aqui.
+
+**REVIEW 3:** A melhoria material que ainda não fiz: ligar explicitamente o cenário hipotético do governo Chega à **longa tradição portuguesa de saudosismo político** — o país que tem saudades do antigamente sem nunca definir bem de que antigamente tem saudades. Um governo Chega seria a concretização dessa saudade vaga, e aí estaria o horror verdadeiro: não um monstro estrangeiro, mas um espelho do que Portugal sempre foi quando ninguém estava a ver.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Portugal passou décadas a dizer "chega!" aos partidos do costume, à corrupção, ao "PS-PSD-eles são todos iguais" — e agora "Chega" chegou mesmo, como aquele familiar incómodo que ninguém convidou para o jantar de Natal mas que apareceu na mesma porque alguém lhe disse que era bem-vindo. O cenário de um governo liderado pelo Chega não é a invasão de um corpo estranho no sistema: é o sistema português a olhar finalmente para o seu próprio reflexo sem óculos — um país que tem saudades de uma ordem que nunca existiu, governado por um partido cujo nome é literalmente um grito de frustração transformado em projeto político. A verdade desconfortável não é André Ventura; é que André Ventura foi eleito por pessoas que já cá estavam, que se abstiveram durante anos, que gozaram com a "classe política" ao jantar e depois não foram votar. O Chega não chegou de fora. Saiu de dentro.
+
+REFERENCES:
+- A abstenção histórica nas eleições portuguesas — em várias autárquicas e legislativas, mais de 40% dos eleitores ficaram em casa, alimentando precisamente o vazio que movimentos protestatários preenchem.
+- O fenómeno "são todos iguais" que dominou a cultura política portuguesa pós-troika, popularizado nas conversas de café e nas redes sociais como sabedoria popular, e que funcionou como tapete vermelho para qualquer outsider com microfone.
+- A Geração à Rasca e os movimentos de 2011 — uma mobilização genuína que, sem estrutura partidária, se dissipou e deixou o terreno fértil para quem soube organizar a raiva de forma mais duradoura.
+- A tradição portuguesa do "saudosismo sem objeto": o país que tem saudades de uma era dourada que nenhum historiador consegue localizar com precisão, e que serve de combustível eleitoral para promessas de restauração.
+- O caso dos "vistos gold" e dos sucessivos escândalos de corrupção mediática (caso BES, Operação Marquês, etc.) que normalizaram a ideia de que o Estado é uma quinta privada — preparando o eleitorado para aceitar qualquer alternativa, mesmo que essa alternativa proponha uma quinta diferente com os mesmos métodos.
+- A memória do 25 de Novembro de 1975 instrumentalizada ciclicamente: cada vez que a direita radical precisa de legitimidade histórica, evoca o "perigo comunista" com a mesma eficácia de quem usa um isqueiro numa divisão a cheirar a gás.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

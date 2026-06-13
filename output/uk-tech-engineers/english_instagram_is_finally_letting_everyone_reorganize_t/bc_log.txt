@@ -1,0 +1,61 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — Too obvious/too lenient?**
+The obvious first read is "this is a trivial feature." That's expected. The sharper angle is *the gap between institutional ceremony and engineering reality* — not "Instagram did something small" but "a trillion-dollar organisation held a formal launch for a function that any British dev would have pushed silently on a Thursday at 4:47pm and gone home." The chalkboard should reflect *the engineering triviality*, not just mock the feature. The sharpest version isolates the specific absurdity: the formal announcement apparatus deployed around what is essentially `array.splice()`. The board should show the "engineering complexity" as starkly minimal — not a joke about Instagram, but a joke about the theatre of the announcement.
+
+**REVIEW 2 — Did I skip a criterion?**
+- ✅ Gata's full physical description must be verbatim in the prompt
+- ✅ Colour palette: greyscale background, Gata in full colour
+- ✅ Board heading must be "ON THE SPOT"
+- ✅ Attachments use masking tape — not pins
+- ✅ No human clothes or accessories on Gata
+- ✅ No copyrighted artist references
+- ✅ Dry British wit, deadpan register
+- ✅ Joke type: deadpan, high subversion
+- ✅ British software engineer audience
+- ✅ All cartoon text in English
+- ✅ Date awareness: June 2026 — the brief says "June 2025" for the news peg, fine, the satire is timeless
+- ❗ I need to weave in at least one of the cultural context references meaningfully — the JIRA ticket angle is the richest and most specific. The `<details>` element reference could work as a chalkboard aside. Let me make sure the caption and board text do real work.
+
+**REVIEW 3 — What material improvement haven't I made yet?**
+The caption is where the joke lands hardest. I should resist the urge to explain the joke in the caption — a truly deadpan caption should *describe a mundane procedural fact* and let the chalkboard's visual content carry the absurdity. The subversion opportunity: the caption should sound like a press release, but the chalkboard should show the JIRA ticket or the one-line diff. That contrast — corporate solemnity vs. a two-line code snippet — is the joke. Final structure: board shows something like a JIRA ticket stub and a one-line pseudo-code entry; caption reads like a dignified announcement. That's the sharpest version.
+
+---
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard style, high-contrast, 1970s newspaper newsroom setting. Fluorescent strip lights overhead. Heavy metal desks visible in the greyscale background, with indistinct background figures hunched over typewriters. Everything in the background and environment is rendered in desaturated greyscale.
+
+Gata — a domestic shorthair calico-tabby mix — stands in full colour in the foreground, facing the chalkboard with her back three-quarters to the viewer, head turned slightly toward the camera in a composed, investigative expression. She has a white chest, muzzle, and paws; dark grey/black tabby stripes across her body; orange/ginger patches on her back and flanks. A small dark spot sits on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". She wears no human clothing, no hat, no glasses, no accessories of any kind. Her demeanour is serious, slightly tired, and highly intelligent.
+
+The chalkboard behind her is dark green-black. Hand-drawn in white chalk at the top in block capitals: "ON THE SPOT". Below the heading, two items are attached to the board with small torn pieces of masking tape:
+
+First item — a rough chalk sketch of a JIRA-style ticket stub, hand-lettered inside it:
+"TICKET #4471
+ALLOW PHOTO REORDER
+Priority: P2 — Nice to Have
+Status: IN BACKLOG
+Opened: March 2019"
+
+Second item — a small chalk-sketched index card, hand-lettered:
+"Resolution:
+array.splice(fromIndex, 1)
+array.splice(toIndex, 0, item)
+// est. 1.5 days
+// press release: pending"
+
+At the very bottom of the chalkboard, in smaller chalk lettering, a single dry aside:
+"(The <details> element filed a sympathy card. It took eleven years.)"
+
+Dry caption printed below the panel in plain serif type:
+"Meta confirmed Tuesday that users may now freely reorder photographs on their profile grid. The engineering team was unavailable for comment, as there was no reason for them to be available for comment."
+
+Colour palette: full selective-colour treatment — Gata rendered in warm realistic colour against a fully greyscale environment. Chalkboard text in bright white chalk. Overall aesthetic: dry, composed, institutional. No slapstick. No exaggerated expressions. Gata's expression is the face of someone who has read the press release twice and found it, on balance, worse the second time.
+</verdict>
+
+<joke_explanation>
+The joke lands because British developers will immediately clock that the "resolution" on the index card is not a punchline but a literal solution — making the corporate machinery around it (the years-old P2 ticket, the pending press release, the formal announcement) the actual absurdity, with the `<details>` element footnote landing as a quiet nod of solidarity from another feature that also kept everyone waiting for no good reason.
+</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

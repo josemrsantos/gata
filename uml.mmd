@@ -1,0 +1,146 @@
+classDiagram
+    %% ── Data types (agents/types.py) ──────────────────────────
+    class StrategyBrief {
+        +str target_audience
+        +str output_language
+        +str tone
+    }
+
+    class Community {
+        +str name
+        +str target_audience
+        +str output_language
+        +str tone
+        +list~str~ topics
+        +to_brief() StrategyBrief
+    }
+
+    class EnrichedBrief {
+        +str target_audience
+        +str output_language
+        +str tone
+        +str cultural_angle
+        +list~str~ culturally_loaded_references
+    }
+
+    class CartoonConcept {
+        +str full_text
+        +str image_prompt
+        +int iteration
+    }
+
+    class PersonaConfig {
+        +str name
+        +list~str~ models
+        +str system_prompt
+        +int max_tokens
+    }
+
+    class ConversationTurn {
+        +int iteration
+        +str role
+        +str text
+        +str verdict
+    }
+
+    class ConversationLog {
+        +str loop_name
+        +list~ConversationTurn~ turns
+    }
+
+    class LoopOutput {
+        +str verdict
+        +ConversationLog log
+    }
+
+    %% ── Core engine (agents/dual_loop.py) ─────────────────────
+    class DualPersonaLoop {
+        +PersonaConfig proposer
+        +PersonaConfig reviewer
+        +int max_iterations
+        +int timeout_seconds
+        +int self_review_passes
+        +_call_persona(persona, messages) str
+        +run(initial_input) LoopOutput
+    }
+
+    %% ── Agents (function modules) ──────────────────────────────
+    class CulturalStrategist {
+        <<agent_0>>
+        +run(topic, seed_brief) EnrichedBrief, ConversationLog
+        -Framer : PersonaConfig [Claude]
+        -Resonator : PersonaConfig [Gemini]
+    }
+
+    class SatiristCritic {
+        <<agent_bc>>
+        +run(topic, enriched_brief) CartoonConcept, ConversationLog
+        -Satirist : PersonaConfig [Claude]
+        -Critic : PersonaConfig [Gemini]
+    }
+
+    class ImageGenerator {
+        <<agent_d>>
+        +generate(concept, brief, output_path) str
+        -models : list~str~ [Gemini Imagen]
+    }
+
+    class Explainer {
+        <<agent_explainer>>
+        +generate_html(enriched_brief, agent0_log, bc_log, image_prompt) str, str
+        -Writer : PersonaConfig [Claude]
+        -Editor : PersonaConfig [Gemini]
+    }
+
+    class BundleWriter {
+        <<bundle_writer>>
+        +write_bundle(output_path, logs, brief, image_prompt) str
+        +format_log(log) str
+    }
+
+    class ConfigLoader {
+        <<config_loader>>
+        +load_communities(path) list~Community~
+        +sanitize_path_segment(text) str
+    }
+
+    class Pipeline {
+        <<pipeline>>
+        +main()
+        +_run_pipeline(topic, seed_brief, output_path)
+    }
+
+    %% ── Relationships ──────────────────────────────────────────
+    Community ..> StrategyBrief : to_brief()
+    ConversationLog "1" *-- "many" ConversationTurn
+    LoopOutput *-- ConversationLog
+
+    DualPersonaLoop ..> PersonaConfig : uses x2
+    DualPersonaLoop ..> LoopOutput : returns
+
+    CulturalStrategist ..> DualPersonaLoop : Framer vs Resonator
+    CulturalStrategist ..> StrategyBrief : takes
+    CulturalStrategist ..> EnrichedBrief : returns
+
+    SatiristCritic ..> DualPersonaLoop : Satirist vs Critic
+    SatiristCritic ..> EnrichedBrief : takes
+    SatiristCritic ..> CartoonConcept : returns
+
+    ImageGenerator ..> CartoonConcept : takes
+    ImageGenerator ..> StrategyBrief : takes
+
+    Explainer ..> DualPersonaLoop : Writer vs Editor
+    Explainer ..> EnrichedBrief : takes
+    Explainer ..> ConversationLog : takes
+
+    BundleWriter ..> Explainer : calls
+    BundleWriter ..> ConversationLog : takes
+    BundleWriter ..> EnrichedBrief : takes
+
+    ConfigLoader ..> Community : returns
+
+    Pipeline ..> ConfigLoader : load config
+    Pipeline ..> CulturalStrategist : 1 enrich brief
+    Pipeline ..> SatiristCritic : 2 generate concept
+    Pipeline ..> ImageGenerator : 3 generate image
+    Pipeline ..> BundleWriter : 4 write output

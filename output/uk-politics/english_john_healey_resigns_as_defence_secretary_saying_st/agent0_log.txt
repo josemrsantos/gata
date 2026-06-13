@@ -1,0 +1,26 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct would be to go for the obvious "Labour splits on defence spending" angle — too gentle. The sharper truth is that a *Labour* defence secretary is resigning because the *Labour* government isn't spending enough on defence, which means the party that spent decades being mocked as soft on defence has somehow contrived to be soft on defence *while actively trying not to be*. That's the squirm. Also: Healey's surname is doing enormous satirical work here — "Healey" resigning because the wounds of underfunding are *not* being healed. Don't waste that.
+
+REVIEW 2: Checking all requirements — CULTURAL ANGLE (one paragraph ✓), REFERENCES (bullet list of touchstones NOT from the news topic ✓), WORDPLAY SCAN (actively look for puns ✓ — "Healey/heal," "fall short/short-changed," "defence/defenceless"), JOKE TYPE selected ✓, target audience UK voters/political observers ✓, output language English ✓, tone sharp British political satire ✓, INCONVENIENCE test — does it make the audience squirm? Need to push harder on the fact that *this is exactly what voters were promised would change under Starmer*. The reset from Corbyn-era unilateralism was meant to be the whole point. That promise is now visibly hollow.
+
+REVIEW 3: A material improvement still exists: I should anchor the satire in the specifically *British* absurdity of the timeline — Starmer spent three years loudly purging the party of anyone who looked vaguely pacifist, saluted the flag at every opportunity, and positioned himself as the serious, grown-up, *pro-defence* Labour leader — only to have his own defence secretary quit saying the defence budget isn't serious enough. The uncomfortable truth isn't just policy failure; it's that the entire rebranding exercise was essentially a costume. That's the sharpest blade.
+
+---
+
+<verdict>
+CULTURAL ANGLE: After years of Keir Starmer very pointedly carrying a large flag, praising the armed forces at every available photo opportunity, and systematically removing anyone from the Labour Party who had ever so much as questioned a tank, his own Defence Secretary has now resigned saying the defence budget doesn't actually defend anything much. John Healey — and yes, the man tasked with healing Britain's military has quit because the wounds remain open — has delivered the most exquisitely timed verdict on New New Labour's central pitch: that serious men in serious suits would do serious things. It turns out the suit was the serious part. Starmer spent three years distance-running from the ghost of Jeremy Corbyn on defence, only to arrive, slightly out of breath, at roughly the same destination. The rebranding was immaculate. The cheque, apparently, was not.
+
+REFERENCES:
+- Starmer's infamous 2021 pledge card and Union Jack-heavy photoshoots were explicitly designed to signal that Labour had "changed" on security — making a defence resignation not just a policy embarrassment but a direct puncture of the entire origin myth of his leadership.
+- The ghost of Michael Foot's 1983 "longest suicide note in history" manifesto haunts every Labour defence row; the uncomfortable echo here is that Starmer's *solution* to that history is now generating its own resignation letters.
+- Geoffrey Howe's 1990 resignation speech — in which he described Thatcher's approach as batting with a broken bat — is the gold standard of Cabinet departures as political execution; Healey's letter, polite as it is, borrows from the same tradition of politeness-as-detonator.
+- The "defence black hole" has been a recurring British political prop since at least the 2010 Strategic Defence Review cuts, meaning voters have watched successive governments announce insufficient military spending with the solemnity of men discovering gravity for the first time.
+- Trident renewal debates have long been the specific liturgy through which Labour leaders prove their seriousness to a sceptical public — making any suggestion that the *conventional* defence budget is underfunded feel like the punchline arriving after everyone has already gone home.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

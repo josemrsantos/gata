@@ -1,0 +1,61 @@
+[project]
+name = "gata"
+version = "0.1.0"
+description = "Automated multi-agent pipeline that transforms news into satirical cartoons starring Gata"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic",
+    "google-genai",
+    "httpx",
+    "python-dotenv",
+    "pyyaml",
+    "unidecode",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+# ---------------------------------------------------------------------------
+# python-semantic-release v9
+# ---------------------------------------------------------------------------
+
+[tool.semantic_release]
+# Keep pyproject.toml and __version__.py in sync on every release.
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["agents/__version__.py:__version__"]
+tag_format = "v{version}"
+# Stay on 0.x until a deliberate major-version decision is made.
+major_on_zero = false
+
+[tool.semantic_release.branches.main]
+match = "(main|master)"
+prerelease = false
+
+[tool.semantic_release.changelog]
+changelog_file = "CHANGELOG.md"
+# Omit chore/style/ci commits from the public changelog.
+exclude_commit_patterns = [
+    "^chore",
+    "^style",
+    "^ci",
+    "^Merge ",
+]
+
+[tool.semantic_release.remote]
+type = "github"
+token = { env = "GH_TOKEN" }
+
+[tool.semantic_release.publish]
+# Attach built dist artefacts to the GitHub Release.
+dist_artifacts = ["dist/*"]
+upload_to_vcs_release = true

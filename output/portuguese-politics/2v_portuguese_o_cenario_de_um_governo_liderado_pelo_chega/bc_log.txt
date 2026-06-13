@@ -1,0 +1,28 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — Too obvious/lenient?**
+My first instinct would be to draw Chega arriving at the door of power as a monster. That's too obvious — it externalises the blame. The sharper position: the monster was already inside the house, and the Portuguese voter handed it the keys. The joke must implicate the audience, not flatter them by making Chega a foreign invasion. The discomfort should land on the person reading, not on Ventura alone.
+
+**REVIEW 2 — Skipped criteria?**
+- Must be 2-panel vertical strip, not a single panel — check structure.
+- Deadpan register throughout — no exclamation points of alarm, no dramatic framing. Keep it flat and clinical.
+- Chalkboard heading must say "ON THE SPOT" or Portuguese equivalent — needs to appear in the scene description.
+- Gata: no clothes, no accessories beyond collar. She must be doing something active/investigative with the board. Check.
+- Caption must be in Portuguese. Check.
+- The "saudosismo sem objeto" and abstenção angles are most potent here — weave in, don't just gesture at.
+- The joke must make the audience squirm — it must implicate the Portuguese voter who "ficou em casa" or "disse são todos iguais."
+
+**REVIEW 3 — Material improvement still missing?**
+The two-panel arc needs a genuine reversal, not just escalation. Panel 1 should appear to be about Chega; Panel 2 should reveal it's about the voter. The chalkboard content in each panel must carry visual satirical weight — not just labels but a diagram or equation that does the comedic work. The caption in Panel 2 should be the coldest, flattest line possible — the deadpan must be bone-dry.
+
+---
+
+<verdict>{"panels":[{"scene":"Newsroom, greyscale background, fluorescent overhead lights, heavy metal desks with background figures blurred. Gata — white chest, muzzle and paws, dark grey/black tabby stripes, orange/ginger patches on back, small dark spot on bridge of pink nose, dark leather collar with gold nameplate 'GATA' — stands on a stool in front of a large dark chalkboard headed 'EM FOCO' in bold chalk lettering. On the chalkboard she has drawn a simple floor plan of a house labelled 'ESTADO PORTUGUÊS'. Inside the house, drawn in white chalk, is a figure labelled 'CHEGA' standing at the centre. Gata points one paw at the figure with a calm, expressionless gaze. An arrow on the board reads: 'INTRUSO?'","caption":"Durante semanas, os comentadores debateram como é que o Chega tinha entrado em casa.","beat":"setup"},{"scene":"Same newsroom, same chalkboard. Gata has not moved from her stool. She has added one detail to the chalk drawing: around the perimeter of the house floor plan, clearly drawn on the outside, are dozens of small chalk figures labelled 'ELEITOR' — each one with an arrow pointing away from the house, captioned 'ficou em casa'. The word 'INTRUSO?' has been crossed out in chalk and replaced, in larger letters, with 'RESIDENTE'. Gata stares directly outward, expression unchanged, one paw resting flat on the stool. Nothing else has changed.","caption":"A porta estava aberta. A fechadura era a abstenção. E a chave, guardou-a quem jurou que eram todos iguais.","beat":"punchline"}]}</verdict>
+
+<joke_explanation>O humor nasce do momento em que o leitor percebe que a investigação de Gata não descobre um culpado exterior — descobre-o a ele próprio, sentado no sofá a ver o resultado eleitoral com indignação genuína.</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+
+The concept successfully navigates the requirement for discomfort by shifting the focus from the political actor to the complicity of the electorate. By utilizing the "abstenção" (abstention) angle, it avoids the trap of externalizing the problem and forces the reader to confront their own political apathy as the primary architect of the current landscape. The visual progression from "intruder" to "resident" provides the necessary subversion, and the deadpan, clinical tone of Gata ensures the satire remains sharp and devoid of performative outrage. The diagrammatic approach on the chalkboard fulfills the visual-first requirement, making the punchline land with cold, structural precision.
+Verdict: APPROVED

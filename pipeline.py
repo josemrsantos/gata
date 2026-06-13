@@ -1,0 +1,371 @@
+import argparse
+import logging
+import os
+import random
+import sys
+
+from dotenv import load_dotenv
+from google.genai.errors import APIError as GeminiAPIError
+
+from agents import (
+    agent_cultural_strategist,
+    agent_image_generator,
+    agent_satirist,
+    bundle_writer,
+    trend_scout,
+)
+from agents.config_loader import (
+    load_communities,
+    load_humor_config,
+    sanitize_path_segment,
+)
+from agents.types import (
+    CartoonLayout,
+    ConversationLog,
+    Headline,
+    HumorConfig,
+    StrategyBrief,
+)
+
+logger = logging.getLogger(__name__)
+
+
+def _panel_filename_prefix(layout: CartoonLayout) -> str:
+    # Returns e.g. "3h_" for 3-panel horizontal, "2v_" for 2-panel vertical, "" for 1.
+    if layout.panels <= 1:
+        return ""
+    direction_char = "h" if layout.direction == "horizontal" else "v"
+    return f"{layout.panels}{direction_char}_"
+
+
+def _resolve_layout(args, community: object | None = None) -> CartoonLayout:
+    # CLI > community config > defaults (FR-004)
+    panels = (
+        args.panels
+        if args.panels is not None
+        else (getattr(community, "panels", 1) if community else 1)
+    )
+    direction = (
+        args.layout
+        if args.layout is not None
+        else (getattr(community, "layout", "horizontal") if community else "horizontal")
+    )
+    return CartoonLayout(panels=panels, direction=direction)
+
+
+def _run_pipeline(
+    topic: str,
+    seed_brief: StrategyBrief,
+    output_path: str,
+    news_headline: Headline | None = None,
+    humor: HumorConfig | None = None,
+    layout: CartoonLayout | None = None,
+) -> None:
+    """Run the full pipeline for a single topic and write the output image."""
+    agent0_log: ConversationLog | None = None
+    bc_log: ConversationLog | None = None
+    enriched_brief = None
+    concept = None
+    try:
+        enriched_brief, agent0_log = agent_cultural_strategist.run(
+            topic, seed_brief, news_brief=news_headline, humor=humor
+        )
+        concept, bc_log = agent_satirist.run(
+            topic, enriched_brief, humor=humor, layout=layout
+        )
+        logger.info("creative loop complete — calling image generator")
+        agent_image_generator.generate(
+            concept, enriched_brief, output_path, layout=layout
+        )
+        logger.info("done: cartoon saved to %s", output_path)
+    except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
+        logger.error("pipeline failed: %s", exc)
+        raise
+    finally:
+        # multi-panel: full_text is the JSON verdict
+        # single-panel: full_text equals image_prompt
+        if concept is not None:
+            has_panels = concept.panels is not None
+            image_prompt = concept.full_text if has_panels else concept.image_prompt
+        else:
+            image_prompt = None
+        bundle_writer.write_bundle(
+            output_path,
+            agent0_log,
+            bc_log,
+            enriched_brief,
+            image_prompt,
+        )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Gata Newsroom cartoon pipeline")
+    parser.add_argument("--community", metavar="NAME", help="community name to run for")
+    parser.add_argument("--topic", help="topic for manual mode")
+    parser.add_argument("--audience", help="target audience for manual mode")
+    parser.add_argument("--language", help="output language for manual mode")
+    parser.add_argument("--tone", help="tone for manual mode")
+    parser.add_argument(
+        "--panels", type=int, default=None, metavar="N",
+        help="number of panels 1-4 (default 1)"
+    )
+    parser.add_argument(
+        "--layout", default=None, metavar="DIR",
+        help="panel direction: horizontal or vertical (default horizontal)"
+    )
+    args = parser.parse_args()
+    # Reject an empty --community immediately — blank string is not a valid description
+    if args.community is not None and not args.community.strip():
+        logger.error("--community must not be empty")
+        sys.exit(1)
+    # Validate panel count and layout direction before any API call (FR-010)
+    if args.panels is not None and not (1 <= args.panels <= 4):
+        logger.error("--panels must be between 1 and 4")
+        sys.exit(1)
+    if args.layout is not None and args.layout not in ("horizontal", "vertical"):
+        logger.error("--layout must be 'horizontal' or 'vertical'")
+        sys.exit(1)
+    # Logging and env vars must be initialised before any config load can emit errors
+    found_dotenv = load_dotenv()
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
+    )
+    # Explicit source log lets operators know at a glance which credential path is active
+    if found_dotenv:
+        logger.info("credentials loaded from .env file")
+    else:
+        logger.info("no .env file found — reading credentials from environment variables")
+    # humor.yaml is optional — absent means no comedy directives are injected
+    try:
+        humor = load_humor_config("humor.yaml")
+    except ValueError as exc:
+        logger.error("humor config error: %s", exc)
+        sys.exit(1)
+    if humor:
+        logger.info("humor config loaded from humor.yaml")
+    # Determine which mode the caller intended before applying constraints
+    has_topic = args.topic is not None
+    ctx_flags = (args.audience, args.language, args.tone)
+    has_context = any(v is not None for v in ctx_flags)
+    has_all_context = all(v is not None for v in ctx_flags)
+    # --community+topic is new; audience/language/tone always conflict with --community
+    community_topic_mode = bool(args.community and has_topic and not has_context)
+    # --community + explicit context flags: community infers the brief, flags conflict
+    if args.community and has_context:
+        logger.error(
+            "--community and context flags "
+            "(--audience, --language, --tone) are mutually exclusive"
+        )
+        sys.exit(1)
+    # Context flags without topic leave StrategyBrief incomplete
+    if has_context and not has_topic:
+        logger.error(
+            "--audience, --language, --tone require --topic to form a complete brief"
+        )
+        sys.exit(1)
+    # --topic alone (no community) requires all context flags to build a full brief
+    if has_topic and not args.community and not has_all_context:
+        logger.error(
+            "manual mode requires all four flags: "
+            "--topic, --audience, --language, --tone"
+        )
+        sys.exit(1)
+    # Both LLM providers required; verify credentials before any network call
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not anthropic_key:
+        logger.error("ANTHROPIC_API_KEY is not set — cannot start pipeline")
+        sys.exit(1)
+    if not gemini_key:
+        logger.error("GEMINI_API_KEY is not set — cannot start pipeline")
+        sys.exit(1)
+    # All preflight checks passed — branch into the appropriate mode
+    if has_topic and not args.community:
+        # Full manual mode: all four context flags supplied by the caller
+        topic = args.topic
+        seed_brief = StrategyBrief(
+            target_audience=args.audience,
+            output_language=args.language,
+            tone=args.tone,
+        )
+        layout = _resolve_layout(args)
+        prefix = _panel_filename_prefix(layout)
+        output_path = (
+            f"output/manual/{prefix}{sanitize_path_segment(args.language)}"
+            f"_{sanitize_path_segment(topic)}.png"
+        )
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        logger.info("manual mode: topic=%r, output=%r", topic, output_path)
+        try:
+            _run_pipeline(topic, seed_brief, output_path, humor=humor, layout=layout)
+        except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
+            logger.error("pipeline failed: %s", exc)
+            sys.exit(1)
+    elif community_topic_mode:
+        # Community + topic mode: brief inferred from community, topic supplied directly
+        communities = []
+        if os.path.exists("communities.yaml"):
+            try:
+                communities = load_communities("communities.yaml")
+            except ValueError as exc:
+                logger.error("config error: %s", exc)
+                sys.exit(1)
+        community = next((c for c in communities if c.name == args.community), None)
+        topic = args.topic
+        if community is not None:
+            # Named community: use its pre-configured brief without inference
+            seed_brief = community.to_brief()
+            folder = sanitize_path_segment(community.name)
+        else:
+            # Free-text community: infer brief from description, skip Trend Scout
+            seed_brief = trend_scout.infer_brief_from_description(args.community)
+            folder = sanitize_path_segment(args.community)
+        layout = _resolve_layout(args, community)
+        prefix = _panel_filename_prefix(layout)
+        output_path = (
+            f"output/{folder}"
+            f"/{prefix}{sanitize_path_segment(seed_brief.output_language)}"
+            f"_{sanitize_path_segment(topic)}.png"
+        )
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        logger.info(
+            "community-topic mode: community=%r topic=%r output=%r",
+            args.community,
+            topic,
+            output_path,
+        )
+        try:
+            _run_pipeline(topic, seed_brief, output_path, humor=humor, layout=layout)
+        except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
+            logger.error("pipeline failed: %s", exc)
+            sys.exit(1)
+    elif args.community:
+        # communities.yaml may not exist — treat absence as valid (no named communities)
+        # and fall through to free-text inference if no exact name match is found
+        communities = []
+        if os.path.exists("communities.yaml"):
+            try:
+                communities = load_communities("communities.yaml")
+            except ValueError as exc:
+                logger.error("config error: %s", exc)
+                sys.exit(1)
+        # Exact name match → use configured brief and Trend Scout for this community
+        community = next((c for c in communities if c.name == args.community), None)
+        if community is not None:
+            logger.info(
+                "pipeline: %r matched in communities.yaml — using named-community path",
+                args.community,
+            )
+            headlines, topic_source = trend_scout.get_topics(community)
+            if not headlines:
+                logger.error(
+                    "no topics available for %r — add seed topics or news_sources",
+                    community.name,
+                )
+                sys.exit(1)
+            headline = headlines[0]
+            topic = headline.title
+            logger.info(
+                "community=%r topic source=%s topic=%r",
+                community.name,
+                topic_source,
+                topic,
+            )
+            seed_brief = community.to_brief()
+            layout = _resolve_layout(args, community)
+            prefix = _panel_filename_prefix(layout)
+            output_path = (
+                f"output/{sanitize_path_segment(community.name)}"
+                f"/{prefix}{sanitize_path_segment(community.output_language)}"
+                f"_{sanitize_path_segment(topic)}.png"
+            )
+        else:
+            # No exact match → treat description as free-text; infer brief via Gemini
+            logger.info(
+                "pipeline: %r not found in communities.yaml"
+                " — using free-text inference",
+                args.community,
+            )
+            free_text = trend_scout.get_topics_for_description(args.community)
+            headlines, seed_brief, topic_source = free_text
+            if not headlines:
+                logger.error(
+                    "no topics available for community: %r", args.community
+                )
+                sys.exit(1)
+            headline = headlines[0]
+            topic = headline.title
+            logger.info(
+                "community=%r topic source=%s topic=%r",
+                args.community,
+                topic_source,
+                topic,
+            )
+            # Free-text has no community object — CLI flags or global defaults only
+            layout = _resolve_layout(args)
+            prefix = _panel_filename_prefix(layout)
+            output_path = (
+                f"output/{sanitize_path_segment(args.community)}"
+                f"/{prefix}{sanitize_path_segment(seed_brief.output_language)}"
+                f"_{sanitize_path_segment(topic)}.png"
+            )
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        logger.info(
+            "community=%r, topic=%r, output=%r", args.community, topic, output_path
+        )
+        try:
+            _run_pipeline(
+                topic, seed_brief, output_path, news_headline=headline, humor=humor,
+                layout=layout,
+            )
+        except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
+            logger.error("pipeline failed: %s", exc)
+            sys.exit(1)
+    else:
+        try:
+            communities = load_communities("communities.yaml")
+        except ValueError as exc:
+            logger.error("config error: %s", exc)
+            sys.exit(1)
+        # Full community list loaded; pick one at random for the unattended daily run
+        community = random.choice(communities)
+        headlines, topic_source = trend_scout.get_topics(community)
+        if not headlines:
+            logger.error(
+                "no topics available for %r — add seed topics or news_sources",
+                community.name,
+            )
+            sys.exit(1)
+        headline = headlines[0]
+        topic = headline.title
+        logger.info(
+            "community=%r topic source=%s topic=%r", community.name, topic_source, topic
+        )
+        seed_brief = community.to_brief()
+        layout = _resolve_layout(args, community)
+        prefix = _panel_filename_prefix(layout)
+        output_path = (
+            f"output/{sanitize_path_segment(community.name)}"
+            f"/{prefix}{sanitize_path_segment(community.output_language)}"
+            f"_{sanitize_path_segment(topic)}.png"
+        )
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        logger.info(
+            "community=%r, topic=%r, output=%r",
+            community.name,
+            topic,
+            output_path,
+        )
+        try:
+            _run_pipeline(
+                topic, seed_brief, output_path, news_headline=headline, humor=humor,
+                layout=layout,
+            )
+        except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
+            logger.error("pipeline failed: %s", exc)
+            sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,74 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — First instinct too obvious?**
+My first instinct is to draw Gata at the chalkboard mapping "amplify Belfast riots" as a ticket. Too expected. The sharper angle is the *IPO quiet period* violation — compliance teams watching a billionaire tweet race riots the night before a float is a specific, excruciating horror that British tech/City people will feel viscerally. The joke should be about the *change management catastrophe*, not merely the malice. The sharpest read: this isn't villainy, it's the most expensive, most consequential instance of "pushed to main on a Friday without a reviewer" in history — and the product being broken is the Good Friday Agreement.
+
+**REVIEW 2 — Did I skip any criterion?**
+- Gata character description verbatim: must include. ✓
+- No human clothes/accessories: check. ✓
+- Selective Color / greyscale background, Gata in full colour: must specify. ✓
+- Chalkboard headed "ON THE SPOT": must include. ✓
+- Masking tape (not pins): must specify. ✓
+- 1970s newsroom setting: must specify. ✓
+- Dry caption at bottom: must include. ✓
+- All cartoon text in English: must check every word on board. ✓
+- No copyrighted characters referenced: check. ✓
+- Deadpan, subversive, not slapstick: must verify joke tone. ✓
+- Audience: British software engineers. The IPO quiet period + Friday deploy + GFA as patch note angle hits all three. ✓
+
+**REVIEW 3 — What material improvement remains?**
+The chalkboard content itself needs to do the satirical heavy lifting. A single, perfectly structured "ticket" or "git commit message" on the board — something that frames the Belfast amplification as a piece of catastrophic change management — will be funnier and more specific than generic commentary. I'll write the board as a mock git commit or incident ticket, with the GFA referenced as the "legacy dependency," and the IPO as the "deployment window." The caption should be the deadpan kicker that reframes the entire panel without explaining the joke.
+
+---
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard sketch style, high-contrast, dry caption at bottom.
+
+**SETTING:** A 1970s newspaper newsroom interior rendered entirely in greyscale — heavy steel-and-formica desks, banks of fluorescent strip lighting humming overhead, background figures of exhausted journalists hunched over typewriters, overflowing wire-copy baskets, yellowed paper stacked in precarious towers. The atmosphere is smoke-stained and weary.
+
+**SUBJECT — GATA (rendered in full colour against the greyscale background, Selective Color style):**
+Gata is a domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She never wears human clothes or accessories — no hats, glasses, pens, or clothing of any kind. She sits upright at the chalkboard, one paw raised, mid-gesture, as though she has just finished pointing at something and deeply regrets having had to.
+
+**THE BOARD:**
+A large dark chalkboard fills the background behind Gata. At the top, in bold hand-drawn chalk capitals: **ON THE SPOT**
+
+Below, a mock git commit log and incident ticket, drawn in rough white chalk in a monospaced hand:
+
+```
+COMMIT: a4f7bc2  [PROD]  Friday 11:47pm
+Author: @TechBro_Billionaire
+Message: "minor engagement optimisation"
+
+DIFF:
+- Good Friday Agreement (1998)     [STABLE]
++ Good Friday Agreement (1998)     [DEPRECATED]
+
+CHANGED FILES:
+  belfast_peace_process.patch      ← BREAKING CHANGE
+  ipo_quiet_period_compliance.cfg  ← DELETED
+  
+REVIEWER: none
+TESTS RUN: none
+ROLLBACK PLAN: none
+
+DEPLOYMENT WINDOW: SpaceX IPO Eve
+AFFECTED DEPENDENCIES: 25 years of conflict resolution
+TICKET PRIORITY: Critical
+TICKET DESCRIPTION: "make it worse"
+```
+
+In the bottom corner of the board, attached with a small strip of masking tape, a torn index card reading:
+**"Move fast and break things."**
+**— found in a skip, California, approx. 2012**
+
+**CAPTION (bottom of panel, dry sans-serif chalk lettering):**
+*"The pull request had 180 million approvers and no reviewers. Compliance is understood to be stress-vaping."*
+</verdict>
+
+<joke_explanation>
+British software engineers will experience the specific, visceral dread of recognising every element of their worst professional nightmare — a breaking change pushed to the most critical system in production, on a Friday night, with no reviewer, no tests, and no rollback plan — reframed as the operating method of a billionaire whose "deployment window" is a peace process and whose "engagement metric" is a riot, all timed to the one moment any compliance team would consider the single most catastrophically inappropriate occasion to do any of it.
+</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

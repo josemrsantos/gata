@@ -1,0 +1,36 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct might be to just riff on "Big Tech bad, water wasted" — too obvious. The sharper angle is the *audacity* of the boast — Amazon isn't apologising, it's *bragging* about being the most efficient at consuming an obscene amount of water. That's the satirical core: the PR framing of colossal excess as a virtue. For British software engineers specifically, there's also the irony that they're the ones *building* the systems that are drinking the planet dry, on behalf of a company that once made them hot-desk in a warehouse-style office. The competitive "we're better than Google" claim is also peak corporate one-upmanship — like boasting you're the skinniest man at an all-you-can-eat buffet.
+
+REVIEW 2: Let me check every requirement:
+- Cultural angle: one paragraph ✓ (need to write it)
+- References: bullet list, one or two sentences each, NOT from the news topic, deepening the satirical read ✓ (need to ensure they're culturally specific to British devs)
+- Wordplay scan: Let me look — "water efficiency" → "waterfall methodology" (British devs love/hate waterfall vs agile), "AWS" → "A Wet Server", "data lakes" is already an industry term ripe for literal reading, "cloud computing" + water = literal clouds/rain (very British), "Prime delivery" of water. "Gallons" is an American unit — British engineers would notice that immediately and find it suspicious/annoying. "2.5 billion gallons" — in litres that's ~9.46 billion litres, which is even more staggering.
+- Joke type: need to select one
+- Target audience locked: British software engineers ✓
+- Output language: English ✓
+- Tone: dry British wit ✓
+- Measurable progress from iteration 1: this is iteration 1, so baseline established ✓
+- Verdict tags and structure: must wrap correctly ✓
+
+REVIEW 3: A material improvement I haven't made yet — the *data lakes* pun is genuinely too good to leave as a passing thought. Also, British developers will have strong feelings about AWS specifically as an infrastructure provider they use *daily* — this isn't abstract Big Tech, this is the thing their Kubernetes clusters run on. The "more efficient than competitors" claim mirrors the kind of corporate benchmarking that British devs encounter in sprint reviews and quarterly OKRs — "we missed by less than last quarter" energy. I should also include a reference to the UK hosepipe ban, which is a shared British cultural memory that lands perfectly here — the contrast between ordinary people being told not to wash their cars and AWS consuming billions of gallons is the satirical gut-punch.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Amazon has announced, with what can only be described as commendable brass neck, that its data centres consumed 2.5 billion gallons of water last year — and would like you to know that this is actually *impressive*, because Microsoft and Google are apparently even worse. For British software engineers who have spent the last decade being told to turn off the tap while brushing their teeth, and who watched their local councils introduce hosepipe bans during a drizzly August, there is something almost magnificent about the scale of this particular spin. The industry that insists on calling its storage infrastructure "data lakes" has, it turns out, been filling them quite literally. AWS, the very platform your microservices are probably running on right now, is essentially the world's most expensive, least visible water feature — and it wants a gold star for only using *this* much. It is, in the grand tradition of British corporate life, the equivalent of a manager explaining that while the project is six months late and twice over budget, it is nonetheless ahead of where Dave's team left off.
+
+REFERENCES:
+- During the 2022 UK drought, millions of households faced hosepipe bans and were urged to take shorter showers; the contrast with a single company's nine-billion-odd litres of annual water consumption requires no further embellishment.
+- "Data lakes" is a genuine enterprise architecture term, used earnestly in planning meetings by the same industry now filling them with cooling water — the metaphor has become uncomfortably literal.
+- British developers will recognise the OKR-speak rhythm of "we're more efficient than our competitors" as the same energy behind sprint retrospectives where the team celebrates missing targets by slightly less than last quarter.
+- Amazon's own warehouse working conditions — documented extensively in the UK press, including workers reportedly avoiding toilet breaks — make the revelation that the buildings *definitely* have enough water for the servers land with a particular dryness.
+- "Waterfall methodology" is the development approach every British dev team claims to have abandoned in favour of Agile; AWS appears to have quietly kept it as a cooling strategy.
+- Reporting the figure in *gallons* rather than litres is the kind of move that will irritate a British engineer before they've even processed the scale — like receiving API documentation in imperial units.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

@@ -1,0 +1,59 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct might be to make a generic "engineers are logical and literal" joke — that's too obvious. A sharper angle would find something in the specific tension between how engineers experience institutional processes versus how those processes are presented publicly.
+
+REVIEW 2: Re-examining requirements — I need (1) a CULTURAL ANGLE paragraph that is satirical, specific to engineers, dry in tone, and (2) REFERENCES as bullet points with one or two sentences each, citing cultural touchstones NOT from the news topic itself. The topic here is "test topic" — a placeholder with no real content. I must work with what exists without fabricating a false news context.
+
+REVIEW 3: A material improvement: I can lean into the meta-irony that "test topic" is itself an unfinished, unvalidated input — which is something engineers would find professionally offensive. The dry tone should feel like a post-mortem report, not a comedy sketch.
+
+---
+
+<verdict>
+CULTURAL ANGLE: A topic has been submitted to the pipeline marked simply as "test topic" — no requirements document, no acceptance criteria, no definition of done. It has, predictably, been routed to production. Engineers will recognise this not as a news story but as a process failure wearing a news story's badge, the kind of thing that gets a five-paragraph incident report six weeks later attributing root cause to "miscommunication between stakeholders" while the actual root cause — that nobody wrote down what the thing was supposed to do — goes tactfully unmentioned.
+
+REFERENCES:
+- The NASA Mars Climate Orbiter was lost in 1999 because one team used metric units and another used imperial; the postmortem used the phrase "human error," which is one way to put it.
+- "Works on my machine" achieving semi-official status as a deployment environment is a milestone in the industry's long journey toward treating testing as optional.
+- The THERAC-25 radiation therapy machine, a recurring case study in software engineering ethics courses, demonstrated what happens when testing phases are collapsed under schedule pressure — a detail that makes "test topic" as a production input feel less funny and more familiar.
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+The angle is solid but stops one step short of the core tension. You’ve correctly identified that engineers see a case study where the public sees a tragedy, but you can sharpen the focus from a general "failure analysis" to the specific, grim reality of the profession.
+
+This isn't just a physics problem; it's the kinetic manifestation of policy and budget meetings.
+
+**PROPOSED ANGLE:**
+To a civil engineer, the Francis Scott Key Bridge collapse isn't a Rorschach test; it's an inevitability made concrete. They see a structure designed to the standards of the Carter administration trying to contend with the sheer kinetic energy of 21st-century global logistics. Their analysis, therefore, isn't just about material stress and load paths. It's a silent, bitter critique of decades of deferred maintenance, grandfathered building codes, and the political calculus that consistently prioritizes the new and visible over the robust and invisible. They don't just see a failed pier; they see a funding problem made terrifyingly real.
+
+**REFERENCES:**
+Your references to Tacoma Narrows and the Hyatt Regency are canonical and appropriate. They represent the foundational pillars of an engineering education: unforeseen forces and professional negligence. However, the third reference is a missed opportunity for a much more resonant and specific precedent.
+
+- **WEAK REFERENCE:** The video game *Poly Bridge*. While clever, it's a lightweight inclusion that trivializes the stakes. It's a game about physics puzzles; this event is about the intersection of physics, economics, and public policy.
+
+- **PROPOSED REPLACEMENT:** The 1980 Sunshine Skyway Bridge collapse. This is the ur-text for this exact failure mode—a ship strike causing a catastrophic collapse in Florida. Every bridge engineer in America thought of it within minutes of seeing the Baltimore footage. More importantly, the *new* Sunshine Skyway, with its massive pier-protecting dolphins, is a case study in how resilience can be designed and funded *after* a disaster forces the public and political will to do so. It’s the perfect reference because it’s not just about the failure; it’s about the expensive, hard-learned, and often-delayed response.
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 2 ===
+[Framer]
+REVIEW 1: The proposed angle and references are strong, but I risk simply transcribing the feedback rather than genuinely sharpening it further. The "funding problem made terrifyingly real" framing is good — but I can push the dry tone harder: engineers don't just see a funding problem, they see a funding problem they *already filed a report about*, in some form, somewhere, that nobody read.
+
+REVIEW 2: Re-examining every requirement — the output language is English, tone is dry (not sardonic, not outraged, not mournful — dry, like a technical memo), target audience is engineers, the CULTURAL ANGLE must be one paragraph, REFERENCES must be bullet points of one or two sentences each citing touchstones NOT in the news topic. The Sunshine Skyway replacement is explicitly proposed as a reference — I must include it and treat it as the anchor. I should not dilute it by crowding it with weak additions.
+
+REVIEW 3: A material improvement still available: the dry tone should feel like it comes from *inside* the profession — the voice of someone who has sat in a budget meeting and lost the argument. The references should escalate in specificity: from canonical pedagogy (Tacoma Narrows) to professional negligence (Hyatt Regency) to the exact failure mode with its hard-learned policy response (Sunshine Skyway). That progression is the real satirical architecture.
+
+---
+
+<verdict>
+CULTURAL ANGLE: To a civil engineer, the Francis Scott Key Bridge collapse is not a tragedy in search of an explanation — it is an explanation that finally became visible enough to be called a tragedy. They see a mid-twentieth-century pier protection standard meeting a 100,000-tonne container ship and reaching the only conclusion the physics ever permitted. What they do not say out loud, at least not immediately, is that someone, at some point, almost certainly ran the numbers, wrote the memo, and watched it get deprioritized in favour of a project with a ribbon-cutting. The bridge did not fail. The funding cycle did. The bridge was just the part that showed up on the news.
+
+REFERENCES:
+- The Tacoma Narrows Bridge collapse of 1940 is now required viewing in undergraduate dynamics courses — not because the engineering community was surprised, but because it is the cleanest possible demonstration of what happens when a design criterion goes unnamed until it becomes unmissable.
+- The 1981 Hyatt Regency walkway collapse in Kansas City is the recurring ethics case study: a design change was reviewed, approved, and catastrophically wrong, and the lesson every engineering student takes from it is that "signed off" and "correct" are not synonyms.
+- The 1980 Sunshine Skyway Bridge collapse — also a ship strike, also Florida, also a clear day — produced the new Sunshine Skyway's massive pier-protection dolphins: a textbook case of resilience being fully fundable immediately after the cost of not funding it becomes undeniable to a public that had previously found infrastructure budgets abstract.
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

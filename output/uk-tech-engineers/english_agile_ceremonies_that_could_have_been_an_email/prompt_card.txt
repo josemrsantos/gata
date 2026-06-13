@@ -1,0 +1,26 @@
+
+Single-panel satirical cartoon. Minimalist charcoal-on-chalkboard style, high-contrast, dry caption at the bottom. Selective Color treatment: greyscale background environment, Gata rendered in full natural colour.
+
+SETTING: A 1970s newspaper newsroom interior. Heavy metal desks, stacks of paper, analogue telephones, fluorescent strip lighting casting a flat institutional glow. Background figures — blurred, greyscale, indistinct — sit at desks suggesting a working office. The atmosphere is tired and institutional.
+
+GATA — include all of the following verbatim: Gata is a domestic shorthair calico-tabby mix with a white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on her back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She wears no human clothes or accessories of any kind — no hats, glasses, pens, or clothing.
+
+Gata sits squarely in front of the chalkboard, facing the viewer. Her expression is entirely neutral — not disgusted, not amused — the expression of someone reviewing evidence that has long since stopped surprising her.
+
+THE CHALKBOARD: Dark chalkboard surface, hand-drawn in rough white chalk. At the top, the heading reads: "ON THE SPOT"
+
+The board is dominated by two adjacent hand-drawn visuals:
+
+LEFT VISUAL — a rough chalk line graph labelled "VELOCITY vs. VALUE" at the top. Two lines are plotted across the same axes. Both lines are identical — they rise together, dip together, and end at precisely the same point. One line is labelled "VELOCITY" and the other "VALUE". There is no legend explaining the coincidence. No annotation. The lines simply agree with each other completely, which is the problem.
+
+RIGHT VISUAL — a hand-drawn burndown chart. The vertical axis is labelled "WORK REMAINING". The horizontal axis is labelled "SPRINTS". The burndown line descends correctly toward zero — but at the base of the chart, where the line meets zero, there is a drawing of a candle burned completely to nothing, just a puddle of wax and a dead wick. Above the melted candle, attached with a strip of masking tape, a small hand-drawn label reads:
+
+  DEFINITION OF DONE ✓
+
+No other annotations. No pins anywhere. All attachments use masking tape only.
+
+CAPTION at the bottom of the panel, in plain text below the image border:
+
+  "Velocity was excellent throughout."
+
+Visual style: single-panel editorial cartoon. Charcoal and chalk aesthetic. High contrast. No colour except Gata. No copyrighted characters or artists referenced. Clean, spare composition with deliberate institutional bleakness.

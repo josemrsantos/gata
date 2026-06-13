@@ -1,0 +1,42 @@
+
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard sketch style, high-contrast, dry caption at bottom.
+
+**SETTING:** A 1970s newspaper newsroom interior rendered entirely in greyscale — heavy steel-and-formica desks, banks of fluorescent strip lighting humming overhead, background figures of exhausted journalists hunched over typewriters, overflowing wire-copy baskets, yellowed paper stacked in precarious towers. The atmosphere is smoke-stained and weary.
+
+**SUBJECT — GATA (rendered in full colour against the greyscale background, Selective Color style):**
+Gata is a domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She never wears human clothes or accessories — no hats, glasses, pens, or clothing of any kind. She sits upright at the chalkboard, one paw raised, mid-gesture, as though she has just finished pointing at something and deeply regrets having had to.
+
+**THE BOARD:**
+A large dark chalkboard fills the background behind Gata. At the top, in bold hand-drawn chalk capitals: **ON THE SPOT**
+
+Below, a mock git commit log and incident ticket, drawn in rough white chalk in a monospaced hand:
+
+```
+COMMIT: a4f7bc2  [PROD]  Friday 11:47pm
+Author: @TechBro_Billionaire
+Message: "minor engagement optimisation"
+
+DIFF:
+- Good Friday Agreement (1998)     [STABLE]
++ Good Friday Agreement (1998)     [DEPRECATED]
+
+CHANGED FILES:
+  belfast_peace_process.patch      ← BREAKING CHANGE
+  ipo_quiet_period_compliance.cfg  ← DELETED
+  
+REVIEWER: none
+TESTS RUN: none
+ROLLBACK PLAN: none
+
+DEPLOYMENT WINDOW: SpaceX IPO Eve
+AFFECTED DEPENDENCIES: 25 years of conflict resolution
+TICKET PRIORITY: Critical
+TICKET DESCRIPTION: "make it worse"
+```
+
+In the bottom corner of the board, attached with a small strip of masking tape, a torn index card reading:
+**"Move fast and break things."**
+**— found in a skip, California, approx. 2012**
+
+**CAPTION (bottom of panel, dry sans-serif chalk lettering):**
+*"The pull request had 180 million approvers and no reviewers. Compliance is understood to be stress-vaping."*

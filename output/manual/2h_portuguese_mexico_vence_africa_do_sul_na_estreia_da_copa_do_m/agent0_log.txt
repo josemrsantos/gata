@@ -1,0 +1,31 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct would be to just make a generic joke about football. But the sharper angle is: Portuguese fans watching a World Cup match where neither Portugal nor any Lusophone country is involved — why do they even care? The satirical tension is in the *irrelevance* of the match to Portugal, yet Portuguese fans will watch and opine anyway, because that's what they do. That's the real joke.
+
+REVIEW 2: Let me check all requirements:
+- CULTURAL ANGLE: one paragraph ✓ (need to write it)
+- REFERENCES: bullet list with short observations, NOT from the news topic, culturally specific to Portuguese fans ✓ (need touchstones like Benfica/Porto debates, "comentadores" culture, café watching habits, etc.)
+- WORDPLAY SCAN: "México" / "mexe" (mexe com todos), "África do Sul" / "sul" directional jokes, "estreia" wordplay... "México mexeu com o mundo" is too obvious. Better: "África do Sul" → Portuguese fans know this World Cup (2010) and the vuvuzela trauma. Also "vencer" / "ver" — they'll watch anything. Let me think of a sharper pun.
+- JOKE TYPE: needs to be selected ✓
+- Output language: Portuguese ✓
+- Tone: enthusiastic and humorous ✓
+- Target audience locked ✓
+
+REVIEW 3: A material improvement: I should anchor the cultural angle in something hyper-specific to Portuguese football culture — like the phenomenon of Portuguese pundits on TVI/SIC/RTP treating every World Cup match as if Portugal played it, complete with tactical analysis and "nós em Portugal faríamos diferente." Also the wordplay: "México" contains "mexe" — "o México mexeu com o futebol africano" and the irony that in 2010 South Africa was the first African host nation, a fact every Portuguese knows because they watched Portugal go far. That's the sharpest reference.
+
+<verdict>
+CULTURAL ANGLE: Numa tarde em que Portugal não jogava, nem estava em campo nenhum país de língua portuguesa, os adeptos lusos instalaram-se na cadeira do café com a mesma seriedade de quem analisa um El Clásico — porque o futebol português tem uma capacidade única de se apropriar de qualquer jogo do mundo como se fosse treino para o próximo Europeu. O México venceu a África do Sul, e já havia quem no Sporting Café da Rua do Benformoso jurasse que "o Rui Jorge podia aprender qualquer coisa com isso", enquanto outros comentavam que "o Ronaldo teria decidido isto ao minuto 60 sem suar." O México *mexeu* com toda a gente — menos com os sul-africanos, que ficaram a ver o jogo da bancada da própria casa, numa situação que os portugueses conhecem bem de 2004.
+
+REFERENCES:
+- Em 2010, a África do Sul foi o primeiro país africano a organizar um Mundial — facto que todo o adepto português sabe porque viu Portugal chegar aos quartos-de-final e sair a chorar contra a Espanha, país que acabou campeão e ainda hoje é motivo de inveja silenciosa.
+- A vuvuzela, instrumento sonoro que traumatizou gerações de telespectadores nesse mesmo Mundial, tornou-se referência cultural suficientemente forte para que qualquer menção à África do Sul faça os portugueses franzir o sobrolho com memória auditiva condicionada.
+- Os "comentadores de café" são uma instituição nacional: homens e mulheres sem qualquer cargo oficial que analisam táticas com uma autoridade inversamente proporcional ao seu conhecimento de regra do fora-de-jogo.
+- A Seleção Nacional tem uma tradição gloriosa de estreias em Mundiais que ora entusiasmam o país inteiro ora terminam em silêncio sepulcral — o que torna qualquer estreia alheia num espelho em que os portugueses inevitavelmente se reveem.
+- "Nós em Portugal faríamos diferente" é a frase mais dita em qualquer transmissão de jogo que não envolva Portugal, geralmente seguida de uma análise que ignora completamente o contexto geográfico, económico e histórico do país em questão.
+
+JOKE TYPE: situational
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

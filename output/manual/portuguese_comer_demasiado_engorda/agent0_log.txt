@@ -1,0 +1,29 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct would be to just make a generic joke about eating too much makes you fat. That's too obvious. The sharper reading for Portuguese clowns is to interrogate the *absurdity of the statement itself* — this is basically a non-news item, a tautology dressed up as revelation, and clowns are professionally attuned to the theatre of the obvious being treated as profound. The satirical angle should mock the pomposity of stating the self-evident.
+
+REVIEW 2: Let me re-examine every requirement:
+- Cultural angle: one paragraph, satirical, resonant with Portuguese clown culture ✓ (need to make sure it's specifically Portuguese, not generic)
+- References: bullet list, one-two sentences each, cultural touchstones NOT from the news topic itself, deepen the satirical reading ✓ (need Portuguese-specific touchstones: palhacaria portuguesa, circus traditions, perhaps Circo Coliseu, Portuguese food culture — bacalhau, caldo verde, the act of eating as social ritual)
+- Output language: Portuguese ✓
+- Tone: absurdist clown humour ✓ (need surrealism, non-sequitur logic, physical comedy implied in text)
+- Cannot change target audience, language, or tone ✓
+- Must make measurable progress beyond obvious ✓
+
+REVIEW 3: A material improvement: I should lean into the clown's professional relationship with *physical excess* — the clown body, the stuffed costume, the pratfall caused by overeating, the water-squirting flower that becomes a gravy squirter. Also, Portuguese clowns specifically have the Coliseu dos Recreios tradition, and there's the beloved figure of the palhaço António Canas and the broader sardinha/bacalhau food culture. I can weave the absurdity of scientific "discovery" of the obvious with the clown's lived experience of this "truth" for decades. The references should include specific Portuguese circus/clown touchstones.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Cientistas portugueses — provavelmente os mesmos que descobriram que a chuva molha e que o silêncio é barulhento quando ninguém fala — anunciaram esta semana que comer demasiado engorda. A comunidade palhacística nacional, que há décadas executa o número clássico do palhaço-barrigudo-que-não-cabe-pela-porta, recebeu a notícia com um misto de honra e indignação: honra, por ver finalmente a ciência validar o seu trabalho artístico; indignação, por não terem sido citados como fonte primária. Afinal, qualquer palhaço do Circo que se preze já sabe — e demonstra ao vivo, com som de trombone — que há uma relação directa entre o número de pastéis de nata consumidos nos bastidores e o raio de curvatura da barriga no picadeiro. A grande questão filosófica que fica no ar, como uma torta de Viana em câmara lenta, é a seguinte: se um palhaço comer tanto que não consiga dar a pirueta, é o palhaço que falhou, ou é a gravidade que está com inveja?
+
+REFERENCES:
+- O número do "palhaço gordo que persegue o palhaço magro" é um dos pilares da palhacaria clássica portuguesa, perpetuado em gerações de espectáculos no Coliseu dos Recreios em Lisboa — a própria arquitectura do gag assenta na diferença de volume corporal como motor cómico.
+- A cultura portuguesa do "comer bem" é ela própria um acto performativo: a expressão "estás a comer bem?" funciona como saudação, diagnóstico médico e elogio estético em simultâneo — um terreno absurdamente fértil para qualquer palhaço que queira fingir que engordou por razões patrióticas.
+- O bacalhau, com as suas 365 receitas obrigatórias, representa o paradoxo alimentar nacional: um peixe seco e magríssimo que, após ser cozinhado à portuguesa (natas, azeite, batatas fritas), se transforma num projéctil de calorias — provando que não é o alimento que engorda, mas sim a criatividade portuguesa.
+- A famosa cena do palhaço com a mala que não fecha — clássico do circo — é indistinguível da tentativa de qualquer português de fechar o botão das calças depois de um almoço de domingo com a família.
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

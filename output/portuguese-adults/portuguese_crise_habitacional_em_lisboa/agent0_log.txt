@@ -1,0 +1,108 @@
+=== Iteration 1 ===
+[Framer]
+**REVIEW 1:** A primeira instinção seria fazer piada genérica sobre rendas altas e turismo — isso é demasiado óbvio e já foi dito mil vezes. O ângulo mais afiado é apontar a cumplicidade do Estado português como proprietário e regulador simultaneamente, enquanto finge ser vítima do mercado que ele próprio alimentou. A verdade desconfortável: os portugueses sabem que os seus políticos têm imóveis. Isso é o que faz doer.
+
+**REVIEW 2:** Verificando critérios — língua portuguesa ✓, tom de sátira política afiada ✓, público adulto interessado em política ✓, wordplay scan (preciso de fazer isto mais deliberadamente), referências culturais específicas portuguesas ✓, INCONVENIENCE (a verdade desconfortável sobre cumplicidade do Estado precisa de ser mais explícita e pessoal), JOKE TYPE ✓. Falta o wordplay: explorar "habitação" → "há-bitação" (há uma bitação / há uma tragédia), ou "arrendar" como "render" (render-se ao mercado), ou o duplo sentido de "despejar" (despejar inquilinos / despejar discursos). "Despejar" é o mais rico — os políticos despejam promessas enquanto os senhorios despejam pessoas.
+
+**REVIEW 3:** A melhoria material que falta: as referências precisam de incluir casos concretos e memoráveis que o público português reconhece imediatamente — o caso dos vistos gold, a polémica com o Airbnb em Lisboa, a Lei dos Solos que nunca saiu do papel, e o facto icónico de que deputados debatem habitação em edifícios do Estado que não pagam renda. A referência mais incómoda de todas: os próprios Serviços Sociais da Assembleia da República têm habitação subsidiada para funcionários — enquanto os trabalhadores lisboetas são expulsos da cidade. Isto é o que faz o público squirm de verdade.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Lisboa vive uma crise de habitação de tal magnitude que já se tornou um género literário próprio — qualquer pessoa que tente arrendar um T1 na cidade sabe que vai competir com vinte candidatos, pagar dois mil euros por mês e receber, como compensação emocional, um landlord que lhe manda o Regulamento Interno em inglês. Entretanto, o Governo português pratica aquilo que só pode ser descrito como *despejar* com distinção: despeja inquilinos através da inacção regulatória, despeja promessas nos debates parlamentares, e despeja culpas no mercado — o mesmo mercado que regulamentou com a generosidade de quem aprova vistos gold à janela enquanto fecha a porta à classe média. A verdade insuportável é esta: Portugal não tem uma *crise* de habitação, tem uma *política* de habitação — e ela funciona exactamente como foi desenhada, só não para quem mora cá.
+
+REFERENCES:
+- Os Vistos Gold foram durante anos o elefante na sala: o Estado sabia que estavam a inflar o mercado imobiliário nas cidades, estudos diziam-no, e mesmo assim o programa só foi restringido quando a pressão europeia se tornou impossível de ignorar.
+- O fenómeno do Airbnb em Lisboa tornou-se tão sistémico que bairros históricos como Alfama e Mouraria esvaziaram de residentes permanentes — e câmaras municipais aprovavam licenças enquanto produziam relatórios sobre a necessidade de "fixar populações".
+- Os próprios serviços sociais da Assembleia da República oferecem habitação subsidiada a funcionários do Estado — um pormenor que circula com a discrição de quem sabe que é explosivo mas prefere não puxar o fio.
+- A "Lei das Rendas" de 2012 (governo Passos Coelho) prometeu liberalizar para atrair investimento; o resultado foi uma vaga de despejos que até gerou manifestações nas ruas — e hoje é citada em tribunais por senhorios que dela tiram partido duas gerações depois.
+- É lugar-comum em Lisboa ouvir alguém dizer que o seu senhorio é um fundo de investimento sediado no Luxemburgo — o que torna impossível qualquer negociação humana, mas muito eficiente qualquer processo de despejo.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+O ângulo é excecionalmente afiado e a metáfora do "despejar" é potente. A tese de que não se trata de uma crise, mas de uma política deliberada, é a verdade desconfortável que ressoa. A maioria das referências é certeira e dolorosa.
+
+No entanto, há uma omissão que enfraquece o argumento ao torná-lo menos atual do que poderia ser. O texto ignora o evento político mais significativo e recente sobre este tema: o pacote "Mais Habitação".
+
+Esta não é uma referência qualquer; é a prova viva e recente da sua tese. É o exemplo perfeito do Estado a "despejar promessas" com grande aparato mediático, apenas para entregar um labirinto de medidas complexas, contestadas e de impacto duvidoso que, para o cidadão comum, soa mais a ruído burocrático do que a uma solução.
+
+**Ação:** Substitua a referência mais anedótica — "o senhorio ser um fundo de investimento sediado no Luxemburgo" — por uma análise crítica ao "Mais Habitação". Enquanto o fundo do Luxemburgo descreve uma experiência real mas difusa, o "Mais Habitação" é um ato político concreto, assinado e carimbado pelo Estado, que encapsula perfeitamente a hipocrisia que o seu ângulo quer expor.
+
+**Sugestão para a nova referência:**
+*   O pacote "Mais Habitação", anunciado pelo governo socialista com a fanfarra de uma solução definitiva, tornou-se o exemplo máximo do despejo de promessas: um emaranhado de legislação que serviu mais para acalmar os comentadores de televisão do que para impedir a próxima renovação de contrato com um aumento de 30%.
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 2 ===
+[Framer]
+**REVIEW 1:** A revisão é cirúrgica e correcta — o "Mais Habitação" é efectivamente a prova documental da tese, não apenas uma ilustração difusa. Mas a minha primeira instinção ao substituir seria apenas trocar uma referência por outra de forma mecânica. O ângulo mais afiado é usar o "Mais Habitação" para fechar o argumento circular: o mesmo Estado que diagnosticou o problema, prescreveu o remédio, e o remédio era essencialmente um atestado médico a confirmar que o paciente está doente. A verdade mais desconfortável não é que falhou — é que foi *aprovado em Conselho de Ministros com PowerPoint e tudo* e mesmo assim não impediu um único despejo.
+
+**REVIEW 2:** Verificando todos os critérios — substituição da referência correcta (fundo do Luxemburgo → Mais Habitação) ✓, manter todas as outras referências ✓, manter o CULTURAL ANGLE sem o diluir ✓, manter o wordplay do "despejar" ✓, INCONVENIENCE activa ✓, língua portuguesa/tom sátira afiada ✓, JOKE TYPE deadpan ✓. O que posso estar a saltar: a nova referência precisa de ser mais específica — mencionar o detalhe concreto mais embaraçoso do "Mais Habitação" (a medida do arrendamento coercivo que os proprietários imediatamente contestaram nos tribunais e que gerou mais confusão do que soluções).
+
+**REVIEW 3:** A melhoria material que ainda falta: a nova referência deve conter o detalhe que mais faz squirm ao público português informado — o facto de que o "Mais Habitação" incluiu medidas que foram imediatamente suspensas ou contestadas judicialmente, e que o governo socialista apresentou como "solução histórica" aquilo que os próprios beneficiários (arrendatários) descreveram como insuficiente e os proprietários descreveram como inconstitucional. Ninguém ficou satisfeito — o que é, na verdade, a assinatura de uma medida feita para consumo mediático.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Lisboa vive uma crise de habitação de tal magnitude que já se tornou um género literário próprio — qualquer pessoa que tente arrendar um T1 na cidade sabe que vai competir com vinte candidatos, pagar dois mil euros por mês e receber, como compensação emocional, um landlord que lhe manda o Regulamento Interno em inglês. Entretanto, o Governo português pratica aquilo que só pode ser descrito como *despejar* com distinção: despeja inquilinos através da inacção regulatória, despeja promessas nos debates parlamentares, e despeja culpas no mercado — o mesmo mercado que regulamentou com a generosidade de quem aprova vistos gold à janela enquanto fecha a porta à classe média. A verdade insuportável é esta: Portugal não tem uma *crise* de habitação, tem uma *política* de habitação — e ela funciona exactamente como foi desenhada, só não para quem mora cá.
+
+REFERENCES:
+- Os Vistos Gold foram durante anos o elefante na sala: o Estado sabia que estavam a inflar o mercado imobiliário nas cidades, estudos diziam-no, e mesmo assim o programa só foi restringido quando a pressão europeia se tornou impossível de ignorar.
+- O fenómeno do Airbnb em Lisboa tornou-se tão sistémico que bairros históricos como Alfama e Mouraria esvaziaram de residentes permanentes — e câmaras municipais aprovavam licenças enquanto produziam relatórios sobre a necessidade de "fixar populações".
+- Os próprios serviços sociais da Assembleia da República oferecem habitação subsidiada a funcionários do Estado — um pormenor que circula com a discrição de quem sabe que é explosivo mas prefere não puxar o fio.
+- A "Lei das Rendas" de 2012 (governo Passos Coelho) prometeu liberalizar para atrair investimento; o resultado foi uma vaga de despejos que até gerou manifestações nas ruas — e hoje é citada em tribunais por senhorios que dela tiram partido duas gerações depois.
+- O pacote "Mais Habitação", anunciado pelo governo socialista com a solenidade de uma solução histórica, tornou-se o espécime perfeito do despejo de promessas em ambiente controlado: um emaranhado de medidas que os proprietários contestaram imediatamente nos tribunais por inconstitucionais, que os arrendatários descreveram como insuficientes, e que o governo celebrou como vitória — provando que, em Portugal, uma política de habitação bem-sucedida é aquela de que ninguém beneficia mas toda a gente já ouviu falar.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+This is exceptionally sharp, and the "Mais Habitação" reference is now a perfect, surgical dissection of policy-as-performance. The angle is strong enough to carry the piece on its own.
+
+However, one reference, while good, is not as powerful as the others in substantiating the central thesis that this is a deliberate *policy*, not just a series of hypocrisies.
+
+**WEAK REFERENCE:**
+- `Os próprios serviços sociais da Assembleia da República oferecem habitação subsidiada a funcionários do Estado — um pormenor que circula com a discrição de quem sabe que é explosivo mas prefere não puxar o fio.`
+
+**WHY IT'S WEAK:** This is an excellent detail about the self-interest and insulation of the political class. It illustrates hypocrisy. However, the core of your angle is about a systemic, national *policy* that actively engineers the housing crisis. This reference is about a comparatively small-scale perk for state employees; it’s a symptom of a caste mentality, but not a primary driver of the city-wide crisis.
+
+**PROPOSED ALTERNATIVE:**
+Replace the Assembleia da República reference with the far more systemic and large-scale phenomenon of the state selling its own assets to luxury developers. This more directly proves the angle’s claim that the state itself is the architect of the problem.
+
+**SUGGESTED REPLACEMENT:**
+- `A venda de património público a fundos privados para conversão em hotéis de luxo e condomínios fechados. O Estado, o maior proprietário do país, tornou-se o principal agente da sua própria gentrificação, vendendo o chão de todos para o benefício de alguns — uma política que não só despeja inquilinos, como despeja a própria história da cidade para uma conta na Suíça.`
+
+This alternative is stronger because it addresses a core mechanism of the crisis at a macro level, directly implicating the state not through passive hypocrisy but through active, lucrative policy decisions that physically transformed the city. It aligns perfectly with your thesis of a "política de habitação" that "funciona exactamente como foi desenhada".
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 3 ===
+[Framer]
+**REVIEW 1:** A substituição proposta é claramente superior em escala sistémica — a venda de património público é um acto de Estado, não um privilégio corporativo. Mas a minha primeira instinção seria aceitar a sugestão quase literalmente, o que seria preguiçoso. O ângulo mais afiado é especificar: não basta dizer "vendeu património" — o detalhe que faz squirm é que o Estado vendeu edifícios que *já tinham inquilinos*, ou seja, despejou pessoas para depois vender o imóvel vazio a preço de mercado. Isso transforma o Estado de vendedor passivo em despejador activo com lucro. É a diferença entre hipocrisia e predação.
+
+**REVIEW 2:** Verificando todos os critérios — substituição correcta (Assembleia → venda de património público) ✓, manter as restantes quatro referências intactas ✓, CULTURAL ANGLE inalterado ✓, wordplay do "despejar" presente e agora amplificado na nova referência ✓, INCONVENIENCE: a nova referência precisa de nomear o mecanismo concreto e não apenas o fenómeno genérico ✓, língua portuguesa/tom sátira afiada ✓, JOKE TYPE deadpan ✓. O que posso estar a saltar: a referência deve incluir um exemplo geograficamente ancorado em Lisboa para ser reconhecível pelo público-alvo — Mouraria, Bairro Alto, ou o caso concreto do património da Santa Casa ou da Misericórdia.
+
+**REVIEW 3:** A melhoria material que ainda falta: a referência mais potente não é genérica ("o Estado vendeu") mas cirúrgica — mencionar que parte deste património incluía habitação social ou arrendamento acessível que foi convertida em alojamento turístico ou habitação de luxo, o que fecha o ciclo perfeito: o Estado primeiro cria dependência de habitação pública, depois vende essa habitação, depois anuncia programas para resolver a crise que criou ao vender. O círculo fechado é a piada — e é real.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Lisboa vive uma crise de habitação de tal magnitude que já se tornou um género literário próprio — qualquer pessoa que tente arrendar um T1 na cidade sabe que vai competir com vinte candidatos, pagar dois mil euros por mês e receber, como compensação emocional, um landlord que lhe manda o Regulamento Interno em inglês. Entretanto, o Governo português pratica aquilo que só pode ser descrito como *despejar* com distinção: despeja inquilinos através da inacção regulatória, despeja promessas nos debates parlamentares, e despeja culpas no mercado — o mesmo mercado que regulamentou com a generosidade de quem aprova vistos gold à janela enquanto fecha a porta à classe média. A verdade insuportável é esta: Portugal não tem uma *crise* de habitação, tem uma *política* de habitação — e ela funciona exactamente como foi desenhada, só não para quem mora cá.
+
+REFERENCES:
+- Os Vistos Gold foram durante anos o elefante na sala: o Estado sabia que estavam a inflar o mercado imobiliário nas cidades, estudos diziam-no, e mesmo assim o programa só foi restringido quando a pressão europeia se tornou impossível de ignorar.
+- O fenómeno do Airbnb em Lisboa tornou-se tão sistémico que bairros históricos como Alfama e Mouraria esvaziaram de residentes permanentes — e câmaras municipais aprovavam licenças enquanto produziam relatórios sobre a necessidade de "fixar populações".
+- A "Lei das Rendas" de 2012 (governo Passos Coelho) prometeu liberalizar para atrair investimento; o resultado foi uma vaga de despejos que até gerou manifestações nas ruas — e hoje é citada em tribunais por senhorios que dela tiram partido duas gerações depois.
+- O Estado português, maior proprietário do país, tornou-se o principal arquitecto da sua própria gentrificação: vendeu ou cedeu sistematicamente património público — incluindo imóveis com inquilinos de rendas antigas e habitação de arrendamento acessível — a fundos privados para conversão em hotéis de luxo e condomínios fechados, despejando primeiro as pessoas e anunciando depois programas de emergência habitacional para resolver a crise que acabara de produzir com lucro.
+- O pacote "Mais Habitação", anunciado pelo governo socialista com a solenidade de uma solução histórica, tornou-se o espécime perfeito do despejo de promessas em ambiente controlado: um emaranhado de medidas que os proprietários contestaram imediatamente nos tribunais por inconstitucionais, que os arrendatários descreveram como insuficientes, e que o governo celebrou como vitória — provando que, em Portugal, uma política de habitação bem-sucedida é aquela de que ninguém beneficia mas toda a gente já ouviu falar.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

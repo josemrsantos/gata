@@ -1,0 +1,26 @@
+=== Iteration 1 ===
+[Framer]
+**REVIEW 1:** The first instinct would be to mock landlords or Airbnb generically — that's too obvious. The sharper position is to turn the mirror on the *Portuguese voter themselves*, who keeps electing governments that promise housing reform and deliver nothing, making the electorate complicit in its own homelessness. The uncomfortable truth: the crisis isn't happening *to* the Portuguese — it's being *maintained* by them through democratic inaction and nostalgia for a stability that never existed for the poor.
+
+**REVIEW 2:** Re-examining requirements — I need: (1) a CULTURAL ANGLE with satirical framing specific to Portuguese cultural context, (2) REFERENCES with cultural touchstones NOT from the news topic, (3) a WORDPLAY SCAN in vernacular Portuguese, (4) a JOKE TYPE selection, (5) the INCONVENIENCE criterion — the uncomfortable squirm — applied ruthlessly. The wordplay scan: *"casa"* (house/home) → *"não há casa que chegue"* (no house that arrives / nothing that's enough); *"renda"* (rent / surrender/yield); *"inquilino"* (tenant) → *"in-quieto-lino"*; **"renda"** is the richest — rent in Portuguese is also *surrender*, also *lace* (rendas, the traditional craft). A country famous for its *rendas* (lace) can no longer afford *renda* (rent). That's the wordplay.
+
+**REVIEW 3:** The material improvement missing: I haven't yet forced the *saudade* angle hard enough — the Portuguese cultural obsession with longing for the past is *precisely* the mechanism by which the housing crisis persists. People vote for parties that promise to preserve "the character of Lisbon" (i.e., cheap rents for some, picturesque poverty for tourists) while their children sleep on sofas in Almada. The squirm: *saudade* is not just a cultural trait — in housing policy, it is a weapon used against the poor by those who already own property and want the city frozen in amber for their asset value.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Portugal é o único país do mundo que transformou a incapacidade de pagar renda numa forma de arte — literalmente. O mesmo país que exportou as suas *rendas* de bilros como símbolo de paciência e delicadeza artesanal elegeu, legislatura após legislatura, governos com a mesma paciência e a mesma delicadeza para resolver a crise habitacional: muita laçada bonita, nenhuma estrutura que sustente o peso. Lisboa virou museu a céu aberto para turistas e fundo de investimento para não-residentes, enquanto o lisboeta original faz o percurso histórico inverso dos Descobrimentos — parte, mas desta vez para Setúbal, para Montijo, para casa dos pais aos 38 anos. A *saudade*, esse produto de exportação nacional tão mais rentável que qualquer política pública, cumpre aqui a sua função mais perversa: serve para chorar a cidade que se perdeu, sem nunca perguntar *a quem* se perdeu, *a favor de quem*, e *quem votou para que assim fosse*.
+
+REFERENCES:
+- O programa Arrendamento Acessível foi lançado com pompa em 2019 e, anos depois, tinha colocado no mercado um número de casas que cabia confortavelmente numa carrinha de mudanças — a metáfora é involuntariamente perfeita.
+- A expressão "Lisboa é uma aldeia" sempre foi dita com afeto pelos seus habitantes; hoje tem outro significado: é o único sítio desenvolvido do mundo onde se pode ser expulso da aldeia onde se nasceu por um nómada digital de Berlim a trabalhar de pijama.
+- O fado — a outra exportação cultural portuguesa — tem letras sobre perda, destino e resignação; raramente sobre senhorios. A coincidência é demasiado conveniente.
+- Fernando Medina e depois Carlos Moedas prometeram, cada um à sua maneira, "devolver Lisboa aos lisboetas" — frase que só faz sentido se alguém, em algum momento, assinou os papéis da transferência e ninguém deu por isso.
+- A geração que fez o 25 de Abril para ter direito à casa própria criou as condições legais e culturais — via desregulação do arrendamento, alojamento local e especulação tolerada — para que os seus netos não tenham direito a rigorosamente nada; o silêncio sobre esta herança é o elefante na sala de estar que já ninguém pode alugar.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

@@ -1,0 +1,57 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct would be to do obvious Farage-in-a-pub jokes or Brexit rehash. Sharper would be to frame him as the eternal protest candidate who has finally run out of things to protest against — the dog who caught the car. The satire should land on the absurdity of the premise itself: that the man whose entire brand is grievance would be undone by actually having to *govern*.
+
+REVIEW 2: Checking requirements — I need a CULTURAL ANGLE (one paragraph, satirical framing resonant with UK cultural context), REFERENCES (bullet list, short observations, cultural touchstones NOT in the news topic itself), target audience locked (UK voters/political observers), language English, tone sharp British political satire. The references must be things the audience recognises that are *not* in the news topic — so no direct Farage policy mentions, but cultural memories, shared incidents, analogies. I need to make sure the references are genuinely separate from the news topic and each is one or two sentences only.
+
+REVIEW 3: A material improvement: lean into the specifically *British* dread of this — not just "populist becomes PM" but the very particular horror of the class of man who gives a terrific speech at the pub quiz suddenly being handed the quiz sheet and the marker pen. I should also reference the British cultural tendency to promote someone until the moment they actually have to do the job — a very recognisable national pattern. I can sharpen the references to include things like "Basil Fawlty running a country" energy, or the British habit of making a protest vote and then living in it.
+
+<verdict>
+CULTURAL ANGLE: There is a very specific British nightmare that has nothing to do with ideology and everything to do with competence theatre: the man who is magnificent at *complaining* about the menu being handed the keys to the kitchen. Nigel Farage as Prime Minister is less a political proposition than a national stress dream — the logical endpoint of three decades of voters reaching for the most eloquent "none of the above" on the ballot paper, only to discover that "none of the above" has now filled in his own name and hired a press secretary. Britain has always had a weakness for the charismatic heckler, the man who makes the front bench look ridiculous from a safe distance, but the satire writes itself the moment he has to sit on it: no more Brussels to blame, no more establishment to rage against, just a red box, a leaking NHS, and the haunting realisation that the revolution does, in fact, require spreadsheets.
+
+REFERENCES:
+- Britain voted for Brexit in 2016 with the vague understanding that someone else would figure out what it actually meant — Farage as PM carries the same energy of a man who shouts "jump!" and is then surprised to find himself airborne.
+- Basil Fawlty remains the definitive British portrait of a man absolutely convinced that everyone else is the problem; the entire Fawlty Towers franchise only works because he never, even for one episode, gets to actually run things unchallenged.
+- The SDP, UKIP, the Brexit Party, and Reform are a uniquely British relay race in which the baton is perpetual outrage and the finish line keeps being moved — a tradition that functions beautifully until someone actually crosses it.
+- Harold Wilson observed that a week is a long time in politics; Farage's brand has survived largely because he has never had to survive more than a few weeks of actual governmental responsibility before a convenient resignation resets the clock.
+- The British public's relationship with Farage echoes its relationship with Keith Lemon or any number of "national characters" — entertaining at a distance, faintly alarming at close range, and absolutely not someone you'd want setting the broadband router.
+- There is a long English tradition of the gifted backbencher — the Heseltines, the Benns — whose talents shine brightest in opposition and curdle almost immediately upon contact with the dispatch box on the wrong side.
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+The cultural angle is exceptionally sharp. Framing Farage as the "man who is magnificent at *complaining* about the menu being handed the keys to the kitchen" is a perfect encapsulation of a specific British cultural anxiety. It correctly identifies that the fear isn't just political, but rooted in a deep-seated suspicion of the loudmouth finally being called upon to act. The angle is approved.
+
+However, two of the references dilute this excellent framing and can be materially improved.
+
+1.  **The Harold Wilson reference is a weak link.** "A week is a long time in politics" is a political commentator's cliché, not a cultural touchstone. It lacks the texture of your other references (Fawlty, Keith Lemon) and feels like a pull-quote from a broadsheet column. It explains a political dynamic but doesn't resonate culturally.
+    *   **Alternative:** Replace it with a reference to a definitive British fictional archetype who embodies lovable but catastrophic incompetence. For example: "The public has long treated Farage as a political Del Boy Trotter — endlessly entertaining as he promises that 'this time next year, we'll be millionaires,' but no one ever seriously expected to see him parked outside the Treasury in a three-wheeled van."
+
+2.  **The Brexit reference is too close to the subject.** While used as an analogy, referencing the central event of Farage's career to explain Farage himself is slightly tautological. The best references are analogies from *outside* the immediate political context.
+    *   **Alternative:** Replace it with a more universal, non-political British cultural habit that captures the same "be careful what you wish for" energy. For example: "Farage's rise is the political equivalent of the national pastime of complaining about Marks & Spencer changing the recipe for their Victoria sponge; it's a cathartic expression of grievance, not a genuine application to become the head of product development."
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 2 ===
+[Framer]
+REVIEW 1: The feedback is precise and I should honour it exactly. The two references to replace are identified clearly. My first instinct might be to do a light substitution — but I should make the new references genuinely sharper and more culturally embedded than the originals, not just adequate replacements. The Del Boy suggestion is a gift — I should use it but make it mine rather than just copy-pasting the reviewer's example. The M&S suggestion is also good but I can push the "be careful what you wish for" British cultural habit into something with more edge — perhaps something from the specific British tradition of TV talent shows or the "phone-in vote" culture, where the public nominates someone as a joke and then has to live with the consequences.
+
+REVIEW 2: Checking every requirement — CULTURAL ANGLE is approved, so I must not change it. I must replace exactly two references (Harold Wilson and the Brexit one). The other four references must remain. Output language English, tone sharp British political satire, wrapped in verdict tags with correct structure. References must be one or two sentences each, must be cultural touchstones NOT in the news topic. The Del Boy reference should feel like *my* voice, not a lifted example. I should check that none of the remaining four references have crept into "too close to the subject" territory now that I'm looking again — the SDP/UKIP/Brexit Party one mentions Farage's political career directly but functions as a meta-observation about British political habits rather than about Farage's policies, so it survives.
+
+REVIEW 3: A material improvement still available: the replacement for the Brexit reference can be sharpened beyond the M&S formula. A specifically *British* "be careful what you wish for" cultural moment that audiences would viscerally remember — something like the phone-in culture of early 2000s reality TV, where the British public voted in increasingly chaotic directions and then acted surprised. "The nation that voted Jedward through to the X Factor final eleven times as a collective joke" carries the precise texture of democratic mischief with unintended consequences. That is *sharper* than M&S Victoria sponge and lands harder on the "protest vote that became real" reading.
+
+<verdict>
+CULTURAL ANGLE: There is a very specific British nightmare that has nothing to do with ideology and everything to do with competence theatre: the man who is magnificent at *complaining* about the menu being handed the keys to the kitchen. Nigel Farage as Prime Minister is less a political proposition than a national stress dream — the logical endpoint of three decades of voters reaching for the most eloquent "none of the above" on the ballot paper, only to discover that "none of the above" has now filled in his own name and hired a press secretary. Britain has always had a weakness for the charismatic heckler, the man who makes the front bench look ridiculous from a safe distance, but the satire writes itself the moment he has to sit on it: no more Brussels to blame, no more establishment to rage against, just a red box, a leaking NHS, and the haunting realisation that the revolution does, in fact, require spreadsheets.
+
+REFERENCES:
+- The public has long treated Farage as a political Del Boy Trotter — eternally compelling as he promises that this time next year everything will be different — but nobody seriously budgeted for the moment he pulls up outside the Treasury in a three-wheeled van and expects to be waved through.
+- Britain is the nation that kept voting Jedward through the X Factor as a delicious act of democratic mischief, only to discover that the joke had its own momentum; the distance between "wouldn't it be funny if" and "oh God it's happening" is, historically, just a few rounds of public voting.
+- Basil Fawlty remains the definitive British portrait of a man absolutely convinced that everyone else is the problem; the entire Fawlty Towers franchise only works because he never, even for one episode, gets to actually run things unchallenged.
+- The SDP, UKIP, the Brexit Party, and Reform are a uniquely British relay race in which the baton is perpetual outrage and the finish line keeps being moved — a tradition that functions beautifully until someone actually crosses it.
+- The British public's relationship with Farage echoes its relationship with Keith Lemon or any number of "national characters" — entertaining at a distance, faintly alarming at close range, and absolutely not someone you'd want setting the broadband router.
+- There is a long English tradition of the gifted backbencher — the Heseltines, the Benns — whose talents shine brightest in opposition and curdle almost immediately upon contact with the dispatch box on the wrong side.
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

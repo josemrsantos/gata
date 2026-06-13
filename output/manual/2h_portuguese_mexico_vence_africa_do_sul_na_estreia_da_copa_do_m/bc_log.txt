@@ -1,0 +1,29 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — Too obvious / too lenient?**
+My first instinct was to show Portuguese café commentators comparing Mexico vs South Africa to Portugal's situation. That's too direct and expected. The sharper angle is to lean into the *mirror effect* — the Portuguese fan watches a game that has nothing to do with Portugal and somehow turns it into a coaching session for Rui Jorge, while the South Africans (hosts eliminated at home, as Portugal knows from 2004's emotional context) are the unspoken punchline that the Portuguese *almost* acknowledge but then pivot away from to talk about Ronaldo. The joke should make the audience laugh at themselves, not at Mexico or South Africa.
+
+**REVIEW 2 — Missed criteria?**
+- Gata: full character description must appear verbatim in every image prompt ✓
+- No human clothes/accessories on Gata ✓
+- Greyscale background, Gata in full colour ✓
+- Chalkboard heading "EM FOCO" (Portuguese equivalent of ON THE SPOT) — wait, the rule says *"ON THE SPOT" (or target-language equivalent)*. I should use a natural Portuguese equivalent like "EM DIA" or "NA MIRA" or "EM FOCO". I'll use "NA MIRA". ✓
+- Masking tape on attachments, no pins ✓
+- 1970s newsroom setting ✓
+- ALL cartoon text in Portuguese ✓
+- Deadpan register ✓
+- Situational joke type ✓
+- Two panels, progressive narrative arc ✓
+- No copyrighted characters referenced ✓
+- Caption: 1-2 sentences in Portuguese ✓
+
+**REVIEW 3 — Material improvement still possible?**
+The two panels need a genuine narrative *arc*, not just two separate jokes. The improvement: Panel 1 sets up the Portuguese fan using Mexico vs South Africa as a tactical lesson for Portugal — the chalkboard shows diagrams labeled "LIÇÃO PARA O RUI JORGE". Panel 2 delivers the punchline: the "lesson" on the board has nothing to do with Mexico or South Africa — it's entirely about Portugal in 2004, with South Africa's vuvuzela drawn on the side, and the caption notes that the real trauma was never the game, it was the sound. This creates a genuine escalation from self-importance to self-exposure, which is the sharpest angle for this audience.
+
+<verdict>{"panels":[{"scene":"Gata sits upright at a heavy metal desk in a 1970s newsroom, greyscale background, she alone in full colour (white chest and muzzle, dark grey-black tabby stripes, orange-ginger patches, small dark nose spot, dark leather collar with brass GATA nameplate). Behind her, the dark chalkboard reads 'NA MIRA' at the top in bold chalk letters. Below that, a hand-drawn tactical diagram shows two teams labelled 'MEX' and 'RSA', arrows everywhere, with a large annotation in chalk: 'LIÇÃO Nº1 PARA O RUI JORGE'. A newspaper cutout reading 'MÉXICO 1–0 ÁFRICA DO SUL' is stuck to the board with masking tape. Two greyscale background figures lean over their desks in the distance, one gesturing. Gata stares at the board with the serious expression of someone who has seen it all.","caption":"No minuto em que o árbitro apitou o fim, três homens no Sporting Café da Rua do Benformoso já tinham identificado cinco erros táticos que comprometiam diretamente a preparação de Portugal para o próximo Europeu.","beat":"setup"},{"scene":"Gata turns slightly toward the viewer, one paw resting flat on the desk, expression unchanged — the same serious, slightly tired intelligence. The chalkboard has been updated: the Mexico vs South Africa diagram is now completely erased and replaced by a single large chalk drawing of a vuvuzela with a red cross through it, labelled 'TRAUMA NACIONAL 2010', and below it, in smaller but emphatic chalk lettering: 'A ÁFRICA DO SUL JÁ PERDEU EM CASA UMA VEZ. NÓS SABEMOS O QUE É ISSO.' A second newspaper cutout, this one reading 'PORTUGAL 2004 — SEM COMENTÁRIOS', is fixed to the board with masking tape, slightly crooked. The background figures are now frozen mid-gesture, staring at the board. Gata does not look at the board. She already knows.","caption":"A análise tática ao México durou quatro minutos. A conversa sobre a vuvuzela durou até à segunda rodada de café.","beat":"punchline"}]}</verdict>
+
+<joke_explanation>O humor nasce do reconhecimento imediato: o adepto português usa qualquer jogo do mundo como espelho de Portugal, mas o que realmente emerge não é sabedoria tática — é trauma acústico e memória coletiva de 2004, expondo com precisão cirúrgica a incapacidade nacional de assistir a futebol sem o transformar em autobiografia.</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

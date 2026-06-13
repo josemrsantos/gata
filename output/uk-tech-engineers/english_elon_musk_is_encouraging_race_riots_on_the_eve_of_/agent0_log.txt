@@ -1,0 +1,25 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct might be to simply mock Musk as a tech billionaire gone rogue — too obvious. The sharper angle is the *timing* — an IPO on the eve of civil unrest he's fanning. British software engineers would appreciate the dark irony of a man whose entire brand is "move fast and break things" now apparently applying that philosophy to multicultural society itself. The IPO angle also lets us frame this as a product launch: civil disorder as a feature, not a bug.
+
+REVIEW 2: Checking all requirements — cultural angle (one paragraph ✓), references as bullet list with one or two sentences each ✓, wordplay scan needed (IPO = Initial Public Outrage? "SpaceX" vs "race riots" — "launching tensions"? "Belfast" rhymes with nothing useful but the "Good Friday Agreement" angle is rich territory for British devs who know their political history), joke type selected ✓, target audience touchstones specific to British software engineers ✓, dry British wit tone ✓, output language English ✓. I need to make the references more *specifically* resonant with British software engineers, not just British people generally — think: Stack Overflow, agile standups, FAANG culture, etc.
+
+REVIEW 3: The material improvement: I haven't fully exploited the Good Friday Agreement angle, which a British software engineer would immediately clock as the catastrophic legacy bug that Musk is casually threatening to reopen. That's the sharpest satirical read — framing the GFA as a 25-year-old patch on a legacy system that a Silicon Valley disruptor just decided to deprecate without reading the documentation. That's *perfect* for this audience.
+
+---
+
+<verdict>
+CULTURAL ANGLE: In a move that can only be described as "shipping to production on a Friday," Elon Musk has apparently decided that the eve of a SpaceX IPO — a moment when most executives would be quietly briefing institutional investors and triple-checking their prospectus — is the ideal moment to algorithmically amplify race riots in Belfast. This is, let us remember, a city whose fragile peace required twenty-five years of painstaking negotiation, several American presidents, and roughly the same number of all-hands emergency meetings as a mid-sized NHS IT migration. Musk, unburdened by this context or apparently any documentation whatsoever, has treated the Good Friday Agreement the way most senior developers treat a legacy codebase: as someone else's technical debt, ripe for disruption. The IPO, presumably, will list "social destabilisation" under "platform engagement metrics."
+
+REFERENCES:
+- The Good Friday Agreement (1998) is essentially the world's most consequential patch note — it fixed a conflict so catastrophic that British developers of a certain age remember the mainland bombing campaigns; the idea of a California tech bro casually rolling it back without a test environment is the kind of change management that gets you fired on your first week.
+- "Move fast and break things" is Facebook's retired internal motto, quietly shelved once it became clear that the "things" being broken were democracies; Musk appears to have found it in a skip and framed it above his desk.
+- British developers will recognise the specific horror of someone pushing a breaking change to main on a Friday afternoon — here, the "main branch" is a peace process and the push notification is a tweet to 180 million followers.
+- The SpaceX IPO framing recalls the well-worn City axiom that you should never let your CEO anywhere near social media during a quiet period; compliance teams across London are understood to be stress-vaping.
+- Stack Overflow's annual developer survey consistently ranks "unclear requirements from stakeholders" as the top workplace frustration — Musk has essentially become a stakeholder who has submitted a ticket reading "make Belfast worse," with priority set to Critical.
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

@@ -1,0 +1,88 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — First instinct too obvious or too lenient?**
+
+My first instinct would be to do a simple "caixão com factura" gag — too broad, too expected. The sharper position: lean into the *circular perfection* of the Cemitério dos Prazeres as a punchline — a man who spent his career promising equality died and was buried among Lisbon's aristocracy, in a cemetery whose name ("Pleasures") is itself a darkly comic irony. The real blade: the reformado who paid for all of it gets a pension letter; Soares gets a state funeral and the Prazeres. The caption should be a one-liner that cuts like a tax bill arriving on the day of a funeral — addressed to the wrong person, as always.
+
+**REVIEW 2 — Did I skip any criterion?**
+
+- ✅ Gata full character description verbatim in prompt
+- ✅ Colour palette: greyscale background, Gata in full colour (Selective Color)
+- ✅ 1970s newsroom setting
+- ✅ Board heading "ON THE SPOT" → Portuguese equivalent: "EM FOCO" — wait, the rules say *always* "ON THE SPOT" **or target-language equivalent**. The brief says ALL text in the cartoon must be in Portuguese. So the board heading must be in Portuguese. I'll use **"EM EVIDÊNCIA"** — actually the most precise equivalent of "On the Spot" in a journalistic/accountability sense is **"NO BANCO DOS RÉUS"** which is sharper satirically — but the rule says "ON THE SPOT (or target-language equivalent)" so I should keep it close: **"EM FOCO"** is clean and journalistic. Let me use **"FLAGRANTE"** — no, that's too police-blotter. I'll go with **"EM FOCO"**.
+- ✅ Masking tape (never pins)
+- ✅ No hats, glasses, pens, clothing on Gata
+- ✅ Dry caption at the bottom in Portuguese
+- ✅ No copyrighted artist/character references
+- ✅ Audience: reformados centro-direita, soarismo victims
+- ✅ Cultural context woven in — Cemitério dos Prazeres, FMI 1977, CEE 1986, pensions, PREC
+
+I need to make sure the BOARD CONTENT is specific and devastating — not generic. It should reference concrete items from the cultural context brief (FMI, quotas, reform letters from Segurança Social, Prazeres).
+
+**REVIEW 3 — What material improvement have I not yet made?**
+
+The board should function as a *dossier* — Gata's investigative work laid out. The real improvement: make the chalkboard items form a *ledger* — two columns, like an accounting balance sheet: one column "O QUE SOARES PROMETEU" / one column "O QUE O CONTRIBUINTE PAGOU." This turns the entire cartoon into an accounting joke — the reformado's language, the language of someone who kept receipts their whole life. The dry caption should be the "total" line at the bottom of the ledger — the line that was always missing from the official account. That's the sharpest version.
+
+---
+
+## CONCEITO DO CARTOON
+
+**Cena:** Sala de redacção dos anos 70. Gata está sentada a uma secretária metálica pesada, defronte de um quadro negro intitulado **"EM FOCO"**. No quadro, desenhado a giz branco em estilo minimalista, está um LIVRO DE CONTABILIDADE ABERTO — com duas colunas manuscritas:
+
+**Coluna esquerda:** *"SOARES PROMETEU"*
+— "Igualdade"
+— "Futuro socialista"
+— "Europa"
+— "O povo primeiro"
+
+**Coluna direita:** *"O CONTRIBUINTE PAGOU"*
+— FMI (1977)
+— Quotas de peixe (Bruxelas)
+— Reforma inferior ao descontado
+— Funeral de Estado (2017)
+
+Ao fundo do livro desenhado, uma linha final sublinhada duas vezes:
+**"TOTAL: Cemitério dos Prazeres"**
+*(com uma seta a apontar para a coluna do contribuinte)*
+
+Gata olha para o quadro com a expressão séria e ligeiramente exausta de quem fez as contas há muito tempo e já sabia o resultado.
+
+---
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard style, high-contrast, dry caption at the bottom. 1970s newspaper newsroom setting: fluorescent overhead lights, heavy metal desks, out-of-focus background figures in greyscale. Colour palette: entire scene in greyscale EXCEPT Gata, who is rendered in full colour (Selective Color technique).
+
+GATA — full character description, reproduce exactly: Gata is a domestic shorthair calico-tabby mix with a white chest, white muzzle, and white paws; dark grey and black tabby stripes across her body; orange and ginger patches on her back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold brass nameplate engraved with the word GATA. Her demeanour is serious, investigative, slightly tired, and highly intelligent. She never wears human clothes or accessories — no hats, no glasses, no pens, no clothing of any kind.
+
+Gata sits at a heavy metal desk, facing a large dark chalkboard. She looks at the board with the expression of someone who ran the numbers long ago and already knew the answer. Her posture is still, attentive, and faintly exhausted.
+
+THE CHALKBOARD: heading at top in large hand-drawn white chalk letters reads "EM FOCO". Below the heading, a hand-drawn open accounting ledger book, sketched in white chalk in rough charcoal-on-chalkboard style. The ledger has two visible columns:
+
+Left column header (underlined): "SOARES PROMETEU"
+Left column entries in smaller chalk handwriting:
+— "Igualdade"
+— "Futuro socialista"
+— "A Europa"
+— "O povo primeiro"
+
+Right column header (underlined): "O CONTRIBUINTE PAGOU"
+Right column entries in smaller chalk handwriting:
+— "FMI (1977)"
+— "Quotas de Bruxelas"
+— "Reforma inferior ao descontado"
+— "Funeral de Estado"
+
+Below both columns, a thick double-underline, and a final summary line written larger:
+"TOTAL: Cemitério dos Prazeres"
+with a hand-drawn chalk arrow pointing to the right column.
+
+All chalkboard text is in Portuguese. The ledger sketch is rough and hand-drawn in white chalk, consistent with the charcoal-on-chalkboard visual style. Masking tape — never pins — attaches a small torn piece of paper to the lower corner of the chalkboard; the paper reads in small chalk-style lettering: "arquivo: 1924–2017".
+
+DRY CAPTION at the bottom of the panel, in Portuguese, in clean sans-serif type against a white strip:
+
+"Quarenta anos de descontos. Uma vida de promessas. No final, os Prazeres eram só para um."
+</verdict>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

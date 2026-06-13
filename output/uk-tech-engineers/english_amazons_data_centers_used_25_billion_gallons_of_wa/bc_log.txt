@@ -1,0 +1,40 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — First instinct too obvious or too lenient?**
+
+The obvious joke is just "serverless uses water, ha." That's too soft. The sharper position: the audience *themselves* are the ones who evangelised serverless, who moved everything to Lambda, who wrote the Medium posts about eliminating infrastructure. They didn't just consume the product — they were the salespeople for it. The guilt is personal, not abstract. The cartoon should make the developer the unwitting accomplice, not just the observer.
+
+**REVIEW 2 — Skipped a criterion?**
+
+Re-examining: The board heading must be "ON THE SPOT" verbatim. Attachments use masking tape — never pins. No copyrighted characters. No clothes on Gata. Caption must be dry. ALL text in English. The "more efficient than competitors" angle must feel specifically British — the train operating company register: "things are bad, but framing is available." Also need to weave in the hosepipe ban specifically — it's the sharpest local contrast. The chalkboard sketches must be hand-drawn style. Let me ensure all of these are in the prompt.
+
+**REVIEW 3 — A material improvement still exists?**
+
+The board diagram is where the real punchline can live — not just the caption. If the board shows a "serverless architecture diagram" that ends with an arrow pointing to a tap (faucet) running into a drain labelled "water table," and the caption delivers the deadpan verdict, the joke fires on two levels simultaneously. The audience reads the board and recognises their own diagram before they've read the caption — and that recognition *is* the squirm. The caption should then land not as explanation but as verdict. Also: I should use the "hosepipe ban" contrast as the caption rather than the diagram, so both elements carry independent satirical weight.
+
+---
+
+<verdict>
+Single-panel satirical cartoon. Minimalist, high-contrast, dry British wit.
+
+GATA — full character description, mandatory and verbatim: Gata is a domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She never wears human clothes or accessories — no hats, glasses, pens, or clothing of any kind.
+
+VISUAL STYLE: Selective Color technique — Gata rendered in full natural colour (calico-tabby colouring, white chest/muzzle/paws, dark grey/black tabby stripes, orange/ginger patches, pink nose with small dark spot, dark leather collar with brass "GATA" nameplate); all background elements and environment in desaturated greyscale. Setting: a 1970s newspaper newsroom — heavy metal desks, cluttered papers, fluorescent overhead strip lighting casting flat institutional light, background figures of reporters hunched over typewriters (all greyscale). The overall style is that of a single-panel editorial cartoon with charcoal-on-chalkboard sketch elements on the board.
+
+THE BOARD: A large dark chalkboard mounted on the wall behind Gata. Bold hand-lettered chalk heading at the top reads: ON THE SPOT. Below this, a hand-drawn white chalk diagram styled as a typical software architecture diagram — boxes connected by arrows in the manner of an AWS serverless flowchart: boxes labelled "YOUR APP", "LAMBDA FUNCTION", "S3 BUCKET", "API GATEWAY", "EC2 INSTANCE (us-east-1)" — all connected by arrows in a neat, professional layout, exactly as it would appear on a developer's whiteboard presentation slide. A final bold arrow at the bottom of the diagram points downward to a roughly sketched chalk drawing of a household garden tap (faucet) dripping into a cracked, dry earth surface. Beside the tap, hand-lettered chalk text reads: 2,500,000,000 GALLONS. A small chalk label beneath the dry earth reads: "THE WATER TABLE (formerly)". In the top-right corner of the chalkboard, a smaller chalk sketch shows a wheelie bin with a hosepipe coiled beside it and a large X drawn through it, labelled "HOSEPIPE BAN: JUNE 2026". All text and labels on the board are in English. Diagrams are attached to the board with strips of masking tape — no pins anywhere.
+
+GATA'S POSITION AND EXPRESSION: Gata sits squarely in front of the chalkboard, facing the viewer directly, four paws on a grey metal desk. Her expression is composed, patient, and forensically unimpressed — the look of an investigator who has confirmed exactly what she suspected and finds no satisfaction in it. She does not gesture or point. She simply sits.
+
+CAPTION: A single line of text in a plain, dry serif font along the bottom of the panel, in English, reads:
+"Amazon confirmed its data centres used 2.5 billion gallons of water last year, and noted it was more efficient than its competitors — which is, of course, exactly what you'd want to hear from your hosepipe ban."
+
+No copyrighted characters, logos, or named artists referenced. Visual characteristics only.
+</verdict>
+
+<joke_explanation>
+The joke lands because British software engineers who spent years evangelising "serverless" and "the cloud" as clean, weightless infrastructure now find their own architecture diagrams — recognisable in every box and arrow — are simply a flowchart with a dripping tap at the bottom, and the hosepipe ban they've tutted at each summer has been quietly watering their Lambda functions the whole time; Amazon's "more efficient than competitors" defence is delivered in exactly the register of a train operator announcing record punctuality on a line that's been suspended since Tuesday.
+</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

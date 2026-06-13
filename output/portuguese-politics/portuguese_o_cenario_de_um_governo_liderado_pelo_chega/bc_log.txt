@@ -1,0 +1,69 @@
+=== Iteration 1 ===
+[Satirist]
+## Self-Review
+
+**REVIEW 1 — Too obvious / too lenient:**
+My first instinct was to draw Chega as a monster or threat — that's the obvious liberal reading. But the cultural brief demands something sharper: *the audience itself is complicit*. The uncomfortable truth isn't "Chega is dangerous" — it's "Chega is the logical product that the audience helped manufacture and now refuses to recognise as their own work." The cartoon should indict the viewer, not reassure them.
+
+**REVIEW 2 — Skipping criteria:**
+- Must use the chalkboard titled "ON THE SPOT" (or Portuguese equivalent) → "EM FOCO" or better: "EM XEQUE" or I'll use the direct translation "NO ALVO"
+- Gata: no clothes, no accessories, dark leather collar with gold nameplate "GATA" — must be verbatim in prompt
+- All text in cartoon in Portuguese
+- Masking tape on attachments, never pins
+- Greyscale background, Gata in full colour
+- Joke type: situational — the *situation* must carry the comedy, not a punchline label
+- The INCONVENIENCE rule: must make the audience squirm — the audience here are Portuguese voters/observers who celebrated the branding era
+
+**REVIEW 3 — Material improvement still available:**
+The board needs a specific visual grammar. Rather than just "Chega wins," I should construct a chalkboard that traces the causal chain visually — "Melhor Destino do Mundo" award → expulsão de residentes → Chega — making the audience see their own applause in the arrow chain. The caption should be the deadpan gut-punch. The chalkboard heading in Portuguese should be "NO ALVO" (direct translation of "ON THE SPOT"). The caption should implicate the audience directly, not describe the situation.
+
+---
+
+## Final Output
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard style, high-contrast, deadpan tone, 1970s newspaper newsroom setting.
+
+**CHARACTER — include verbatim:**
+Gata is a domestic shorthair calico-tabby mix: white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger patches on back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She never wears human clothes or accessories — no hats, glasses, pens, or clothing of any kind.
+
+**Scene:**
+Gata stands in full colour at the centre of a large dark chalkboard in a 1970s newsroom — heavy metal desks, fluorescent lights humming overhead, greyscale background figures hunched over typewriters, cigarette smoke suggested in the air. Gata faces the board, back slightly turned to the viewer, as if she has just finished drawing. Her expression is flat, exhausted, entirely unsurprised.
+
+**The chalkboard — heading: "NO ALVO" in large chalk capitals at the top.**
+
+Below the heading, a hand-drawn flowchart in crude white chalk sketches, reading left to right across three connected panels joined by thick arrows:
+
+**Panel 1 (left):** A crudely drawn trophy or star shape labelled — *"MELHOR DESTINO DO MUNDO"* — with small stick figures cheering around it and a single stick figure with a suitcase being pushed off the edge of the frame.
+
+**Arrow →**
+
+**Panel 2 (centre):** A sketch of a street (labelled *"CENTRO HISTÓRICO"*) with a door marked *"ALOJAMENTO LOCAL"* and a stick figure family standing outside with bags. Attached to the chalkboard beside this sketch, using masking tape, is a torn scrap of paper with the handwritten note: *"indicador económico positivo"* — the quotation marks drawn with deliberate irony.
+
+**Arrow →**
+
+**Panel 3 (right):** A ballot box, crudely drawn, with a single large tick visible through the slot. Above it, in large chalk letters: *"CHEGA."* No explanation. No decoration.
+
+Below the entire flowchart, underlined once in chalk: *"O produto chegou ao mercado doméstico."*
+
+**Caption at the bottom of the image, in clean Portuguese, dry and flat:**
+*"Tantos prémios de Melhor Destino do Mundo — e ninguém percebeu para quem era o destino."*
+
+**Visual style:**
+- Colour palette: greyscale throughout except Gata, who appears in full natural colour (selective colour technique)
+- Chalkboard: dark green-black, all writing in hand-drawn white chalk lettering, imperfect and authentic
+- Newsroom background: heavily textured, slightly grainy, 1970s press atmosphere
+- No copyrighted characters or referenced artists — purely described visual characteristics
+- No clothing, hats, glasses, or accessories on Gata — only her dark leather collar with gold nameplate "GATA"
+- Attachments to chalkboard use masking tape exclusively — never pins
+</verdict>
+
+<joke_explanation>
+O chiste corta porque pede ao mesmo público que partilhou os prémios de "Melhor Destino do Mundo" no Facebook que reconheça, no diagrama à sua frente, a sua própria assinatura no processo que agora lamenta — o Chega não é uma surpresa que chegou de fora, é o recibo de uma encomenda feita em casa.
+</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+
+**Critic’s Note:** This concept succeeds because it weaponizes the audience's own past vanity against them. By framing the rise of populism as the inevitable "receipt" for the gentrification and tourism-obsessed policies that the middle class cheered for, you move past the lazy "protest vote" narrative and force the reader to confront their own role in the displacement that fueled the political shift. The visual grammar—using the masking tape and the "NO ALVO" board—establishes the Gata persona as an objective, cold observer of a process the humans are too emotionally compromised to see. The irony is sharp, the visual hierarchy is clear, and the indictment is total.
+Verdict: APPROVED

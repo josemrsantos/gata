@@ -1,0 +1,53 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — Too obvious/lenient?**
+The first instinct would be a simple "chaos engineer breaks Belfast" joke. That's the surface read. The sharper position: the most uncomfortable truth isn't that Musk is reckless — it's that *the industry built the tools and the philosophy he's using*. The squirm should land on the audience, not just on Musk. The punchline should implicate the engineers watching, not just the man at the keyboard.
+
+**REVIEW 2 — Skipped criteria check:**
+- ✅ Gata in full colour, greyscale background
+- ✅ Dark leather collar, gold nameplate "GATA"
+- ✅ No human clothes/accessories on Gata
+- ✅ Chalkboard headed "ON THE SPOT"
+- ✅ Masking tape attachments
+- ✅ 1970s newsroom setting
+- ✅ Dry British wit, deadpan
+- ✅ All text in English
+- ✅ Three panels, valid JSON
+- ✅ Chaos Monkey, GFA, post-mortem, perverse metric references woven in
+- ✅ Today's date context: 12 June 2026
+- ⚠️ The "inconvenience" directive — force the most uncomfortable truth. Currently the punchline is too comfortable. The real discomfort: engineers will nod along, then open Jira and write tickets using the same engagement metrics. Fix this.
+
+**REVIEW 3 — Material improvement not yet made:**
+The three-panel arc should build to a punchline where the audience realises *they are complicit* — not as rioters, but as the people who normalised "move fast and break things" and built Chaos Monkey and A/B tested engagement loops. The final caption should make a sprint planning session feel faintly complicit. The chalkboard should carry the technical scaffolding — panel 1 establishes Belfast as a legacy system, panel 2 shows the Chaos Monkey script running, panel 3 reveals the post-mortem template, blank, scheduled for never. The unbearable detail: the post-mortem owner field reads "TBD."
+
+---
+
+<verdict>
+{
+  "panels": [
+    {
+      "scene": "Gata sits at a heavy metal desk in a 1970s fluorescent-lit newsroom, greyscale background, she in full calico-tabby colour. Behind her, a dark chalkboard headed 'ON THE SPOT' in chalk. On the board, a hand-drawn system architecture diagram labelled 'BELFAST (PROD)' showing interlocking nodes labelled 'GFA v1.0', '30 YRS UPTIME', 'LOAD-BEARING', and 'DO NOT TOUCH'. A strip of masking tape holds a small card reading 'LEGACY SYSTEM — BRITTLE'. Gata stares at the board with the expression of an engineer who has been handed someone else's undocumented codebase.",
+      "caption": "Belfast: thirty years of uptime. Negotiated in production. Backward-compatible with living memory. No unit tests. No rollback plan. Thoroughly not a greenfield deployment.",
+      "beat": "setup"
+    },
+    {
+      "scene": "Same newsroom. Gata has turned to face the viewer directly, one paw resting flat on the desk. The chalkboard now shows a second diagram: a terminal window, hand-drawn in chalk, with the command 'chaos-monkey --target=belfast-prod --metric=engagement --schedule=IPO_EVE' typed on it. A masking-tape card beneath it reads 'OPTIMISING FOR CLICKS'. In the greyscale background, blurry figures at other desks appear to be filling in sprint planning boards without looking up.",
+      "caption": "Chaos Monkey was designed with one explicit precondition: that you run it on systems *built to survive it*. This is, apparently, considered optional.",
+      "beat": "escalation"
+    },
+    {
+      "scene": "Same newsroom. Close in on Gata's face — serious, slightly tired, utterly unsurprised. The chalkboard now shows a standard post-mortem template, hand-drawn: fields for 'ROOT CAUSE', 'CONTRIBUTING FACTORS', 'LESSONS LEARNED', and 'OWNER'. Every field is blank. The OWNER field has a masking-tape label stuck over it reading 'TBD'. A second masking-tape card at the bottom of the board reads 'INDUSTRY COINED THE METHODOLOGY'. Gata's gold nameplate 'GATA' catches the fluorescent light.",
+      "caption": "The industry has a word for the document you file after this. Nobody has scheduled it. The owner field, per established tradition, reads TBD — which is also what we said about accountability when we wrote the original methodology.",
+      "beat": "punchline"
+    }
+  ]
+}
+</verdict>
+
+<joke_explanation>The joke lands because British software engineers will recognise every layer simultaneously — the Chaos Monkey misuse, the engagement-metric perversity, the unfiled post-mortem — and then, precisely at the moment of comfortable superiority, the final caption kicks the chair out from under them by noting that "move fast and break things" is not Musk's invention but the industry's own founding document, making the audience the co-authors of the methodology now running on Belfast.</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+
+The concept successfully navigates the requirement to implicate the audience. By framing the "Chaos Monkey" not as an external threat, but as a direct consequence of the industry's own "move fast and break things" dogma, you force the reader to confront their own professional complicity. The "TBD" in the post-mortem owner field is a sharp, specific detail that will resonate with any engineer who has watched a systemic failure be swept under the rug by the very people who built the architecture. The visual progression from system architecture to terminal command to the hollow post-mortem template effectively carries the narrative weight.
+Verdict: APPROVED

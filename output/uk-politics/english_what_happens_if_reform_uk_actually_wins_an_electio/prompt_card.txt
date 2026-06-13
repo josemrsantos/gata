@@ -1,0 +1,84 @@
+` tags around image prompt
+- I haven't yet written the actual concept — need to make sure the chalkboard text and caption are crisp, specific, and not too wordy for a visual medium.
+
+**REVIEW 3 — Material improvement:**
+The chalkboard diagram should do the satirical heavy lifting visually — not just say "they'd fail" but actually *map the logical trap* like an investigative flow chart. The funniest and truest version is: Reform's survival strategy has always been *not winning*. The diagram should show that the moment they win, the protest party ceases to exist and something far more terrifying — *a government* — must appear in its place. The caption should land like a coroner's conclusion. Also: I should include a small taped-on note referencing the "fag packet manifesto" or similar detail to reward close readers.
+
+---
+
+## 🗞️ GATA NEWSROOM — CARTOON CONCEPT
+
+**Headline concept:** *What Happens If Reform UK Actually Wins?*
+
+**Scene:** Gata sits on a heavy metal desk in a 1970s fluorescent-lit newsroom, facing a large dark chalkboard. She is mid-investigation, expression grave and tired. Background figures in greyscale bustle indistinctly.
+
+**Chalkboard — headed "ON THE SPOT" — contains a hand-drawn flow chart:**
+
+```
+REFORM UK WINS GENERAL ELECTION
+            ↓
+   Must now form a government
+            ↓
+   Government must do things
+            ↓
+        [LONG PAUSE]
+            ↓
+   Things turn out to be hard
+            ↓
+  No one in cabinet has done them
+            ↓
+        Who is in cabinet?
+            ↓
+  People who were very cross on TV
+            ↓
+       Still very cross. On TV.
+            ↓
+     PARTY CEASES TO HAVE PURPOSE
+            ↓
+         SEE ALSO: UKIP, 2016
+```
+
+**Taped to the board with masking tape** — a small scrap of paper reading:
+*"Full costings available. Ask at bar."*
+
+**Caption at the bottom (dry, single line):**
+> *"Winning, it turns out, was not part of the business model."*
+
+---
+
+<verdict>
+Single-panel satirical cartoon, minimalist charcoal-on-chalkboard style, high-contrast, 1970s newspaper newsroom setting. Fluorescent overhead lights, heavy metal desks, background figures rendered entirely in greyscale. Selective Color technique: everything greyscale except the central character, who is in full colour.
+
+The central character is Gata: a domestic shorthair calico-tabby mix with a white chest, muzzle, and paws; dark grey/black tabby stripes across her body; orange/ginger patches on her back. She has a small dark spot on the bridge of her pink nose. She wears a simple dark leather collar with a gold/brass nameplate engraved "GATA". Her demeanour is serious, investigative, slightly tired, and highly intelligent. She wears no human clothes or accessories of any kind — no hats, no glasses, no pens, no clothing.
+
+Gata sits on a heavy metal newsroom desk, facing a large dark chalkboard. Her expression is grave and professionally exhausted. The newsroom behind her is greyscale — background figures move indistinctly under harsh fluorescent strip lighting.
+
+The chalkboard is dark with hand-drawn white chalk illustrations. At the top, in bold hand-lettered chalk text: ON THE SPOT. Below, a vertical investigative flow chart drawn in rough chalk lines and arrows:
+
+REFORM UK WINS GENERAL ELECTION
+↓
+MUST NOW FORM A GOVERNMENT
+↓
+GOVERNMENT MUST DO THINGS
+↓
+[LONG PAUSE]
+↓
+THINGS TURN OUT TO BE HARD
+↓
+NO ONE IN CABINET HAS DONE THEM
+↓
+WHO IS IN CABINET?
+↓
+PEOPLE WHO WERE VERY CROSS ON TV
+↓
+STILL VERY CROSS. ON TV.
+↓
+PARTY CEASES TO HAVE PURPOSE
+↓
+SEE ALSO: UKIP, 2016
+
+Attached to the lower corner of the chalkboard with a strip of masking tape is a small torn scrap of paper. Written on the scrap in rough chalk-style lettering: "Full costings available. Ask at bar."
+
+Dry caption in plain text beneath the panel: "Winning, it turns out, was not part of the business model."
+
+Style: single-panel British political satire cartoon, high-contrast, flat lighting, period-accurate 1970s newsroom aesthetic, no decorative flourishes, no speech bubbles, no borders beyond the panel edge.

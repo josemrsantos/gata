@@ -1,0 +1,66 @@
+=== Iteration 1 ===
+[Framer]
+**REVIEW 1:** O primeiro instinto seria atacar o Chega de forma óbvia — fascismo, Ventura como demagogo, etc. Isso é demasiado previsível e não faz o público *squirm*. A verdade mais desconfortável é outra: são os próprios eleitores portugueses, cansados de décadas de PS/PSD, que estão ativamente a construir esta possibilidade. O desconforto real não é o Chega em si — é o espelho que ele representa para quem o habilitou.
+
+**REVIEW 2:** Verificando critérios: língua portuguesa ✓, tom de sátira política direta e incisiva ✓, WORDPLAY SCAN (ainda não fiz — vou procurar agora). "Chega" significa literalmente "enough/it's enough" mas também "chegou" (it has arrived). "Governo do Chega" = "o governo chegou" — o nome do partido é já em si um aviso ignorado. Também: "já chega" pode ser usado satiricamente para o próprio governo. JOKE TYPE ainda não determinado. REFERENCES precisam de ser touchstones portugueses específicos, não genéricos.
+
+**REVIEW 3:** Melhoria material possível: as referências precisam de incluir memória coletiva portuguesa específica — o 25 de Abril como ferida aberta, a geração que "não se esquece", e a ironia de que Portugal se orgulha de ter inventado a Revolução dos Cravos e agora pondera eleger exatamente o tipo de partido que essa revolução pretendia sepultar. Isso faz o público squirm de verdade. Vou também afiar o wordplay de "Chega" como verbo performativo.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Portugal passou cinquenta anos a guardar um cravo vermelho na lapela como prova de que nunca mais — nunca mais — deixaria entrar pela porta das traseiras aquilo que o 25 de Abril varrreu pela porta da frente. E então, com toda a solenidade democrática de quem carrega uma urna de acrílico num centro comercial, o eleitorado português foi lá e votou "Chega". O nome do partido é, em si, a piada mais cruel da história recente: porque "Chega" era suposto ser o grito contra a velha corrupção do PS e do PSD — mas agora que o cenário de governo se materializa, o país descobre que "Chega" tem duplo sentido. Chega o quê, exactamente? A alternativa — ou a conta.
+
+REFERENCES:
+- O 25 de Abril de 1974 e o slogan "Nunca Mais" tornaram-se quase uma identidade nacional; há uma geração inteira de portugueses que cresceu a ouvir que certos partidos eram "um perigo para a democracia" — frase agora reciclada com tanta frequência que perdeu o calibre.
+- A memória viva das "décadas de betão" do Estado Novo serve de combustível retórico para o Chega, que se apresenta como ruptura — ignorando que Salazar também se apresentou como a solução ao caos da Primeira República.
+- O "fenómeno Ventura" nasceu em comentários televisivos de futebol, o que significa que o potencial primeiro-ministro português foi, antes de tudo, um pundit do Benfica — e os portugueses, que levam o futebol mais a sério do que as finanças públicas, acham isso completamente normal.
+- A geringonça de 2015 foi celebrada como engenharia política genial; o seu colapso moral e eleitoral é precisamente o húmus em que o Chega cresceu — o desconforto está em admitir que a esquerda portuguesa plantou a semente que agora quer arrancar.
+- "Isto não é o meu Portugal" é a frase que circula nas redes sociais sempre que o Chega sobe nas sondagens — dita invariavelmente por pessoas que não foram votar nas últimas autárquicas.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+O ângulo é excecionalmente forte e a maior parte das referências são cirúrgicas. A análise do 25 de Abril como identidade performativa, a origem de Ventura no comentário futebolístico e a "geringonça" como húmus para o Chega são observações de calibre superior. A peça está a um passo da perfeição.
+
+O ponto fraco é a última referência:
+- `"Isto não é o meu Portugal" é a frase que circula nas redes sociais sempre que o Chega sobe nas sondagens — dita invariavelmente por pessoas que não foram votar nas últimas autárquicas.`
+
+Esta referência, embora precisa, aponta a um alvo demasiado fácil e já gasto: o "slacktivista" urbano e desligado. É um cliché da crítica política. A verdade mais desconfortável — e que fará o público-alvo contorcer-se mais — não está na hipocrisia de quem não vota, mas na hipocrisia de quem beneficia diretamente do sistema que gera o descontentamento que alimenta o Chega.
+
+**AÇÃO RECOMENDADA:**
+Substitua a última referência por uma que aponte para a elite económica e social, cuja indignação pública contrasta com a sua cumplicidade sistémica.
+
+**PROPOSTA DE REFERÊNCIA ALTERNATIVA:**
+- A elite de Lisboa que se indigna com Ventura entre garfadas de carabineiro no JNcQUOI é a mesma que lucra com um mercado imobiliário que expulsa os portugueses das cidades e um ecossistema de consultoria que prospera com o Estado que dizem querer reformar. O Chega não é o seu inimigo; é o sintoma feio da sua própria e lucrativa doença.
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 2 ===
+[Framer]
+**REVIEW 1:** A referência proposta é forte mas posso torná-la ainda mais cirúrgica. "JNcQUOI" é um touchstone reconhecível para o público-alvo, mas a referência pode ganhar mais dentada se conectar explicitamente a acumulação de privilégio com o silêncio cúmplice — não apenas o lucro imobiliário, mas também a mobilidade: a mesma elite que tem segunda casa no Alentejo, manda os filhos para universidades britânicas e faz "nesting" fiscal em NHR enquanto fala de coesão social.
+
+**REVIEW 2:** Verificando critérios: a referência deve ser um touchstone cultural/memória coletiva que o público reconheça — não apenas uma observação sociológica. O NHR (Non-Habitual Resident) é precisamente esse touchstone: um regime criado para atrair estrangeiros ricos que acabou por ser aproveitado pela própria elite portuguesa repatriada, enquanto o arrendamento subiu para valores impossíveis. É concreto, reconhecível e faz squirm porque muitos no público-alvo beneficiaram dele ou conhecem quem beneficiou.
+
+**REVIEW 3:** Melhoria material: a referência ficará mais afiada se terminar com uma inversão — a elite que financia think-tanks pró-democracia com dinheiro que não pagou impostos em Portugal. Isso fecha o loop: defendem a democracia com recursos que retiraram à democracia.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Portugal passou cinquenta anos a guardar um cravo vermelho na lapela como prova de que nunca mais — nunca mais — deixaria entrar pela porta das traseiras aquilo que o 25 de Abril varreu pela porta da frente. E então, com toda a solenidade democrática de quem carrega uma urna de acrílico num centro comercial, o eleitorado português foi lá e votou "Chega". O nome do partido é, em si, a piada mais cruel da história recente: porque "Chega" era suposto ser o grito contra a velha corrupção do PS e do PSD — mas agora que o cenário de governo se materializa, o país descobre que "Chega" tem duplo sentido. Chega o quê, exactamente? A alternativa — ou a conta.
+
+REFERENCES:
+- O 25 de Abril de 1974 e o slogan "Nunca Mais" tornaram-se quase uma identidade nacional; há uma geração inteira de portugueses que cresceu a ouvir que certos partidos eram "um perigo para a democracia" — frase agora reciclada com tanta frequência que perdeu o calibre.
+- A memória viva das "décadas de betão" do Estado Novo serve de combustível retórico para o Chega, que se apresenta como ruptura — ignorando que Salazar também se apresentou como a solução ao caos da Primeira República.
+- O "fenómeno Ventura" nasceu em comentários televisivos de futebol, o que significa que o potencial primeiro-ministro português foi, antes de tudo, um pundit do Benfica — e os portugueses, que levam o futebol mais a sério do que as finanças públicas, acham isso completamente normal.
+- A geringonça de 2015 foi celebrada como engenharia política genial; o seu colapso moral e eleitoral é precisamente o húmus em que o Chega cresceu — o desconforto está em admitir que a esquerda portuguesa plantou a semente que agora quer arrancar.
+- A elite de Lisboa que se indigna com Ventura entre garfadas de carabineiro no JNcQUOI é a mesma que passou anos a beneficiar do regime NHR — pagando impostos simbólicos enquanto o arrendamento tornava Lisboa inacessível para os eleitores que agora votam Chega — e que hoje financia think-tanks pró-democracia com fortunas construídas à margem da fiscalidade que dizem querer defender.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

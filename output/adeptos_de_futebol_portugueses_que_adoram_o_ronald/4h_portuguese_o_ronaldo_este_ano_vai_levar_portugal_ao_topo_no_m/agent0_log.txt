@@ -1,0 +1,125 @@
+=== Iteration 1 ===
+[Framer]
+**REVIEW 1:** My first instinct would be to simply celebrate Ronaldo — but the brief says "Force the most uncomfortable truth into every concept." For an audience that *adores* Ronaldo, the uncomfortable truth isn't that he's bad — it's that they've heard this exact promise before. Every World Cup cycle, this narrative resurfaces. The squirm comes from recognising the ritual of hope-and-heartbreak they keep willingly re-entering. That's sharper.
+
+**REVIEW 2:** Re-examining requirements:
+- CULTURAL ANGLE: must be satirical framing, one paragraph ✓
+- REFERENCES: cultural touchstones NOT in the news topic itself ✓
+- WORDPLAY SCAN: need to actively look for puns in Portuguese vernacular ✓ — "levar ao topo" / "levar a melhor" / "CR7" / "Selecção" / "promessa" — wordplay opportunity: "levar Portugal ao topo" vs. "levar Portugal ao trauma" is a near-rhyme and a devastating substitution. Also "CR7" → "Crer-7" (to believe, seven times). Also "Mundial" → "Mundialmente sofredor."
+- JOKE TYPE: must be selected and justified ✓
+- Tone is LOCKED as passionate/enthusiastic/admiring — the satire must live *inside* that tone, not mock it from outside. The audience must feel seen and celebrated even as they squirm. ✓
+
+**REVIEW 3:** A material improvement: the cultural references should include specific painful Portuguese World Cup memories (2006 semifinal, 2022 quarterfinal exit to Morocco) and the recurring "este é o ano" trope that Portuguese fans themselves joke about — making the satire feel like an inside joke, not an attack. Also, I can work the wordplay "levar ao topo / ao topo da dor" into the angle itself for tonal richness.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Há rituais sagrados em Portugal: o bacalhau na Consoada, o fado quando chove, e — sem falta — a profecia de que *este* é o ano em que o Ronaldo finalmente leva a Seleção ao topo do mundo. É uma tradição tão portuguesa quanto chorar a 90 minutos de glória e acordar no dia seguinte a dizer "merecíamos mais." A geração que cresceu a vê-lo marcar de livre aos 17 anos no Euro 2004, que sofreu com ele em 2006, que chorou com ele em 2022 contra Marrocos, volta — com o coração escancarado e a memória cirurgicamente removida — a acreditar. E o mais bonito? O mais perturbador? Não conseguimos fazer de outra forma. Crer-7 não é um número de camisola. É uma condição crónica, transmitida de pai para filho, sem cura conhecida, com recaída garantida a cada quatro anos.
+
+REFERENCES:
+- O Euro 2004 em casa, onde Portugal chegou à final e perdeu para a Grécia — a seleção mais improvável do torneio —, plantou nas almas portuguesas uma capacidade única de transformar derrota em poesia nacional.
+- Em 2022, o golo de Ronaldo contra o Gana (que depois se provou não ter sido dele) tornou-se símbolo perfeito do país: celebramos primeiro, investigamos depois, e nunca perdemos o entusiasmo.
+- A eliminação frente a Marrocos nos quartos de final do Mundial 2022 — Ronaldo a chorar no banco — foi partilhada em ecrãs gigantes por todo o país, prova de que os portugueses preferem sofrer em público e em conjunto.
+- "Este é o ano" é uma frase que a Rádio Renascença, a TSF e a TVI repetem desde 2006, funcionando como um mantra coletivo que, inexplicavelmente, ganha força a cada ciclo.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+Framer, this is exceptionally close. The core angle is a scalpel. Framing the nation’s belief in Ronaldo as a "condição crónica" is brilliant, and the "Crer-7" wordplay is the kind of discovery that makes a piece unforgettable. The tone is perfect — it’s an insider’s loving critique, not an outsider’s mockery. The audience will feel profoundly seen.
+
+However, a crucial element is missing from the psychological portrait, which keeps this from being definitive.
+
+**The references exclusively catalogue the pain, but they don't identify the source of the addiction: the win.**
+
+The current references (Euro 2004 loss, Morocco exit) perfectly establish the tradition of poetic suffering. But *why* do the fans keep coming back for more? Because of Euro 2016. That victory was the worst thing that could have happened to the national psyche — it provided concrete, historical proof that the prophecy *can* come true. It turned blind faith into evidence-based hope, which makes every subsequent failure feel less like a tragedy and more like a betrayal of destiny.
+
+Without the 2016 reference, the cycle is just masochism. With it, it’s a deeply rational, if painful, chase for a high they know exists.
+
+**Actionable Feedback:**
+Replace the reference to the 2022 Ghana "ghost goal." While a fun detail about the national character, it's the least essential pillar of your argument.
+
+Substitute it with a reference framed like this:
+*   **A vitória no Euro 2016, com o grito do Éder a ecoar de Paris a Bragança, foi o pior que nos podia ter acontecido: deu-nos provas. Transformou a nossa fé cega numa esperança fundamentada, tornando cada desilusão seguinte não apenas um desgosto, mas uma traição àquilo que agora sabemos ser possível.**
+
+This single change will elevate the entire piece from a sharp observation to an unassailable cultural diagnosis.
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 2 ===
+[Framer]
+**REVIEW 1:** The editor is right — Euro 2016 is the load-bearing pillar of the psychological argument. Without it, the cycle reads as pure masochism. With it, it becomes something more insidious: *rational addiction*. But my first instinct is simply to swap references mechanically. The sharper move is to make the 2016 reference do double work — it must simultaneously explain *why* they believe AND deepen the squirm by showing that the one time the prophecy came true, Ronaldo left the pitch injured in the first half and watched from the sidelines. He didn't even *play* the final. Portugal won *despite* him being absent — and yet he is still the symbol. That's the truly uncomfortable truth hiding inside 2016.
+
+**REVIEW 2:** Re-checking all requirements:
+- Remove the Ghana ghost goal reference ✓ (editor's explicit instruction)
+- Add 2016 as evidence-based hope ✓
+- WORDPLAY: "Crer-7" stays, it's the anchor ✓
+- Tone: LOCKED as passionate/enthusiastic/admiring — the 2016 addition must feel like worship, not ambush ✓
+- INCONVENIENCE: the uncomfortable truth about 2016 — that he limped off — must be in the references, it's the sharpest squirm available ✓
+- CULTURAL ANGLE: should it absorb the 2016 logic? Yes — "evidence-based hope" should appear in the paragraph itself ✓
+
+**REVIEW 3:** One material improvement remains: the CULTURAL ANGLE paragraph currently ends on "recaída garantida a cada quatro anos" which is strong but slightly expected as a closer. If I weave in the 2016 paradox — that the proof of possibility came precisely when he *wasn't* playing — the final paragraph lands with far more devastating irony while keeping the tone admiring. The audience will squirm *and* nod.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Há rituais sagrados em Portugal: o bacalhau na Consoada, o fado quando chove, e — sem falta — a profecia de que *este* é o ano em que o Ronaldo finalmente leva a Seleção ao topo do mundo. É uma tradição tão portuguesa quanto chorar a 90 minutos de glória e acordar no dia seguinte a dizer "merecíamos mais." A geração que cresceu a vê-lo marcar de livre aos 17 anos no Euro 2004, que sofreu com ele em 2006, que chorou com ele em 2022 contra Marrocos, volta — com o coração escancarado e a memória cirurgicamente removida — a acreditar. Mas atenção: isto já não é fé cega. É esperança *fundamentada*. Em 2016, o grito do Éder transformou-nos de crentes em testemunhas, e uma testemunha não pode simplesmente deixar de acreditar. Que o homem tenha saído de maca no intervalo da final não é um detalhe incómodo — é, para o adepto português, uma prova adicional da sua condição mítica. Crer-7 não é um número de camisola. É uma condição crónica, agora clinicamente documentada, com recaída garantida a cada quatro anos e sem vontade coletiva de cura.
+
+REFERENCES:
+- O Euro 2004 em casa, onde Portugal chegou à final e perdeu para a Grécia — a seleção mais improvável do torneio —, plantou nas almas portuguesas uma capacidade única de transformar derrota em poesia nacional e prometer, imediatamente, que a próxima seria diferente.
+- A vitória no Euro 2016, com o grito do Éder a ecoar de Paris a Bragança, foi o pior que nos podia ter acontecido: deu-nos provas. Transformou a fé cega numa esperança fundamentada, tornando cada desilusão seguinte não apenas um desgosto, mas uma traição àquilo que agora sabemos ser possível.
+- O detalhe que nenhum adepto gosta de ter de processar: Ronaldo saiu lesionado no intervalo da final do Euro 2016 — Portugal ganhou sem ele em campo. Em vez de abalar o mito, este facto foi absorvido como mais uma camada da lenda, provando que o adepto português tem uma capacidade digestiva para a ironia que não tem paralelo no mundo do futebol.
+- A eliminação frente a Marrocos nos quartos de final do Mundial 2022 — Ronaldo a chorar no banco — foi partilhada em ecrãs gigantes por todo o país, prova de que os portugueses preferem sofrer em público e em conjunto, e que o sofrimento partilhado é, na verdade, a segunda forma mais alta de celebração nacional.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+The angle is exceptionally sharp and the "Crer-7" wordplay is inspired. You have correctly identified the 2016 paradox as the load-bearing pillar of the entire argument, transforming the cycle from simple faith into a kind of evidence-based, tragic ritual. The tone is perfectly calibrated.
+
+Three of the four references are flawless. The fourth needs to be re-forged.
+
+**WEAK REFERENCE:** The final reference on the Morocco 2022 elimination.
+
+**WHY IT'S WEAK:** As written, it makes a powerful, standalone observation about the Portuguese embrace of shared public suffering. It's a beautiful aphorism: "o sofrimento partilhado é, na verdade, a segunda forma mais alta de celebração nacional." However, it serves as a general commentary on the national character rather than a direct, functional support for your central thesis about the *cyclical nature of the prophecy*. It describes the *symptom* (the communal crying) but fails to connect it back to the *disease* (the chronic condition of "Crer-7"). It tells us *how* they suffer, but not how that suffering guarantees the next relapse.
+
+**ACTIONABLE FEEDBACK:** The Morocco reference must be the engine that resets the cycle. The tears are not an ending; they are the ritual baptism for the *next* wave of belief. The reference should explicitly state that this moment of ultimate vulnerability and defeat is precisely what fertilizes the soil for the next prophecy.
+
+**PROPOSED ALTERNATIVE REFERENCE:**
+- A eliminação frente a Marrocos em 2022 — com Ronaldo a chorar no túnel, uma imagem que substituiu o hino nacional por 24 horas — não foi o fim de um ciclo, foi o adubo para o seguinte. O sofrimento coletivo não serviu para purgar a fé, mas para a regar. Cada lágrima partilhada foi uma promessa silenciosa de que a próxima tentativa, a redenção final, estava agora ainda mais perto.
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 3 ===
+[Framer]
+**REVIEW 1:** The editor's diagnosis is precise — the Morocco reference was functioning as a eulogy when it needed to function as a reset mechanism. My first instinct is to simply transplant the proposed alternative. But the sharper move is to ensure this reference doesn't just *describe* the cycle reset — it should make the audience squirm by implicating *them* in it. The uncomfortable truth: the fans don't just passively receive the next wave of belief — they actively *manufacture* it from their own tears. They are both the victims and the architects of the addiction.
+
+**REVIEW 2:** Re-checking all requirements:
+- CULTURAL ANGLE: still intact and absorbs the 2016 paradox ✓
+- REFERENCES: four references, three confirmed strong, one to be replaced ✓ — the replacement must connect suffering to cycle-reset, not just describe suffering ✓
+- The proposed alternative from the editor is excellent but I must make it *mine* — adding the implication that fans are active participants in their own relapse, not passive sufferers ✓
+- WORDPLAY: "Crer-7" anchor maintained ✓
+- TONE: LOCKED as passionate/admiring — the reference must feel like it honours rather than mocks the fans' capacity for self-renewal ✓
+- INCONVENIENCE: the squirm must be present — fans realising they *chose* this ✓
+
+**REVIEW 3:** One final material improvement: the Morocco reference can close with a direct callback to "Crer-7" or the "condição crónica" language from the CULTURAL ANGLE, creating a structural loop that makes the four references feel like a unified argument rather than a list. This transforms the REFERENCES section from supporting evidence into a narrative arc.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Há rituais sagrados em Portugal: o bacalhau na Consoada, o fado quando chove, e — sem falta — a profecia de que *este* é o ano em que o Ronaldo finalmente leva a Seleção ao topo do mundo. É uma tradição tão portuguesa quanto chorar a 90 minutos de glória e acordar no dia seguinte a dizer "merecíamos mais." A geração que cresceu a vê-lo marcar de livre aos 17 anos no Euro 2004, que sofreu com ele em 2006, que chorou com ele em 2022 contra Marrocos, volta — com o coração escancarado e a memória cirurgicamente removida — a acreditar. Mas atenção: isto já não é fé cega. É esperança *fundamentada*. Em 2016, o grito do Éder transformou-nos de crentes em testemunhas, e uma testemunha não pode simplesmente deixar de acreditar. Que o homem tenha saído de maca no intervalo da final não é um detalhe incómodo — é, para o adepto português, uma prova adicional da sua condição mítica. Crer-7 não é um número de camisola. É uma condição crónica, agora clinicamente documentada, com recaída garantida a cada quatro anos e sem vontade coletiva de cura.
+
+REFERENCES:
+- O Euro 2004 em casa, onde Portugal chegou à final e perdeu para a Grécia — a seleção mais improvável do torneio —, plantou nas almas portuguesas uma capacidade única de transformar derrota em poesia nacional e prometer, imediatamente, que a próxima seria diferente.
+- A vitória no Euro 2016, com o grito do Éder a ecoar de Paris a Bragança, foi o pior que nos podia ter acontecido: deu-nos provas. Transformou a fé cega numa esperança fundamentada, tornando cada desilusão seguinte não apenas um desgosto, mas uma traição àquilo que agora sabemos ser possível.
+- O detalhe que nenhum adepto gosta de ter de processar: Ronaldo saiu lesionado no intervalo da final do Euro 2016 — Portugal ganhou sem ele em campo. Em vez de abalar o mito, este facto foi absorvido como mais uma camada da lenda, provando que o adepto português tem uma capacidade digestiva para a ironia que não tem paralelo no mundo do futebol.
+- A eliminação frente a Marrocos em 2022 — com Ronaldo a chorar no túnel, uma imagem que substituiu o hino nacional por 24 horas — não foi o fim de um ciclo, foi o adubo para o seguinte. Os adeptos não esperaram pelo apito final para começar a construir a próxima narrativa de redenção: cada lágrima partilhada foi uma promessa silenciosa, auto-imposta, de que a próxima tentativa estava agora ainda mais perto. O sofrimento não purgou a fé — regou-a. E foi o próprio adepto que pegou no regador.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

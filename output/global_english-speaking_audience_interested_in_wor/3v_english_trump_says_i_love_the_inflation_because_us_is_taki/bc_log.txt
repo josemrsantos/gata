@@ -1,0 +1,29 @@
+=== Iteration 1 ===
+[Satirist]
+**REVIEW 1 — Too obvious/lenient?**
+The first instinct is to do a simple "Trump loves inflation" gag. That's too on-the-nose. The sharper angle is the *semantic inversion* mechanics — the Orwellian rebranding of a harm as a trophy. The chalkboard should function as the rhetorical machinery being exposed, not just a label for what happened. The joke should make the reader feel the *grammar* of the lie, not just note that a lie was told. The deadpan register demands Gata treat the absurdity as a solved equation, not as outrage.
+
+**REVIEW 2 — Skipped criteria?**
+- Selective Color style: Gata full colour, background greyscale ✓ must be in prompt
+- Gata's physical description must appear verbatim in every image prompt ✓
+- No pins — masking tape only ✓
+- No copyrighted characters referenced ✓
+- No human clothes/accessories on Gata ✓
+- Board heading must be "ON THE SPOT" ✓
+- Output language English, all text in cartoon in English ✓
+- Cultural context references (Orwell, Erdoğan, OPEC, Maduro) must be woven in — I need to integrate these into the visual/caption logic, not just name-drop ✓
+- Joke type: deadpan — no slapstick, no broad reactions ✓
+- 3-panel progressive arc: setup → escalation → punchline ✓
+
+**REVIEW 3 — Material improvement still missing?**
+The three panels should each carry *one* cultural reference without being encyclopedic — the escalation panel is the place to layer the Erdoğan/Maduro precedent as a "pattern recognition" beat, and the punchline should deliver the Orwellian slogan logic as the revealed conclusion. The chalkboard in panel 3 should show a finished "Ministry of Truth"-style slogan so the reader gets the full semantic inversion payoff visually, not just in caption. Also: the caption for panel 3 should be the driest, most clinical line — zero emotion, maximum devastation.
+
+---
+
+<verdict>{"panels":[{"scene":"Gata sits at a heavy metal desk in a 1970s fluorescent-lit newsroom, greyscale background, full-colour Gata — white chest, muzzle and paws, dark grey/black tabby stripes, orange/ginger patches, small dark nose-bridge spot, dark leather collar with brass 'GATA' nameplate. Behind her, a dark chalkboard headed 'ON THE SPOT' in white chalk. On the board, taped with masking tape, a hand-drawn white chalk sketch: a barrel labelled 'OIL' with a large arrow pointing INTO a wallet labelled 'PRICES UP'. Below it, in block chalk letters: 'SEIZED OIL = LOWER PRICES?' Gata stares at the board with a composed, tired expression, one paw resting on the desk.","caption":"On June 10, 2026, a sitting head of government announced he 'loves the inflation' — the same inflation his administration attributed to oil it had just seized. The chalkboard notes the direction of the arrow.","beat":"setup"},{"scene":"Same newsroom, greyscale background, Gata full colour. She has turned slightly toward the viewer, expression unchanged — neutral, clinical. The chalkboard now shows a second column of chalk sketches taped with masking tape: a crude timeline labelled 'PATTERN RECOGNITION' — three small panels within the panel: '1973: OIL WITHHELD → PRICES UP', then 'ANKARA: RATES UP → INFLATION (allegedly)', then 'CARACAS: SCARCITY = SOVEREIGNTY'. A horizontal chalk line connects all three to a single circled word at the bottom: 'PRECEDENT'. Gata's tail is still. She does not look surprised.","caption":"Students of the genre will recognise the manoeuvre: take the measurable harm, reassign its meaning, and declare the ledger closed. The precedents are well-documented and the handwriting is consistent.","beat":"escalation"},{"scene":"Same newsroom, greyscale background, Gata full colour. She has risen slightly, looking directly and flatly at the viewer. The chalkboard now shows a single large chalk inscription, centred, in the style of a Ministry wall slogan, taped at its corners with masking tape: 'INFLATION IS VICTORY'. Beneath it, in smaller chalk letters, a footnote: '(cf. War is Peace, 1949)'. Gata's expression is perfectly neutral — no raised brow, no smirk, no emotion. She offers nothing further.","caption":"The slogan required no focus group. It had already been road-tested.","beat":"punchline"}]}</verdict>
+
+<joke_explanation>For globally literate English-news readers, the punchline lands because it completes the Orwellian circuit precisely and without commentary — "INFLATION IS VICTORY" on a Ministry-style board, footnoted to 1984, exposes the rhetorical move not as a gaffe but as a recognisable, recurring technology of power, and Gata's total absence of surprise is the deadpan delivery that confirms the audience already knew.</joke_explanation>
+
+[Critic]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

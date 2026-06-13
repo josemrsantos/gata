@@ -1,0 +1,25 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct might be to simply mock Soares generically. The sharper position is to frame him as a beloved exile-hero whose actual governance produced economic consequences that the target audience (retired middle-class, centre-right) felt directly in their pensions, taxes, and cost of living — the gap between the myth and the lived reality is the satirical engine.
+
+REVIEW 2: Re-examining requirements: Cultural angle must be ONE paragraph, satirical, resonant with the specific target audience. References must be bullet points, short (1-2 sentences), NOT from the news topic itself, but cultural touchstones the audience recognises. Language: Portuguese. Tone: conservative and nostalgic irony about the socialist legacy. Target audience is retired, centre-right, middle-class Portuguese — they remember the PREC, nationalizations, the troika, their pension cuts. I must not change any of these locked parameters. ✓
+
+REVIEW 3: A material improvement: I should anchor the satire more precisely in the contrast between the romantic exile narrative (Soares as democratic martyr) and the concrete economic biography of a middle-class Portuguese reformado — someone who worked their whole life, saw their savings nationalised, watched the welfare state promise dissolve into austerity and IMF bailouts, and now collects a modest pension. The references should include specific, recognisable Portuguese cultural-political moments that this audience lived through, not generic socialist critique.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Mário Soares saiu do exílio em 1974 como herói de romance, valise na mão e discurso pronto, e os portugueses de bem receberam-no com lágrimas nos olhos e cravos na lapela — afinal, a democracia tinha chegado e com ela a promessa de um país moderno, próspero e justo. Cinquenta anos depois, o reformado de classe média que trabalhou a vida inteira, viu as suas poupanças nacionalizadas num ápice, sobreviveu ao PREC, pagou décadas de contribuições para uma Segurança Social que entretanto "reformou" as suas próprias promessas, e ainda assistiu a dois resgates da troika, pode finalmente fazer as contas: o legado do grande estadista socialista coube certinho no extrato bancário do fim do mês — algures entre o recibo da farmácia e a conta da luz. Mas claro, a estátua fica muito bem ali no Largo do Rato.
+
+REFERENCES:
+- O PREC (Processo Revolucionário em Curso, 1974-75) ficou na memória da classe média como o período em que empresas, bancos e terras foram nacionalizados "em nome do povo" — sendo que "o povo" em causa raramente era quem tinha poupado para as comprar.
+- As nacionalizações da banca de 1975 eliminaram de um dia para o outro a propriedade privada de dezenas de instituições; muitos portugueses de classe média viram carteiras de acções e contas a prazo transformarem-se em memórias afectuosas.
+- O FMI foi chamado a Portugal pela primeira vez em 1977-78, já com Soares como primeiro-ministro — a estreia de uma série que os portugueses reeditariam com sucesso em 1983 e, com grande aplauso internacional, em 2011.
+- A expressão "viver acima das nossas possibilidades" tornou-se o mantra oficial das décadas seguintes, curiosamente enunciado sempre pelos mesmos que tinham desenhado o orçamento original.
+- O Partido Socialista nasceu em Bad Münstereifel, na Alemanha, em 1973 — fundado no exílio, longe de Portugal, o que os seus críticos sempre acharam uma metáfora bastante conveniente para a relação do partido com a realidade económica nacional.
+- A "geringonça" (2015-2019), coligação de esquerda liderada pelo PS com apoio do PCP e do Bloco, foi recebida pelos reformados de centro-direita com a mesma confiança serena com que se recebe um explicador de matemática reprovado em cálculo.
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

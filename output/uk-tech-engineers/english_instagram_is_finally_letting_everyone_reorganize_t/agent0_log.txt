@@ -1,0 +1,120 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct might be to make a lazy joke about Instagram being late to the party. But the sharper angle for *British software engineers* specifically is the absurdity that this is framed as a major feature launch — when any competent developer would recognise this as a trivially simple drag-and-drop array reindex. The real satire is in the institutional hubris of a trillion-dollar company taking years to ship what a junior dev could knock out in an afternoon sprint. That's the richer vein.
+
+REVIEW 2: Let me check all requirements:
+- Cultural angle: ✓ (need to write)
+- References: ✓ bullet list, NOT from the news topic itself, culturally resonant to British devs
+- Wordplay scan: I should look for puns. "Grid" → "grid" as in National Grid (power infrastructure) — could work. "Reorder" → "order" as in command pattern in software. "Rearrange" → rearranging deckchairs on the Titanic — very British idiom, fits perfectly. Also "profile grid" → CSS Grid, which British devs would know was famously painful to implement. That's a good angle.
+- JOKE TYPE: needs to be selected and included
+- Tone locked: dry British wit ✓
+- Output language locked: English ✓
+
+REVIEW 3: The "rearranging deckchairs on the Titanic" reference is gold and I should make it structural, not just decorative. Also, I can sharpen the references by including the specific British developer experience: things like the GOV.UK design system (known for doing simple things properly), or the classic "it's just a sort" complaint. I can also reference the famous Jeff Bezos API memo as context for big-tech internal dysfunction, and perhaps the broader British cynicism about "agile" ceremonies producing nothing. Let me make sure the wordplay around CSS Grid is explicit — that's an in-group reference that lands perfectly with this audience.
+
+<verdict>
+CULTURAL ANGLE: After what Instagram's engineering org has presumably described in no fewer than fourteen Confluence pages, three cross-functional alignment meetings, and a "discovery sprint" that somehow spanned the better part of a decade, the platform has heroically shipped the ability to reorder items in an array and re-render them on screen — a feature whose core logic any British bootcamp graduate could have implemented before their lunch break at Pret. For an audience that has watched colleagues spend a Thursday afternoon building a fully functional drag-and-drop kanban board "just to see if it was possible," the announcement that Meta considers this a *wide launch* worthy of a Verge headline lands less like a product update and more like a corporate memo proudly announcing the invention of the `sort()` method. It is, in the most technically precise sense, rearranging deckchairs — and billing it as naval architecture.
+
+REFERENCES:
+- The CSS Grid specification took years to achieve broad browser support, during which developers hand-rolled float-based layouts and wept quietly — Instagram has now taken a comparable timeline to implement what CSS Grid was literally designed to make trivial.
+- The GOV.UK Design System is widely admired among British developers precisely because it does simple things simply, on time, with clear documentation — a standard that makes Instagram's nine-year journey to "move photo up" feel like a masterclass in the opposite.
+- "It's just a sort" is practically a meme in standup meetings — the phrase uttered by a stakeholder who has never opened a ticket, immediately followed by a developer silently adding two weeks to the estimate.
+- The UK's disastrous NHS Test and Trace app rollout cost £37 billion and famously struggled with basic data handling — British developers are therefore professionally sensitised to large organisations making simple software problems sound impossibly complex.
+- Stack Overflow's annual developer survey perennially shows drag-and-drop UI libraries among the most downloaded frontend tools in existence, meaning the building blocks for this feature have been freely available, documented, and dependency-free for longer than some junior developers have been alive.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+
+The proposed angle is too broad and the references are generationally misaligned for a British Gen Z audience. Conflating a general, backward-looking stereotype of British thriftiness with the specific, contemporary economic precarity of Gen Z misses the real story. This audience did not grow up with Del Boy; they grew up with austerity, Brexit, and a cost-of-living crisis. The tension isn't that an old habit has a new name; it's that their non-negotiable reality is being repackaged by a global algorithm as a cheerful, opt-in "wellness" trend.
+
+The current references would resonate with British Millennials or Gen X, for whom they represent a kind of nostalgic, folksy frugality. For Gen Z, they are museum pieces.
+
+**PROPOSED REVISED ANGLE:**
+The absurdity of "loud budgeting" for British Gen Z is not that it's a new name for an old habit, but that it frames existential financial pressure as a quirky, empowering lifestyle choice. For a generation whose social life is dictated by the price of a pint and whose housing prospects are a literal meme, the American-inflected trend of announcing "I can't afford it" with the triumphant air of a wellness guru lands as a profound category error. The story isn't "we've always done this," it's "this is just called 'surviving' here, and the lack of choice is the entire point."
+
+**PROPOSED REVISED REFERENCES:**
+-   **The Tesco Clubcard:** Not a loyalty scheme, but a non-negotiable social contract. For this audience, seeing the price drop at the till isn't a "saving," it's accessing the *actual* price of an item. Paying full price is a sign of madness or immense wealth.
+-   **Vinted/Depop Culture:** Second-hand marketplaces are not a quirky hobby for this cohort; they are the default high street. The act of "Vinted-ing" is a verb, and the thrill is less about vintage finds and more about funding a night out by selling a top you wore twice.
+-   **The Ubiquity of Monzo/Revolut Bill Splitting:** The immediate, frictionless, and surgically precise splitting of every shared cost (a single Uber, a shared pizza, a round of drinks) is a core ritual of Gen Z socialising. There is no "I'll get the next one"; there is only the immediate notification: "You paid Tom £4.71."
+-   **The "Girl Math" Trend:** This TikTok phenomenon is a native Gen Z reference that perfectly captures the complex psychological gymnastics required to justify any non-essential spending. It's a coping mechanism disguised as a joke, and far more relevant than a "whip-round."
+-   **Aldi's Middle Aisle (The "Aisle of Dreams"):** The cultural significance of the random, non-food items in Lidl and Aldi. It represents the only affordable form of spontaneous consumerism left, a treasure hunt where the prize might be a cordless drill or a surprisingly decent ski jacket for £19.99.
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 2 ===
+[Framer]
+REVIEW 1: The feedback is clear — I must abandon the previous angle entirely and rebuild around the *revised* brief. But I need to check: the news topic is **Instagram grid reordering** for **British software engineers and developers**. The NEEDS REVISION feedback and proposed revised angle appear to be about a *different* topic ("loud budgeting," Gen Z, Tesco Clubcard etc.). This is a mismatch. The locked parameters say target audience is **British software engineers and developers**, tone is **dry British wit**, and the news topic is **Instagram grid reordering**. I must not drift to the "loud budgeting" framing — that belongs to a different brief entirely. I must honour the locked parameters and make measurable progress on the *actual* brief.
+
+REVIEW 2: Re-examining all requirements explicitly:
+- News topic: Instagram profile grid reordering ✓ (must stay on this)
+- Target audience: British software engineers and developers ✓ (not Gen Z consumers)
+- Output language: English ✓
+- Tone: dry British wit ✓
+- The NEEDS REVISION feedback references a completely different topic (loud budgeting/Gen Z) — this appears to be editor feedback intended for a *different card* that has been attached here in error. My job is to make measurable progress on *this* brief, not absorb the wrong brief's feedback.
+- Measurable progress from my previous output: I need to sharpen, not repeat. My previous output was already strong on the "trivial engineering task" angle. I should push further into a *different* satirical dimension — perhaps the *product management* and *prioritisation* absurdity rather than just the engineering triviality.
+
+REVIEW 3: A material improvement: my previous angle focused on developer contempt for the feature's simplicity. A sharper, more specifically *British developer* angle would focus on the **sprint planning and agile theatre** that must have preceded this — the JIRA tickets, the stakeholder reviews, the "phased rollout" — contrasting it with the very British experience of quietly fixing something in prod without telling anyone, or the cultural norm of deprioritising UX niceties for years while calling it "technical debt." The wordplay opportunity I underused: **"grid"** as in **"gridlock"** — the feature was in gridlock. Also **"reorder"** → **"standing order"** (very British banking term). Let me build on these.
+
+<verdict>
+CULTURAL ANGLE: Instagram has formally announced — via press release, presumably following several quarters of roadmap grooming, a OKR alignment workshop, and at least one all-hands where someone described it as "democratising creative expression" — that users may now reorder the photos on their profile. The underlying operation, for anyone in the room who writes software for a living, is an index reassignment persisted to a database. It is, at an extremely charitable estimate, a two-day ticket. And yet here we are: June 2025, The Verge has filed copy, and Meta's communications team has deployed the word "freely" as though the previous constraint had been load-bearing. For British developers raised on the quiet cultural tradition of pushing a three-line fix to production on a Friday afternoon and saying nothing to anyone, the spectacle of a trillion-dollar engineering organisation doing a formal launch for `array.splice()` is not so much offensive as it is deeply, profoundly, almost meditative in its wrongness — like watching someone book a meeting to announce they've located the biscuit tin.
+
+REFERENCES:
+- The JIRA ticket that sits in the backlog for eighteen months marked "P2 — Nice to Have" before a product manager discovers it exists and reclassifies it as a Q3 strategic initiative is a foundational artefact of British developer life; this feature almost certainly has one, and it is probably still open.
+- British developer culture has a specific and well-documented contempt for the "big reveal" deploy — the unspoken professional ideal is that good work ships silently, is noticed gradually, and is never, under any circumstances, accompanied by a press release.
+- The `<details>` HTML element — which provides native browser accordion behaviour — was first proposed in 2009 and achieved baseline cross-browser support in 2020, establishing the industry benchmark for "how long a trivially simple UI feature can be technically unavailable while everyone just implements it manually anyway."
+- Heroku's free tier, beloved by British junior developers for hosting personal projects, was discontinued in 2022 — around the same time Instagram apparently began the discovery phase for drag-and-drop reordering.
+- The British government's digital transformation programme (GDS) famously operates on the principle that if a feature cannot be explained to a non-technical minister in one sentence, it is probably overengineered — "users can move their photos around" would pass this test comfortably, and GDS would have shipped it in a fortnight.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>NEEDS REVISION</verdict>
+The angle is superb — the "biscuit tin" analogy is a work of art and the focus on agile theatre is precisely the right level of gallows humour for this audience. The GDS and `<details>` element references are inspired.
+
+However, one reference dilutes the otherwise perfect focus.
+
+**WEAK REFERENCE:**
+-   **Heroku's free tier:** This reference is thematically adrift. The core angle is about the corporate ceremony surrounding a trivially simple *feature launch*. The discontinuation of Heroku's free tier is about a *business model change* and the sunsetting of a platform. While it's a legitimate grievance for the target audience, it belongs to a different conversation about the enshittification of developer tools, not the absurdity of product management theatre.
+
+**PROPOSED REPLACEMENT:**
+To sharpen the point, replace the Heroku reference with a more direct, UK-specific example of a simple, long-requested feature that became a minor saga. This reinforces the core theme of mismatched effort and user desire.
+
+Consider:
+-   **The wait for dark mode in UK high-street banking apps:** For years, a top user request for apps like Lloyds or Barclays was a simple dark mode toggle — a solved problem from a UI perspective. The multi-year delay and eventual fanfare for its arrival is a perfect parallel to the Instagram grid situation, and a shared experience for almost everyone in the target audience. It hits the notes of triviality, user demand, and corporate inertia.
+Verdict: NEEDS REVISION
+
+---
+=== Iteration 3 ===
+[Framer]
+REVIEW 1: The feedback is precise and actionable — remove Heroku, replace with the dark mode banking app reference. My risk here is simply doing a mechanical swap without ensuring the replacement reference is *as sharp* as the others. I need to make sure the dark mode banking reference is written with the same dry specificity as the GDS and `<details>` references, not just slotted in generically. The specific naming of Lloyds or Barclays (rather than vague "UK banking apps") will make it land harder for the target audience.
+
+REVIEW 2: Checking all requirements explicitly:
+- Keep all five strong references, replace only Heroku ✓
+- Cultural angle: unchanged — it was approved, must not be altered ✓
+- JOKE TYPE: deadpan — must be retained ✓
+- Wordplay scan: no new wordplay required since angle was approved, but I should verify nothing is lost ✓
+- Measurable progress: the one specific change requested must be implemented cleanly ✓
+- Output language English, tone dry British wit, target audience British software engineers ✓
+
+REVIEW 3: A material improvement beyond the mechanical swap: I can make the dark mode reference *slightly* more precise and pointed by noting that dark mode is not merely a cosmetic preference for this audience — it is considered basic ergonomic hygiene for people who stare at screens professionally. This adds a layer that makes it specifically resonate with *developers* rather than just general users, sharpening the in-group quality of the reference.
+
+<verdict>
+CULTURAL ANGLE: Instagram has formally announced — via press release, presumably following several quarters of roadmap grooming, a OKR alignment workshop, and at least one all-hands where someone described it as "democratising creative expression" — that users may now reorder the photos on their profile. The underlying operation, for anyone in the room who writes software for a living, is an index reassignment persisted to a database. It is, at an extremely charitable estimate, a two-day ticket. And yet here we are: June 2025, The Verge has filed copy, and Meta's communications team has deployed the word "freely" as though the previous constraint had been load-bearing. For British developers raised on the quiet cultural tradition of pushing a three-line fix to production on a Friday afternoon and saying nothing to anyone, the spectacle of a trillion-dollar engineering organisation doing a formal launch for `array.splice()` is not so much offensive as it is deeply, profoundly, almost meditative in its wrongness — like watching someone book a meeting to announce they've located the biscuit tin.
+
+REFERENCES:
+- The JIRA ticket that sits in the backlog for eighteen months marked "P2 — Nice to Have" before a product manager discovers it exists and reclassifies it as a Q3 strategic initiative is a foundational artefact of British developer life; this feature almost certainly has one, and it is probably still open.
+- British developer culture has a specific and well-documented contempt for the "big reveal" deploy — the unspoken professional ideal is that good work ships silently, is noticed gradually, and is never, under any circumstances, accompanied by a press release.
+- The `<details>` HTML element — which provides native browser accordion behaviour — was first proposed in 2009 and achieved baseline cross-browser support in 2020, establishing the industry benchmark for "how long a trivially simple UI feature can be technically unavailable while everyone just implements it manually anyway."
+- Barclays and Lloyds banking apps spent years fielding dark mode as a top-requested feature — a single CSS media query and a colour palette swap away from resolution — before eventually shipping it with the quiet fanfare of a product team that had apparently confused "toggle background colour" with "rewrite the rendering engine"; for developers who consider dark mode basic screen-hygiene rather than a luxury, the wait was noted.
+- The British government's digital transformation programme (GDS) famously operates on the principle that if a feature cannot be explained to a non-technical minister in one sentence, it is probably overengineered — "users can move their photos around" would pass this test comfortably, and GDS would have shipped it in a fortnight.
+
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED

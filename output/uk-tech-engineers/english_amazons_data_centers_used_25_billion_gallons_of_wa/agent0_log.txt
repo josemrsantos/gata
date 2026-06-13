@@ -1,0 +1,24 @@
+=== Iteration 1 ===
+[Framer]
+REVIEW 1: My first instinct would be to lean on the obvious "Big Tech bad, environment bad" angle — too broad, too preachy. The sharper read is the *audacity of the comparison* — Amazon claiming moral superiority over equally terrible actors, as if bragging about being the most punctual passenger on the Titanic. British engineers will appreciate the bureaucratic absurdity of a corporation publishing a number so large it's meaningless, then framing it as good news. Push harder on the workplace/developer angle: AWS is the infrastructure these engineers live in daily. They are complicit. That's the squirm.
+
+REVIEW 2: Checking all criteria — Target audience: British software engineers ✓. Output language: English ✓. Tone: dry British wit ✓. WORDPLAY SCAN: "data centers/data centres" (British spelling awareness), "the cloud" as euphemism for evaporated water — literal cloud, actual cloud — that's a strong wordplay opportunity. "Water efficiency" vs "AWS" — "A Wet Situation." Cultural touchstones needed: hosepipe bans (British summers), Ronseal ("does exactly what it says on the tin"), the British tradition of queuing/understatement. INCONVENIENCE: The uncomfortable truth must be sharpened — British developers deploy on AWS constantly; they are personally funding this water usage every time they spin up an EC2 instance. That's the knife twist. JOKE TYPE: deadpan fits best — the comedy is in stating monstrous facts in a calm, reasonable voice.
+
+REVIEW 3: The wordplay opportunity on "the cloud" is too good to leave decorative — it should be *load-bearing* in the cultural angle paragraph, not just mentioned. Also, the references list needs more specificity to British developer culture: AWS re:Invent evangelism, the "serverless" marketing language irony (it's not serverless, it's someone else's server, drinking water). I should also include the British hosepipe ban as a visceral cultural memory — something every British person has lived through — and tie it back to the fact that Amazon's data centres used enough water to fill Windermere several times over. The inconvenience sharpens: the engineers' own JIRA tickets are, quite literally, evaporating rivers.
+
+---
+
+<verdict>
+CULTURAL ANGLE: Amazon has announced, with the quiet pride of a man who's just hoovered around the dog rather than moving it, that its data centres consumed 2.5 billion gallons of water last year — and that this is, actually, fine, because Microsoft and Google used more per unit of compute. This is the "at least I'm not him" defence, delivered by a corporation whose entire brand proposition is that it is, in fact, the everything store, including apparently a significant portion of the global water table. For British software engineers — who have spent their careers being told that moving workloads "to the cloud" is clean, efficient, and vaguely ethereal — the revelation that the cloud is, in the most literal meteorological sense, made of evaporated water should land with the specific horror of realising your "serverless" architecture runs on someone else's very thirsty server. Every Lambda function, every S3 bucket, every 3am PagerDuty alert about an EC2 instance in us-east-1: billed to the water table. You didn't eliminate the server. You just outsourced the guilt, at scale, with 99.99% uptime.
+REFERENCES:
+- British hosepipe bans are a cherished national ritual — the moment each summer when a drought is declared and suburbanites are formally forbidden from watering their hanging baskets, while data centres the size of Swindon continue unimpeded. The contrast has never been more legible.
+- "Serverless" is one of the great marketing achievements in tech history — like calling a coal plant "flameless heating." British developers who've spent years evangelising it at meetups may now wish to update their slides.
+- Amazon Web Services operates an annual conference, re:Invent, held in Las Vegas — a desert city — where thousands of developers gather to hear about cloud efficiency whilst the air conditioning runs continuously and the fountains outside the Bellagio perform on the hour.
+- The British tradition of the Ronseal standard ("does exactly what it says on the tin") finds its dark mirror here: the cloud does, it turns out, do exactly what it says — it's just that what it says is "weather system requiring industrial water extraction."
+- The phrase "more efficient than our competitors" has a specific register in British culture — it's what a train operating company says after your commute takes 47 minutes longer than it did in 1987. It means: things are bad, but framing is available.
+JOKE TYPE: deadpan
+</verdict>
+
+[Resonator]
+<verdict>APPROVED</verdict>
+Verdict: APPROVED
