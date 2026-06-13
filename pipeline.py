@@ -7,25 +7,14 @@ import sys
 from dotenv import load_dotenv
 from google.genai.errors import APIError as GeminiAPIError
 
-from agents import (
-    agent_cultural_strategist,
-    agent_image_generator,
-    agent_satirist,
-    bundle_writer,
-    trend_scout,
-)
+from agents import trend_scout
 from agents.config_loader import (
     load_communities,
     load_humor_config,
     sanitize_path_segment,
 )
-from agents.types import (
-    CartoonLayout,
-    ConversationLog,
-    Headline,
-    HumorConfig,
-    StrategyBrief,
-)
+from agents.runner import run_pipeline
+from agents.types import CartoonLayout, StrategyBrief
 
 logger = logging.getLogger(__name__)
 
@@ -52,50 +41,6 @@ def _resolve_layout(args, community: object | None = None) -> CartoonLayout:
     )
     return CartoonLayout(panels=panels, direction=direction)
 
-
-def _run_pipeline(
-    topic: str,
-    seed_brief: StrategyBrief,
-    output_path: str,
-    news_headline: Headline | None = None,
-    humor: HumorConfig | None = None,
-    layout: CartoonLayout | None = None,
-) -> None:
-    """Run the full pipeline for a single topic and write the output image."""
-    agent0_log: ConversationLog | None = None
-    bc_log: ConversationLog | None = None
-    enriched_brief = None
-    concept = None
-    try:
-        enriched_brief, agent0_log = agent_cultural_strategist.run(
-            topic, seed_brief, news_brief=news_headline, humor=humor
-        )
-        concept, bc_log = agent_satirist.run(
-            topic, enriched_brief, humor=humor, layout=layout
-        )
-        logger.info("creative loop complete — calling image generator")
-        agent_image_generator.generate(
-            concept, enriched_brief, output_path, layout=layout
-        )
-        logger.info("done: cartoon saved to %s", output_path)
-    except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
-        logger.error("pipeline failed: %s", exc)
-        raise
-    finally:
-        # multi-panel: full_text is the JSON verdict
-        # single-panel: full_text equals image_prompt
-        if concept is not None:
-            has_panels = concept.panels is not None
-            image_prompt = concept.full_text if has_panels else concept.image_prompt
-        else:
-            image_prompt = None
-        bundle_writer.write_bundle(
-            output_path,
-            agent0_log,
-            bc_log,
-            enriched_brief,
-            image_prompt,
-        )
 
 
 def main() -> None:
@@ -131,11 +76,13 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
     )
-    # Explicit source log lets operators know at a glance which credential path is active
+    # Explicit source log lets operators know which credential path is active
     if found_dotenv:
         logger.info("credentials loaded from .env file")
     else:
-        logger.info("no .env file found — reading credentials from environment variables")
+        logger.info(
+            "no .env file found — reading credentials from environment variables"
+        )
     # humor.yaml is optional — absent means no comedy directives are injected
     try:
         humor = load_humor_config("humor.yaml")
@@ -198,7 +145,7 @@ def main() -> None:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         logger.info("manual mode: topic=%r, output=%r", topic, output_path)
         try:
-            _run_pipeline(topic, seed_brief, output_path, humor=humor, layout=layout)
+            run_pipeline(topic, seed_brief, output_path, humor=humor, layout=layout)
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
             sys.exit(1)
@@ -236,7 +183,7 @@ def main() -> None:
             output_path,
         )
         try:
-            _run_pipeline(topic, seed_brief, output_path, humor=humor, layout=layout)
+            run_pipeline(topic, seed_brief, output_path, humor=humor, layout=layout)
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
             sys.exit(1)
@@ -315,7 +262,7 @@ def main() -> None:
             "community=%r, topic=%r, output=%r", args.community, topic, output_path
         )
         try:
-            _run_pipeline(
+            run_pipeline(
                 topic, seed_brief, output_path, news_headline=headline, humor=humor,
                 layout=layout,
             )
@@ -358,7 +305,7 @@ def main() -> None:
             output_path,
         )
         try:
-            _run_pipeline(
+            run_pipeline(
                 topic, seed_brief, output_path, news_headline=headline, humor=humor,
                 layout=layout,
             )
