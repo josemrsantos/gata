@@ -1,5 +1,7 @@
 # Gata Newsroom
 
+[![PyPI version](https://img.shields.io/pypi/v/gata)](https://pypi.org/project/gata/)
+
 An automated multi-agent pipeline that transforms daily topics into a recurring satirical cartoon series starring **Gata**, a serious investigative calico cat who views all geopolitics through the lens of feline priorities.
 
 ## Status
@@ -40,6 +42,14 @@ All agents use prioritised model fallback chains. Both dual-loop pairs (Framer/R
 | **Explainer** | Writer, Editor | Claude (Writer) · Gemini (Editor) | Writer drafts two HTML pages (in-language for end users, English for operators); Editor approves or requests revision |
 
 ## Setup
+
+**Install from PyPI:**
+
+```bash
+pip install gata
+```
+
+**Install from source (for development):**
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
