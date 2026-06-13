@@ -1,0 +1,10 @@
+anthropic
+google-genai
+httpx
+python-dotenv
+pyyaml
+unidecode
+
+[dev]
+pytest
+ruff
