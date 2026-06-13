@@ -2,6 +2,9 @@
 name = "gata"
 version = "0.1.0"
 description = "Automated multi-agent pipeline that transforms news into satirical cartoons starring Gata"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Jose Santos", email = "josemrsantos@gmail.com" }]
 requires-python = ">=3.10"
 dependencies = [
     "anthropic",
