@@ -44,7 +44,7 @@ All agents use prioritised model fallback chains. Both dual-loop pairs (Framer/R
 ## Quick start
 
 ```bash
-pip install gata
+pipx install gata
 export ANTHROPIC_API_KEY=...
 export GEMINI_API_KEY=...
 gata "World Cup Qatar vs Swiss"
@@ -54,7 +54,15 @@ This generates three satirical cartoons from a single topic — one for the Swis
 
 ## Setup
 
-**Install from PyPI:**
+**Install from PyPI** (recommended — installs the `gata` command globally):
+
+```bash
+pipx install gata
+```
+
+If `pipx` is not installed: `sudo apt install pipx && pipx ensurepath`
+
+**Install into a virtual environment** (for use as a library or in scripts):
 
 ```bash
 pip install gata
