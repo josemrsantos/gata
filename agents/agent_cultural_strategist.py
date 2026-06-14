@@ -1,10 +1,15 @@
+import json
 import logging
 import re
+
+from google import genai
+from google.genai import types as genai_types
 
 from agents.dual_loop import DualPersonaLoop
 from agents.humor_utils import inconvenience_directive
 from agents.types import (
     AgentTelemetry,
+    AudienceProfile,
     ConversationLog,
     EnrichedBrief,
     Headline,
@@ -14,6 +19,98 @@ from agents.types import (
 )
 
 logger = logging.getLogger(__name__)
+
+_GEMINI_CLIENT: genai.Client | None = None
+
+_INFERENCE_MODEL = "gemini-2.5-flash"
+
+_AUDIENCE_INFERENCE_SYSTEM = (
+    "Given a news topic, identify the 2 to 4 most relevant audiences for satirical"
+    " cartoon coverage. For each audience consider: who would find this topic most"
+    " meaningful or funny, what language they speak, and what comedy style resonates"
+    " with their culture. If you are uncertain about comedy norms for a culture, reason"
+    " from what you know about that culture's satire traditions, popular media, and"
+    " sense of humour.\n\n"
+    "Return ONLY a valid JSON array with no preamble or markdown fences. Each element"
+    " must have exactly these string keys:\n"
+    '  "name": short lowercase slug used as a filename (e.g. "swiss", "qatar")\n'
+    '  "audience": human description (e.g. "Swiss German-speaking public")\n'
+    '  "language": the language to write the cartoon in'
+    ' (be specific, e.g. "Brazilian Portuguese")\n'
+    '  "tone": comedy style that works for this audience'
+    ' (e.g. "dry Swiss wit", "Gulf Arabic satire")\n\n'
+    "Example output:\n"
+    '[{"name":"swiss","audience":"Swiss German-speaking public",'
+    '"language":"Swiss German","tone":"dry Swiss wit"}]'
+)
+
+_AUDIENCE_FALLBACK: list[AudienceProfile] = [
+    AudienceProfile(
+        name="swiss",
+        audience="Swiss public",
+        language="Swiss German",
+        tone="dry Swiss wit",
+    ),
+    AudienceProfile(
+        name="qatar",
+        audience="Qatari public",
+        language="Arabic",
+        tone="Gulf Arabic satire",
+    ),
+    AudienceProfile(
+        name="global",
+        audience="global English-speaking public",
+        language="English",
+        tone="international wit",
+    ),
+]
+
+
+def infer_audiences(topic: str) -> list[AudienceProfile]:
+    """Infer relevant audiences for a topic via a single Gemini call.
+
+    Returns a parsed list of AudienceProfile objects. On any failure falls back
+    to _AUDIENCE_FALLBACK so the caller always receives a usable list.
+    """
+    global _GEMINI_CLIENT
+    if _GEMINI_CLIENT is None:
+        _GEMINI_CLIENT = genai.Client()
+    try:
+        response = _GEMINI_CLIENT.models.generate_content(
+            model=_INFERENCE_MODEL,
+            contents=f"News topic: {topic}",
+            config=genai_types.GenerateContentConfig(
+                system_instruction=_AUDIENCE_INFERENCE_SYSTEM,
+                temperature=0.2,
+            ),
+        )
+        # Strip markdown fences defensively before JSON parse
+        raw = response.text.strip()
+        raw = re.sub(r"^```(?:json)?\s*", "", raw)
+        raw = re.sub(r"\s*```$", "", raw)
+        parsed = json.loads(raw)
+        if not isinstance(parsed, list) or not parsed:
+            raise ValueError(f"inference returned non-list: {raw!r}")
+        profiles = []
+        for item in parsed:
+            profiles.append(AudienceProfile(
+                name=str(item.get("name", "audience")).lower().replace(" ", "_"),
+                audience=str(item.get("audience", "")),
+                language=str(item.get("language", "English")),
+                tone=str(item.get("tone", "wit")),
+            ))
+        logger.info(
+            "infer_audiences: inferred %d audiences for topic %r",
+            len(profiles),
+            topic[:60],
+        )
+        return profiles
+    except Exception as exc:
+        logger.warning(
+            "infer_audiences: failed (%s) — using fallback audience list", exc
+        )
+        return list(_AUDIENCE_FALLBACK)
+
 
 _FRAMER_MODELS = [
     "claude-sonnet-4-6",
