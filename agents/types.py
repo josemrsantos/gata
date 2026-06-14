@@ -46,6 +46,14 @@ class NewsSource:
 
 
 @dataclass
+class AudienceProfile:
+    name: str
+    audience: str
+    language: str
+    tone: str
+
+
+@dataclass
 class StrategyBrief:
     target_audience: str
     output_language: str
