@@ -4,6 +4,7 @@ import re
 from agents.dual_loop import DualPersonaLoop
 from agents.humor_utils import inconvenience_directive
 from agents.types import (
+    AgentTelemetry,
     ConversationLog,
     EnrichedBrief,
     Headline,
@@ -117,7 +118,7 @@ def run(
     seed_brief: StrategyBrief,
     news_brief: Headline | None = None,
     humor: HumorConfig | None = None,
-) -> tuple[EnrichedBrief, ConversationLog]:
+) -> tuple[EnrichedBrief, ConversationLog, AgentTelemetry]:
     framer = PersonaConfig(
         name="Framer",
         models=_FRAMER_MODELS,
@@ -165,4 +166,8 @@ def run(
         cultural_angle[:80],
         len(references),
     )
-    return enriched, loop_output.log
+    # telemetry is always populated by DualPersonaLoop; guard for safety
+    telemetry = loop_output.telemetry or AgentTelemetry(
+        agent_name="Agent 0", duration_seconds=0.0, iterations=0
+    )
+    return enriched, loop_output.log, telemetry

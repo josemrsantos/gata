@@ -1,11 +1,20 @@
 import logging
 import os
 import tempfile
+import time
 
 from google import genai
 from google.genai.errors import APIError
 
-from agents.types import CartoonConcept, CartoonLayout, PanelConcept, StrategyBrief
+from agents.types import (
+    AgentTelemetry,
+    CartoonConcept,
+    CartoonLayout,
+    PanelConcept,
+    StrategyBrief,
+    TokenUsage,
+    compute_cost,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +112,9 @@ def generate(
     brief: StrategyBrief,
     output_path: str,
     layout: CartoonLayout | None = None,
-) -> str:
+) -> tuple[str, AgentTelemetry]:
+    start = time.monotonic()
+    token_calls: list[TokenUsage] = []
     # Build the prompt: multi-panel composite when panels present, verbatim otherwise
     if concept.panels is not None and layout is not None:
         prompt = _build_multi_panel_prompt(concept.panels, layout)
@@ -166,6 +177,21 @@ def generate(
                 pass
             raise
 
-        return os.path.abspath(output_path)
+        # Image models are billed per image; record token counts as 0
+        meta = getattr(response, "usage_metadata", None)
+        in_tok = getattr(meta, "prompt_token_count", 0) or 0
+        token_calls.append(TokenUsage(
+            model=model,
+            input_tokens=in_tok,
+            output_tokens=0,
+            cost_usd=compute_cost(model, in_tok, 0),
+        ))
+        telemetry = AgentTelemetry(
+            agent_name="Image Generator",
+            duration_seconds=time.monotonic() - start,
+            iterations=1,
+            calls=token_calls,
+        )
+        return os.path.abspath(output_path), telemetry
 
     raise RuntimeError("Image generation failed: no binary data from any model")

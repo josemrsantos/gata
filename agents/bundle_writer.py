@@ -1,8 +1,9 @@
+import json
 import logging
 from pathlib import Path
 
 from agents import agent_explainer
-from agents.types import ConversationLog, EnrichedBrief
+from agents.types import ConversationLog, EnrichedBrief, RunTelemetry
 
 logger = logging.getLogger(__name__)
 
@@ -44,23 +45,23 @@ def write_bundle(
     bc_log: ConversationLog | None,
     enriched_brief: EnrichedBrief | None,
     image_prompt: str | None,
+    telemetry: RunTelemetry | None = None,
 ) -> str:
     """Create the bundle folder and write all output files. Never raises."""
     bundle_dir = Path(output_path).parent / Path(output_path).stem
     bundle_dir.mkdir(parents=True, exist_ok=True)
     logger.info("bundle_writer: writing bundle to %s", bundle_dir)
-
     # Write conversation logs
     if agent0_log is not None:
         _write_text(bundle_dir / "agent0_log.txt", format_log(agent0_log))
-
     if bc_log is not None:
         _write_text(bundle_dir / "bc_log.txt", format_log(bc_log))
-
     # Write prompt card
     if image_prompt is not None:
         _write_text(bundle_dir / "prompt_card.txt", image_prompt)
-
+    # Write telemetry when available
+    if telemetry is not None:
+        _write_text(bundle_dir / "telemetry.json", _serialise_telemetry(telemetry))
     # Generate and write HTML files when we have enough context
     if enriched_brief is not None and image_prompt is not None:
         try:
@@ -77,8 +78,38 @@ def write_bundle(
                 "bundle_writer: agent_explainer failed — HTML files not written: %s",
                 exc,
             )
-
     return str(bundle_dir)
+
+
+def _serialise_telemetry(telemetry: RunTelemetry) -> str:
+    agents = []
+    for a in telemetry.agents:
+        calls = [
+            {
+                "model": c.model,
+                "input_tokens": c.input_tokens,
+                "output_tokens": c.output_tokens,
+                "cost_usd": round(c.cost_usd, 6),
+            }
+            for c in a.calls
+        ]
+        agents.append({
+            "agent": a.agent_name,
+            "duration_seconds": round(a.duration_seconds, 2),
+            "iterations": a.iterations,
+            "total_input_tokens": a.total_input_tokens,
+            "total_output_tokens": a.total_output_tokens,
+            "total_cost_usd": round(a.total_cost_usd, 6),
+            "calls": calls,
+        })
+    doc = {
+        "total_duration_seconds": round(telemetry.total_duration_seconds, 2),
+        "total_input_tokens": telemetry.total_input_tokens,
+        "total_output_tokens": telemetry.total_output_tokens,
+        "total_cost_usd": round(telemetry.total_cost_usd, 6),
+        "agents": agents,
+    }
+    return json.dumps(doc, indent=2)
 
 
 def _write_text(path: Path, content: str) -> None:
