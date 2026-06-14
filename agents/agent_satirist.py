@@ -6,6 +6,7 @@ from datetime import date
 from agents.dual_loop import DualPersonaLoop
 from agents.humor_utils import inconvenience_directive
 from agents.types import (
+    AgentTelemetry,
     CartoonConcept,
     CartoonLayout,
     ConversationLog,
@@ -234,7 +235,7 @@ def run(
     brief: EnrichedBrief,
     humor: HumorConfig | None = None,
     layout: CartoonLayout | None = None,
-) -> tuple[CartoonConcept, ConversationLog]:
+) -> tuple[CartoonConcept, ConversationLog, AgentTelemetry]:
     satirist = PersonaConfig(
         name="Satirist",
         models=_CLAUDE_MODELS,
@@ -263,7 +264,11 @@ def run(
         len(concept.panels) if concept.panels else "single",
         brief.cultural_angle[:60],
     )
-    return concept, loop_output.log
+    # telemetry is always populated by DualPersonaLoop; guard for safety
+    telemetry = loop_output.telemetry or AgentTelemetry(
+        agent_name="B/C", duration_seconds=0.0, iterations=0
+    )
+    return concept, loop_output.log, telemetry
 
 
 def _parse_multi_panel_verdict(

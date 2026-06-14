@@ -13,6 +13,7 @@ from agents.types import (
     ConversationLog,
     Headline,
     HumorConfig,
+    RunTelemetry,
     StrategyBrief,
 )
 
@@ -32,17 +33,21 @@ def run_pipeline(
     bc_log: ConversationLog | None = None
     enriched_brief = None
     concept = None
+    telemetry = RunTelemetry()
     try:
-        enriched_brief, agent0_log = agent_cultural_strategist.run(
+        enriched_brief, agent0_log, agent0_tel = agent_cultural_strategist.run(
             topic, seed_brief, news_brief=news_headline, humor=humor
         )
-        concept, bc_log = agent_satirist.run(
+        telemetry.agents.append(agent0_tel)
+        concept, bc_log, bc_tel = agent_satirist.run(
             topic, enriched_brief, humor=humor, layout=layout
         )
+        telemetry.agents.append(bc_tel)
         logger.info("creative loop complete — calling image generator")
-        agent_image_generator.generate(
+        _image_path, image_tel = agent_image_generator.generate(
             concept, enriched_brief, output_path, layout=layout
         )
+        telemetry.agents.append(image_tel)
         logger.info("done: cartoon saved to %s", output_path)
     except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
         logger.error("pipeline failed: %s", exc)
@@ -61,4 +66,5 @@ def run_pipeline(
             bc_log,
             enriched_brief,
             image_prompt,
+            telemetry=telemetry,
         )

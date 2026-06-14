@@ -1,5 +1,30 @@
 from dataclasses import dataclass, field
 
+# Cost per million tokens (USD). Approximate — verify against provider pricing pages.
+_COST_PER_M: dict[str, tuple[float, float]] = {
+    "claude-sonnet-4-6":              (3.00,  15.00),
+    "claude-opus-4-7":                (15.00, 75.00),
+    "claude-sonnet-4-5":              (3.00,  15.00),
+    "claude-haiku-4-5-20251001":      (0.80,   4.00),
+    "gemini-2.5-pro":                 (1.25,  10.00),
+    "gemini-2.5-flash":               (0.30,   2.50),
+    "gemini-2.0-flash":               (0.10,   0.40),
+    "gemini-3.1-flash-lite":          (0.10,   0.40),
+    "gemini-3.1-pro-preview":         (1.25,  10.00),
+    # Image models are billed per image, not per token
+    "gemini-3.1-flash-image-preview": (0.0,    0.0),
+    "gemini-3.1-flash-image":         (0.0,    0.0),
+    "gemini-3-pro-image-preview":     (0.0,    0.0),
+    "gemini-3-pro-image":             (0.0,    0.0),
+    "gemini-2.5-flash-image":         (0.0,    0.0),
+}
+
+
+def compute_cost(model: str, input_tokens: int, output_tokens: int) -> float:
+    """Return estimated USD cost for one LLM call; unknown models cost 0.0."""
+    rates = _COST_PER_M.get(model, (0.0, 0.0))
+    return (input_tokens * rates[0] + output_tokens * rates[1]) / 1_000_000
+
 
 @dataclass
 class Headline:
@@ -151,6 +176,56 @@ class ConversationLog:
 
 
 @dataclass
+class TokenUsage:
+    model: str
+    input_tokens: int
+    output_tokens: int
+    cost_usd: float
+
+
+@dataclass
+class AgentTelemetry:
+    agent_name: str
+    duration_seconds: float
+    iterations: int
+    calls: list[TokenUsage] = field(default_factory=list)
+
+    @property
+    def total_input_tokens(self) -> int:
+        return sum(c.input_tokens for c in self.calls)
+
+    @property
+    def total_output_tokens(self) -> int:
+        return sum(c.output_tokens for c in self.calls)
+
+    @property
+    def total_cost_usd(self) -> float:
+        return sum(c.cost_usd for c in self.calls)
+
+
+@dataclass
+class RunTelemetry:
+    agents: list[AgentTelemetry] = field(default_factory=list)
+
+    @property
+    def total_duration_seconds(self) -> float:
+        return sum(a.duration_seconds for a in self.agents)
+
+    @property
+    def total_cost_usd(self) -> float:
+        return sum(a.total_cost_usd for a in self.agents)
+
+    @property
+    def total_input_tokens(self) -> int:
+        return sum(a.total_input_tokens for a in self.agents)
+
+    @property
+    def total_output_tokens(self) -> int:
+        return sum(a.total_output_tokens for a in self.agents)
+
+
+@dataclass
 class LoopOutput:
     verdict: str
     log: ConversationLog
+    telemetry: AgentTelemetry | None = None

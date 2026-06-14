@@ -7,7 +7,7 @@ include = ["agents*"]
 
 [project]
 name = "gata"
-version = "1.0.0"
+version = "1.1.0"
 description = "Automated multi-agent pipeline that transforms news into satirical cartoons starring Gata"
 readme = "README.md"
 license = { text = "MIT" }

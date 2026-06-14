@@ -6,7 +6,15 @@ import anthropic
 from google import genai
 from google.genai import types as genai_types
 
-from agents.types import ConversationLog, ConversationTurn, LoopOutput, PersonaConfig
+from agents.types import (
+    AgentTelemetry,
+    ConversationLog,
+    ConversationTurn,
+    LoopOutput,
+    PersonaConfig,
+    TokenUsage,
+    compute_cost,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +56,7 @@ Last reviewer feedback:
 
 def _call_model(
     model: str, system_prompt: str, messages: list[dict], max_tokens: int = 2048
-) -> str:
+) -> tuple[str, TokenUsage]:
     global _anthropic_client, _gemini_client
     if model.startswith("claude"):
         if _anthropic_client is None:
@@ -59,7 +67,16 @@ def _call_model(
             system=system_prompt,
             messages=messages,
         )
-        return response.content[0].text
+        text = response.content[0].text
+        # usage is always present on Anthropic responses
+        in_tok = getattr(response.usage, "input_tokens", 0) or 0
+        out_tok = getattr(response.usage, "output_tokens", 0) or 0
+        return text, TokenUsage(
+            model=model,
+            input_tokens=in_tok,
+            output_tokens=out_tok,
+            cost_usd=compute_cost(model, in_tok, out_tok),
+        )
     if _gemini_client is None:
         _gemini_client = genai.Client()
     # Format conversation history as a single string (consistent with agent_satirist.py)
@@ -75,7 +92,16 @@ def _call_model(
             temperature=0.2,
         ),
     )
-    return response.text
+    # usage_metadata may be absent on some Gemini models — guard defensively
+    meta = getattr(response, "usage_metadata", None)
+    in_tok = getattr(meta, "prompt_token_count", 0) or 0
+    out_tok = getattr(meta, "candidates_token_count", 0) or 0
+    return response.text, TokenUsage(
+        model=model,
+        input_tokens=in_tok,
+        output_tokens=out_tok,
+        cost_usd=compute_cost(model, in_tok, out_tok),
+    )
 
 
 def _extract_proposer_verdict(text: str) -> str:
@@ -120,7 +146,7 @@ class DualPersonaLoop:
         persona: PersonaConfig,
         messages: list[dict],
         system_prompt: str | None = None,
-    ) -> str:
+    ) -> tuple[str, TokenUsage]:
         base = system_prompt if system_prompt is not None else persona.system_prompt
         effective_system = base + self._self_review_suffix
         for model in persona.models:
@@ -143,6 +169,8 @@ class DualPersonaLoop:
         last_feedback = ""
         last_proposer_verdict = ""
         log = ConversationLog(loop_name=self._loop_name)
+        token_calls: list[TokenUsage] = []
+        iterations_run = 0
 
         for iteration in range(1, self._max_iterations + 1):
             if time.monotonic() - start > self._timeout_seconds:
@@ -157,10 +185,10 @@ class DualPersonaLoop:
                 )
             else:
                 proposer_system = self._proposer.system_prompt
-
-            proposer_response = self._call_persona(
+            proposer_response, proposer_usage = self._call_persona(
                 self._proposer, proposer_messages, system_prompt=proposer_system
             )
+            token_calls.append(proposer_usage)
             last_proposer_verdict = _extract_proposer_verdict(proposer_response)
             log.turns.append(
                 ConversationTurn(
@@ -170,13 +198,13 @@ class DualPersonaLoop:
                     verdict="",
                 )
             )
-
-            reviewer_response = self._call_persona(
+            reviewer_response, reviewer_usage = self._call_persona(
                 self._reviewer,
                 [{"role": "user", "content": proposer_response}],
             )
+            token_calls.append(reviewer_usage)
             verdict = _parse_reviewer_verdict(reviewer_response)
-
+            iterations_run = iteration
             logger.info(
                 "%s: iteration %d/%d verdict=%s",
                 self._proposer.name,
@@ -184,7 +212,6 @@ class DualPersonaLoop:
                 self._max_iterations,
                 verdict,
             )
-
             if verdict == "APPROVED":
                 log.turns.append(
                     ConversationTurn(
@@ -194,9 +221,16 @@ class DualPersonaLoop:
                         verdict="APPROVED",
                     )
                 )
-                return LoopOutput(verdict=last_proposer_verdict, log=log)
-
-            # Determine reviewer turn verdict label
+                telemetry = AgentTelemetry(
+                    agent_name=self._loop_name,
+                    duration_seconds=time.monotonic() - start,
+                    iterations=iterations_run,
+                    calls=token_calls,
+                )
+                return LoopOutput(
+                    verdict=last_proposer_verdict, log=log, telemetry=telemetry
+                )
+            # Reviewer turn verdict label differs on the final iteration
             reviewer_verdict_label = "FINAL_SAY" if is_final else "NEEDS REVISION"
             log.turns.append(
                 ConversationTurn(
@@ -206,7 +240,6 @@ class DualPersonaLoop:
                     verdict=reviewer_verdict_label,
                 )
             )
-
             last_feedback = reviewer_response
             proposer_messages.append(
                 {"role": "assistant", "content": proposer_response}
@@ -218,4 +251,10 @@ class DualPersonaLoop:
             self._proposer.name,
             self._max_iterations,
         )
-        return LoopOutput(verdict=last_proposer_verdict, log=log)
+        telemetry = AgentTelemetry(
+            agent_name=self._loop_name,
+            duration_seconds=time.monotonic() - start,
+            iterations=iterations_run,
+            calls=token_calls,
+        )
+        return LoopOutput(verdict=last_proposer_verdict, log=log, telemetry=telemetry)
