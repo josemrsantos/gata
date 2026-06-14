@@ -14,6 +14,7 @@ from agents.types import (
     EnrichedBrief,
     Headline,
     HumorConfig,
+    MoodBrief,
     PersonaConfig,
     StrategyBrief,
 )
@@ -110,6 +111,69 @@ def infer_audiences(topic: str) -> list[AudienceProfile]:
             "infer_audiences: failed (%s) — using fallback audience list", exc
         )
         return list(_AUDIENCE_FALLBACK)
+
+
+_MOOD_INFERENCE_SYSTEM = (
+    "You are a cultural analyst with real-time web access.\n"
+    "Given a news topic and a target audience, describe the current emotional mood of"
+    " that audience toward the topic. Search the web for recent reactions, commentary,"
+    " and public sentiment if needed.\n\n"
+    "Return ONLY a valid JSON object with no preamble or markdown fences:\n"
+    '  "mood_summary": one paragraph describing the current mood\n'
+    '  "emotional_posture": a short label (e.g. "defensive optimism",'
+    ' "anxious pride", "resigned cynicism")\n'
+    '  "key_triggers": array of 3-5 short strings — current cultural references,'
+    " recent events, or shared experiences that would sharpen a satirical cartoon"
+    " for this audience right now"
+)
+
+
+def infer_mood(topic: str, audience: str, language: str) -> MoodBrief | None:
+    """Return the current emotional mood of an audience toward a topic.
+
+    Uses Gemini with Google Search grounding for real-time accuracy.
+    Returns None on any failure so callers can proceed without mood context.
+    """
+    global _GEMINI_CLIENT
+    if _GEMINI_CLIENT is None:
+        _GEMINI_CLIENT = genai.Client()
+    try:
+        response = _GEMINI_CLIENT.models.generate_content(
+            model=_INFERENCE_MODEL,
+            contents=(
+                f"Topic: {topic}\n"
+                f"Audience: {audience}\n"
+                f"Language: {language}"
+            ),
+            config=genai_types.GenerateContentConfig(
+                system_instruction=_MOOD_INFERENCE_SYSTEM,
+                tools=[genai_types.Tool(google_search=genai_types.GoogleSearch())],
+                temperature=0.2,
+            ),
+        )
+        # Strip markdown fences defensively before JSON parse
+        raw = response.text.strip()
+        raw = re.sub(r"^```(?:json)?\s*", "", raw)
+        raw = re.sub(r"\s*```$", "", raw)
+        parsed = json.loads(raw)
+        triggers = parsed.get("key_triggers", [])
+        if not isinstance(triggers, list):
+            triggers = []
+        mood = MoodBrief(
+            mood_summary=str(parsed.get("mood_summary", "")),
+            emotional_posture=str(parsed.get("emotional_posture", "")),
+            key_triggers=[str(t) for t in triggers],
+        )
+        logger.info(
+            "infer_mood: posture=%r triggers=%d for audience=%r",
+            mood.emotional_posture,
+            len(mood.key_triggers),
+            audience,
+        )
+        return mood
+    except Exception as exc:
+        logger.warning("infer_mood: failed (%s) — proceeding without mood context", exc)
+        return None
 
 
 _FRAMER_MODELS = [
@@ -235,8 +299,19 @@ def run(
         if news_brief.abstract:
             parts.append(f"Summary: {news_brief.abstract}")
         news_context = "\n" + "\n".join(parts)
+    # Infer current mood before building the initial input — failure is non-fatal
+    mood = infer_mood(topic, seed_brief.target_audience, seed_brief.output_language)
+    mood_context = ""
+    if mood:
+        trigger_lines = "\n".join(f"- {t}" for t in mood.key_triggers)
+        mood_context = (
+            f"\n\nCURRENT MOOD (use this to sharpen the cultural angle):\n"
+            f"{mood.mood_summary}\n"
+            f"Emotional posture: {mood.emotional_posture}\n"
+            f"Key cultural triggers:\n{trigger_lines}"
+        )
     initial_input = (
-        f"News topic: {topic}{news_context}\n\n"
+        f"News topic: {topic}{news_context}{mood_context}\n\n"
         f"Target audience: {seed_brief.target_audience}\n"
         f"Output language: {seed_brief.output_language}\n"
         f"Tone: {seed_brief.tone}"

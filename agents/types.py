@@ -46,6 +46,13 @@ class NewsSource:
 
 
 @dataclass
+class MoodBrief:
+    mood_summary: str
+    emotional_posture: str
+    key_triggers: list[str]
+
+
+@dataclass
 class AudienceProfile:
     name: str
     audience: str
