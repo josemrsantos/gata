@@ -41,6 +41,17 @@ All agents use prioritised model fallback chains. Both dual-loop pairs (Framer/R
 | **Image Generator** | — | Gemini image models | Renders the approved image prompt into a PNG; tries up to 5 models in order before failing |
 | **Explainer** | Writer, Editor | Claude (Writer) · Gemini (Editor) | Writer drafts two HTML pages (in-language for end users, English for operators); Editor approves or requests revision |
 
+## Quick start
+
+```bash
+pip install gata
+export ANTHROPIC_API_KEY=...
+export GEMINI_API_KEY=...
+gata "World Cup Qatar vs Swiss"
+```
+
+This generates three satirical cartoons from a single topic — one for the Swiss public (Swiss German), one for the Qatari public (Arabic), and one for a global English audience — saved to a subdirectory of your working directory.
+
 ## Setup
 
 **Install from PyPI:**
@@ -98,7 +109,17 @@ env:
   NEWSAPI_ORG_KEY: ${{ secrets.NEWSAPI_ORG_KEY }}
 ```
 
-## Usage
+## `gata` command
+
+```bash
+# Generate 3 audience-adapted images from a single topic
+gata "World Cup Qatar vs Swiss"
+# → saves swiss.png, qatar.png, global.png to ./world_cup_qatar_vs_swiss/
+```
+
+Output folder: `{cwd}/{topic_slug}/` containing three PNGs and a bundle folder per image (logs, HTML explanation, prompt card).
+
+## `pipeline.py` — advanced usage
 
 ```bash
 # Named community (exact match in communities.yaml; topic selected by Trend Scout)

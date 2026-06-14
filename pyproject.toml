@@ -7,7 +7,7 @@ include = ["agents*"]
 
 [project]
 name = "gata"
-version = "0.1.1"
+version = "1.0.0"
 description = "Automated multi-agent pipeline that transforms news into satirical cartoons starring Gata"
 readme = "README.md"
 license = { text = "MIT" }
@@ -21,6 +21,9 @@ dependencies = [
     "pyyaml",
     "unidecode",
 ]
+
+[project.scripts]
+gata = "agents.cli:main"
 
 [project.optional-dependencies]
 dev = [
