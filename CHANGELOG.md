@@ -1,7 +1,23 @@
 # CHANGELOG
 
 
+## v1.5.0 (2026-06-16)
+
+### Features
+
+* feat: reduce default audience inference to single main audience + UK
+
+Previously generated 2–4 images per topic run; now generates one image
+for the most relevant inferred audience plus one for the UK public.
+Cuts API cost and run time roughly in half for the typical single-post use case.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`40dbbbe`](https://github.com/josemrsantos/gata/commit/40dbbbede53662a818cdc4b47cca0c20bfd2f2b8))
+
+
 ## v1.4.0 (2026-06-16)
+
+
+## v1.5.1 (2026-06-16)
 
 ### Bug Fixes
 
