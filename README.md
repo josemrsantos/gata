@@ -174,6 +174,10 @@ Each bundle contains:
 - `explanation.html` — in-language explanation of the joke for end users
 - `deep_dive_en.html` — English operator deep-dive (news context, cultural references, satirical logic)
 - `prompt_card.txt` — verbatim image prompt for standalone reuse
+- `telemetry.json` — per-agent timing, token counts, and cost (machine-readable)
+- `summary.txt` — per-agent time, iterations, and cost, plus a run total (human-readable)
+
+Running `gata <topic>` also writes a top-level `{output_dir}/summary.txt` aggregating time and cost across every audience generated for that topic.
 
 ## Communities
 

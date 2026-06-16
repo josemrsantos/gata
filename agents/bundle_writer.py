@@ -39,6 +39,21 @@ def format_log(log: ConversationLog) -> str:
     return "\n---\n".join(sections)
 
 
+def format_summary(telemetry: RunTelemetry) -> str:
+    """Human-readable rollup: one line per agent, then a TOTAL line."""
+    lines = [
+        f"{a.agent_name}: {a.duration_seconds:.1f}s"
+        f" — {a.iterations} iteration(s) — ${a.total_cost_usd:.4f}"
+        for a in telemetry.agents
+    ]
+    lines.append("")
+    lines.append(
+        f"TOTAL: {telemetry.total_duration_seconds:.1f}s"
+        f" — ${telemetry.total_cost_usd:.4f}"
+    )
+    return "\n".join(lines)
+
+
 def write_bundle(
     output_path: str,
     agent0_log: ConversationLog | None,
@@ -62,6 +77,7 @@ def write_bundle(
     # Write telemetry when available
     if telemetry is not None:
         _write_text(bundle_dir / "telemetry.json", _serialise_telemetry(telemetry))
+        _write_text(bundle_dir / "summary.txt", format_summary(telemetry))
     # Generate and write HTML files when we have enough context
     if enriched_brief is not None and image_prompt is not None:
         try:

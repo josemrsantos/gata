@@ -1,6 +1,12 @@
 from unittest.mock import patch
 
-from agents.types import ConversationLog, ConversationTurn
+from agents.types import (
+    AgentTelemetry,
+    ConversationLog,
+    ConversationTurn,
+    RunTelemetry,
+    TokenUsage,
+)
 
 
 def _make_log(loop_name: str, n_iterations: int = 2) -> ConversationLog:
@@ -321,3 +327,100 @@ def test_write_bundle_skips_prompt_card_when_none(tmp_path):
     output_path = str(tmp_path / "cartoon.png")
     write_bundle(output_path, _make_log("Agent 0"), _make_log("B/C"), None, None)
     assert not (tmp_path / "cartoon" / "prompt_card.txt").exists()
+
+
+# -- format_summary: human-readable telemetry rollup --
+
+
+def _make_telemetry() -> RunTelemetry:
+    agent0 = AgentTelemetry(
+        agent_name="Agent 0",
+        duration_seconds=18.3,
+        iterations=2,
+        calls=[TokenUsage(model="claude-sonnet-4-6", input_tokens=900,
+                           output_tokens=350, cost_usd=0.008)],
+    )
+    image_gen = AgentTelemetry(
+        agent_name="Image Generator", duration_seconds=5.0, iterations=1
+    )
+    return RunTelemetry(agents=[agent0, image_gen])
+
+
+def test_format_summary_lists_each_agent_by_name():
+    # Every agent that ran must appear by name so the operator can see where the
+    # time and cost went without opening telemetry.json.
+    from agents.bundle_writer import format_summary
+
+    text = format_summary(_make_telemetry())
+    assert "Agent 0" in text
+    assert "Image Generator" in text
+
+
+def test_format_summary_includes_per_agent_duration_and_iterations():
+    # The per-agent line must show duration and iteration count, the two numbers an
+    # operator needs to spot a slow or looping agent.
+    from agents.bundle_writer import format_summary
+
+    text = format_summary(_make_telemetry())
+    assert "18.3s" in text
+    assert "2 iteration(s)" in text
+
+
+def test_format_summary_includes_per_agent_cost():
+    # The per-agent line must show its cost so the operator can see which agent is
+    # driving the bill, not just the total.
+    from agents.bundle_writer import format_summary
+
+    text = format_summary(_make_telemetry())
+    assert "$0.0080" in text
+
+
+def test_format_summary_includes_total_line():
+    # A TOTAL line summing duration and cost across all agents is the headline number
+    # for an announcement post — it must be present and correct.
+    from agents.bundle_writer import format_summary
+
+    text = format_summary(_make_telemetry())
+    assert "TOTAL: 23.3s" in text
+    assert "$0.0080" in text
+
+
+# -- write_bundle: summary.txt --
+
+
+def test_write_bundle_creates_summary_txt_when_telemetry_given(tmp_path):
+    # summary.txt must be written alongside telemetry.json so the human-readable
+    # rollup is available without parsing JSON.
+    from agents.bundle_writer import write_bundle
+
+    output_path = str(tmp_path / "cartoon.png")
+    write_bundle(
+        output_path, _make_log("Agent 0"), _make_log("B/C"), None, None,
+        telemetry=_make_telemetry(),
+    )
+    assert (tmp_path / "cartoon" / "summary.txt").exists()
+
+
+def test_write_bundle_skips_summary_txt_when_telemetry_none(tmp_path):
+    # When no telemetry was collected, summary.txt must not be created — an empty or
+    # placeholder file would be misleading.
+    from agents.bundle_writer import write_bundle
+
+    output_path = str(tmp_path / "cartoon.png")
+    write_bundle(output_path, _make_log("Agent 0"), _make_log("B/C"), None, None)
+    assert not (tmp_path / "cartoon" / "summary.txt").exists()
+
+
+def test_write_bundle_summary_txt_matches_format_summary(tmp_path):
+    # summary.txt content must be exactly what format_summary produces — no separate,
+    # potentially diverging formatting logic for the file vs. the log line.
+    from agents.bundle_writer import format_summary, write_bundle
+
+    output_path = str(tmp_path / "cartoon.png")
+    telemetry = _make_telemetry()
+    write_bundle(
+        output_path, _make_log("Agent 0"), _make_log("B/C"), None, None,
+        telemetry=telemetry,
+    )
+    content = (tmp_path / "cartoon" / "summary.txt").read_text()
+    assert content == format_summary(telemetry)
