@@ -177,14 +177,15 @@ def generate(
                 pass
             raise
 
-        # Image models are billed per image; record token counts as 0
+        # usage_metadata may be absent on some Gemini models — guard defensively
         meta = getattr(response, "usage_metadata", None)
         in_tok = getattr(meta, "prompt_token_count", 0) or 0
+        out_tok = getattr(meta, "candidates_token_count", 0) or 0
         token_calls.append(TokenUsage(
             model=model,
             input_tokens=in_tok,
-            output_tokens=0,
-            cost_usd=compute_cost(model, in_tok, 0),
+            output_tokens=out_tok,
+            cost_usd=compute_cost(model, in_tok, out_tok),
         ))
         telemetry = AgentTelemetry(
             agent_name="Image Generator",

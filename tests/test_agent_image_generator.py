@@ -6,7 +6,13 @@ import pytest
 from google.genai.errors import ServerError
 
 from agents import agent_image_generator
-from agents.types import CartoonConcept, CartoonLayout, PanelConcept, StrategyBrief
+from agents.types import (
+    CartoonConcept,
+    CartoonLayout,
+    PanelConcept,
+    StrategyBrief,
+    compute_cost,
+)
 
 BRIEF = StrategyBrief(
     target_audience="general public",
@@ -23,7 +29,7 @@ CONCEPT = CartoonConcept(
 FAKE_PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 20
 
 
-def _make_gemini_response(binary_data=None):
+def _make_gemini_response(binary_data=None, usage_metadata=None):
     part = MagicMock()
     if binary_data is not None:
         part.inline_data = MagicMock(data=binary_data)
@@ -31,7 +37,17 @@ def _make_gemini_response(binary_data=None):
         part.inline_data = None
     response = MagicMock()
     response.candidates = [MagicMock(content=MagicMock(parts=[part]))]
+    response.usage_metadata = usage_metadata
     return response
+
+
+class _UsageMetadata:
+    # Plain object (not MagicMock) so getattr() with a default behaves like the real
+    # SDK type when an attribute is genuinely absent, instead of auto-vivifying one.
+    def __init__(self, prompt_token_count=0, candidates_token_count=None):
+        self.prompt_token_count = prompt_token_count
+        if candidates_token_count is not None:
+            self.candidates_token_count = candidates_token_count
 
 
 # ---------------------------------------------------------------------------
@@ -314,3 +330,47 @@ def test_generate_multi_panel_beat_not_in_prompt(tmp_path):
 
     prompt = captured.get("prompt", "").upper()
     assert "BEAT:" not in prompt
+
+
+# ---------------------------------------------------------------------------
+# Cost telemetry reflects real Gemini usage (Stage 015)
+# ---------------------------------------------------------------------------
+
+
+def test_generate_records_real_output_tokens_and_nonzero_cost(tmp_path):
+    # Image generation must record the actual billed output token count and a
+    # non-zero cost, instead of the previous hardcoded output_tokens=0 / $0.00 bug.
+    out_file = tmp_path / "cartoon_output.png"
+    usage = _UsageMetadata(prompt_token_count=500, candidates_token_count=1120)
+    response = _make_gemini_response(FAKE_PNG, usage_metadata=usage)
+
+    with patch("agents.agent_image_generator._gemini_client") as mock_client:
+        mock_client.models.generate_content.return_value = response
+        _, telemetry = agent_image_generator.generate(
+            CONCEPT, BRIEF, output_path=str(out_file)
+        )
+
+    call = telemetry.calls[0]
+    assert call.model == "gemini-3.1-flash-image-preview"
+    assert call.input_tokens == 500
+    assert call.output_tokens == 1120
+    assert call.cost_usd == pytest.approx(compute_cost(call.model, 500, 1120))
+    assert call.cost_usd > 0
+
+
+def test_generate_defaults_tokens_to_zero_when_usage_metadata_absent(tmp_path):
+    # When the SDK response carries no usage_metadata, token counts and cost must
+    # default to 0 rather than raising — mirrors the existing dual_loop.py guard.
+    out_file = tmp_path / "cartoon_output.png"
+    response = _make_gemini_response(FAKE_PNG, usage_metadata=None)
+
+    with patch("agents.agent_image_generator._gemini_client") as mock_client:
+        mock_client.models.generate_content.return_value = response
+        _, telemetry = agent_image_generator.generate(
+            CONCEPT, BRIEF, output_path=str(out_file)
+        )
+
+    call = telemetry.calls[0]
+    assert call.input_tokens == 0
+    assert call.output_tokens == 0
+    assert call.cost_usd == 0.0
