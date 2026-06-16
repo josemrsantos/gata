@@ -26,14 +26,13 @@ _GEMINI_CLIENT: genai.Client | None = None
 _INFERENCE_MODEL = "gemini-2.5-flash"
 
 _AUDIENCE_INFERENCE_SYSTEM = (
-    "Given a news topic, identify the 2 to 4 most relevant audiences for satirical"
-    " cartoon coverage. For each audience consider: who would find this topic most"
-    " meaningful or funny, what language they speak, and what comedy style resonates"
-    " with their culture. If you are uncertain about comedy norms for a culture, reason"
-    " from what you know about that culture's satire traditions, popular media, and"
-    " sense of humour.\n\n"
-    "Return ONLY a valid JSON array with no preamble or markdown fences. Each element"
-    " must have exactly these string keys:\n"
+    "Given a news topic, identify the single most relevant audience for satirical"
+    " cartoon coverage. Consider: who would find this topic most meaningful or funny,"
+    " what language they speak, and what comedy style resonates with their culture."
+    " If you are uncertain about comedy norms for a culture, reason from what you know"
+    " about that culture's satire traditions, popular media, and sense of humour.\n\n"
+    "Return ONLY a valid JSON array containing exactly one element, with no preamble"
+    " or markdown fences. The element must have exactly these string keys:\n"
     '  "name": short lowercase slug used as a filename (e.g. "swiss", "qatar")\n'
     '  "audience": human description (e.g. "Swiss German-speaking public")\n'
     '  "language": the language to write the cartoon in'
@@ -46,18 +45,7 @@ _AUDIENCE_INFERENCE_SYSTEM = (
 )
 
 _AUDIENCE_FALLBACK: list[AudienceProfile] = [
-    AudienceProfile(
-        name="swiss",
-        audience="Swiss public",
-        language="Swiss German",
-        tone="dry Swiss wit",
-    ),
-    AudienceProfile(
-        name="qatar",
-        audience="Qatari public",
-        language="Arabic",
-        tone="Gulf Arabic satire",
-    ),
+    # Single entry — _ensure_uk in cli.py appends UK, giving the same "main + UK" shape
     AudienceProfile(
         name="global",
         audience="global English-speaking public",

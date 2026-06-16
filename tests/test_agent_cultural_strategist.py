@@ -1,5 +1,5 @@
 import logging
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -256,3 +256,46 @@ def test_framer_prompt_no_inconvenience_when_zero():
     )
     prompt = _build_framer_system_prompt(humor)
     assert "INCONVENIENCE" not in prompt
+
+
+# ---------------------------------------------------------------------------
+# infer_audiences — single-audience default (Stage 016)
+# ---------------------------------------------------------------------------
+
+
+def test_infer_audiences_returns_exactly_one_profile_on_success():
+    # infer_audiences() must return a list with exactly one AudienceProfile when
+    # the LLM responds correctly — the prompt now asks for a single audience.
+    from agents.agent_cultural_strategist import infer_audiences
+    mock_response = MagicMock()
+    mock_response.text = (
+        '[{"name":"swiss","audience":"Swiss public",'
+        '"language":"Swiss German","tone":"dry Swiss wit"}]'
+    )
+    with patch(
+        "agents.agent_cultural_strategist._GEMINI_CLIENT"
+    ) as mock_client:
+        mock_client.models.generate_content.return_value = mock_response
+        profiles = infer_audiences("Swiss election results")
+    assert len(profiles) == 1
+    assert profiles[0].name == "swiss"
+
+
+def test_infer_audiences_fallback_returns_one_profile():
+    # On LLM failure the fallback list must contain exactly one entry so the
+    # "main + UK" shape is preserved even in degraded mode.
+    from agents.agent_cultural_strategist import infer_audiences
+    with patch(
+        "agents.agent_cultural_strategist._GEMINI_CLIENT"
+    ) as mock_client:
+        mock_client.models.generate_content.side_effect = RuntimeError("network error")
+        profiles = infer_audiences("some topic")
+    assert len(profiles) == 1
+
+
+def test_infer_audiences_system_prompt_asks_for_single_audience():
+    # The system prompt must ask for the single most relevant audience, not a list
+    # of 2-4, so the LLM doesn't return more than one entry.
+    from agents.agent_cultural_strategist import _AUDIENCE_INFERENCE_SYSTEM
+    assert "single" in _AUDIENCE_INFERENCE_SYSTEM.lower()
+    assert "2 to 4" not in _AUDIENCE_INFERENCE_SYSTEM

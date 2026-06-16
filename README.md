@@ -50,7 +50,7 @@ export GEMINI_API_KEY=...
 gata "World Cup Qatar vs Swiss"
 ```
 
-This generates three satirical cartoons from a single topic — one for the Swiss public (Swiss German), one for the Qatari public (Arabic), and one for a global English audience — saved to a subdirectory of your working directory.
+This generates two satirical cartoons from a single topic — one for the most culturally relevant audience (inferred by the pipeline) and one for the UK public — saved to a subdirectory of your working directory.
 
 ## Setup
 
@@ -120,12 +120,12 @@ env:
 ## `gata` command
 
 ```bash
-# Generate 3 audience-adapted images from a single topic
+# Generate 2 audience-adapted images from a single topic
 gata "World Cup Qatar vs Swiss"
-# → saves swiss.png, qatar.png, global.png to ./world_cup_qatar_vs_swiss/
+# → saves e.g. swiss.png + uk.png to ./world_cup_qatar_vs_swiss/
 ```
 
-Output folder: `{cwd}/{topic_slug}/` containing three PNGs and a bundle folder per image (logs, prompt card, telemetry). Pass `--html` to also generate the HTML explanation pages.
+Output folder: `{cwd}/{topic_slug}/` containing one PNG per audience and a bundle folder per image (logs, prompt card, telemetry). Pass `--html` to also generate the HTML explanation pages.
 
 ## `pipeline.py` — advanced usage
 
