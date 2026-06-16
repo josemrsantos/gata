@@ -19,6 +19,10 @@ An automated multi-agent pipeline that transforms daily topics into a recurring 
 | 9 | Multi-panel cartoon format — --panels and --layout flags | ✅ Complete |
 | 10 | Agent personality — inconvenience level (0–100) + dual satirist mode | ✅ Complete |
 | 11 | Dynamic news search — infers country + category from free-text; --community + --topic mode | ✅ Complete |
+| 12 | Run summary — per-agent time, iterations, and cost + grand total | ✅ Complete |
+| 13 | Optional HTML output — --html flag, off by default | ✅ Complete |
+| 14 | Image generation cost tracking — accurate $/image in telemetry and summary | ✅ Complete |
+| 15 | Single main audience default — one inferred audience + UK per run | ✅ Complete |
 
 ## How it works
 
@@ -119,13 +123,26 @@ env:
 
 ## `gata` command
 
+The simplest way to run the pipeline. Give it any topic and it generates two satirical
+cartoons: one for the most culturally relevant audience (inferred automatically) and one
+for the UK public.
+
 ```bash
-# Generate 2 audience-adapted images from a single topic
-gata "World Cup Qatar vs Swiss"
-# → saves e.g. swiss.png + uk.png to ./world_cup_qatar_vs_swiss/
+# Generate cartoons for a news topic
+gata "Interest rates stay high despite falling inflation"
+# → infers audience (e.g. "german"), adds UK
+# → saves german.png + uk.png to ./interest_rates_stay_high.../
+
+# Any topic works — Gata will find the angle
+gata "World Cup final: Argentina vs France"
+gata "Tech layoffs hit Silicon Valley again"
+gata "Portugal wins Eurovision"
+
+# Also generate HTML explanation pages (off by default — adds an extra Claude + Gemini call)
+gata "NATO summit in Brussels" --html
 ```
 
-Output folder: `{cwd}/{topic_slug}/` containing one PNG per audience and a bundle folder per image (logs, prompt card, telemetry). Pass `--html` to also generate the HTML explanation pages.
+Output folder: `{cwd}/{topic_slug}/` — one PNG per audience, plus a bundle folder per image containing logs, prompt card, telemetry, and a cost/time summary. Run `gata --help` to see all options.
 
 ## `pipeline.py` — advanced usage
 
@@ -238,9 +255,8 @@ To add a new community, add an entry to `communities.yaml` — no code changes r
 
 See `TODO.md` for the full backlog. Key items:
 
-- **Post-generation image review** — vision model checks for rendering artifacts (duplicate labels, garbled text, Gata integrity failures)
-- **Error hardening** — `<verdict>` parse retry, content policy → B/C feedback loop, per-run log files
-- **AWS distribution** — upload to S3, static webpage
-- **Scheduling** — daily automated runs via AWS EventBridge
-- **Voting system** — funny / not funny ratings feeding back into the pipeline
-- **Trend Scout enhancement** — multi-source aggregation, deduplication, and quality scoring
+- **Post-generation image review** — vision model checks for rendering artifacts (duplicate labels, garbled text, Gata integrity failures) and retries before writing the bundle
+- **Voting system** — funny / not funny ratings per cartoon feeding back into the pipeline to improve future output
+- **Self-documenting CLI** — `pipeline.py` with no arguments prints all calling modes with ready-to-copy examples
+- **Gemini fact-check gate** — Gemini verifies every factual claim in the concept before the image prompt is finalised; returns with a `FACT:` tag if anything is wrong
+- **Batch image generation** — use the Gemini Batch API to cut image generation cost by ~50%
