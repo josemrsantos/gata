@@ -61,6 +61,7 @@ def write_bundle(
     enriched_brief: EnrichedBrief | None,
     image_prompt: str | None,
     telemetry: RunTelemetry | None = None,
+    include_html: bool = False,
 ) -> str:
     """Create the bundle folder and write all output files. Never raises."""
     bundle_dir = Path(output_path).parent / Path(output_path).stem
@@ -78,8 +79,8 @@ def write_bundle(
     if telemetry is not None:
         _write_text(bundle_dir / "telemetry.json", _serialise_telemetry(telemetry))
         _write_text(bundle_dir / "summary.txt", format_summary(telemetry))
-    # Generate and write HTML files when we have enough context
-    if enriched_brief is not None and image_prompt is not None:
+    # Generate and write HTML files only when requested — opt-in, off by default
+    if include_html and enriched_brief is not None and image_prompt is not None:
         try:
             in_lang_html, english_html = agent_explainer.generate_html(
                 enriched_brief,

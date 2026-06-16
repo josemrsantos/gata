@@ -56,6 +56,11 @@ def main() -> None:
         "topic",
         help="topic to satirise, e.g. 'World Cup Qatar vs Swiss'",
     )
+    parser.add_argument(
+        "--html",
+        action="store_true",
+        help="also generate explanation.html and deep_dive_en.html (default off)",
+    )
     args = parser.parse_args()
     # Reject blank topics immediately before any setup
     if not args.topic.strip():
@@ -117,7 +122,10 @@ def main() -> None:
             output_path,
         )
         try:
-            telemetry = run_pipeline(args.topic, seed_brief, output_path, humor=humor)
+            telemetry = run_pipeline(
+                args.topic, seed_brief, output_path, humor=humor,
+                include_html=args.html,
+            )
             audience_telemetry.append((audience.name, telemetry))
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("failed for audience %r: %s", audience.name, exc)
