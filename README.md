@@ -26,8 +26,8 @@ An automated multi-agent pipeline that transforms daily topics into a recurring 
 2. **Cultural Strategist** (Framer + Resonator loop) negotiates a cultural angle and audience-specific references for the chosen topic
 3. **Satirist + Critic loop** iterates on a satirical cartoon concept until approved (up to 5 iterations)
 4. **Image Generator** renders the approved concept into a PNG via a fallback chain of Gemini image models
-5. **Explainer** produces two HTML explanation pages: one in the target language, one in English for operators
-6. **Bundle writer** saves the full output package: image, conversation logs, HTML files, and prompt card
+5. **Explainer** (opt-in via `--html`) produces two HTML explanation pages: one in the target language, one in English for operators
+6. **Bundle writer** saves the full output package: image, conversation logs, prompt card, telemetry, and summary — plus the HTML files when `--html` is set
 
 All agents use prioritised model fallback chains. Both dual-loop pairs (Framer/Resonator and Satirist/Critic) include a 3-pass self-review injected into both personas.
 
@@ -125,7 +125,7 @@ gata "World Cup Qatar vs Swiss"
 # → saves swiss.png, qatar.png, global.png to ./world_cup_qatar_vs_swiss/
 ```
 
-Output folder: `{cwd}/{topic_slug}/` containing three PNGs and a bundle folder per image (logs, HTML explanation, prompt card).
+Output folder: `{cwd}/{topic_slug}/` containing three PNGs and a bundle folder per image (logs, prompt card, telemetry). Pass `--html` to also generate the HTML explanation pages.
 
 ## `pipeline.py` — advanced usage
 
@@ -151,6 +151,9 @@ python pipeline.py --topic "AI hype" --audience "developers" --language "English
 python pipeline.py --community uk-politics --panels 3 --layout horizontal
 python pipeline.py --community portuguese-adults --panels 2 --layout vertical
 python pipeline.py --topic "World Cup result" --audience "football fans" --language "English" --tone "excited" --panels 4 --layout horizontal
+
+# Also generate the HTML explanation pages (off by default; add --html to any mode above)
+python pipeline.py --community uk-politics --html
 ```
 
 ### Multi-panel flags
@@ -171,11 +174,13 @@ Each bundle contains:
 - `cartoon.png` — the generated image
 - `agent0_log.txt` — Agent 0 negotiation history (cultural strategy)
 - `bc_log.txt` — B/C creative loop history (satirist + critic exchange)
-- `explanation.html` — in-language explanation of the joke for end users
-- `deep_dive_en.html` — English operator deep-dive (news context, cultural references, satirical logic)
 - `prompt_card.txt` — verbatim image prompt for standalone reuse
 - `telemetry.json` — per-agent timing, token counts, and cost (machine-readable)
 - `summary.txt` — per-agent time, iterations, and cost, plus a run total (human-readable)
+
+With `--html` (off by default), the bundle also contains:
+- `explanation.html` — in-language explanation of the joke for end users
+- `deep_dive_en.html` — English operator deep-dive (news context, cultural references, satirical logic)
 
 Running `gata <topic>` also writes a top-level `{output_dir}/summary.txt` aggregating time and cost across every audience generated for that topic.
 

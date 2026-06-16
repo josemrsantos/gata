@@ -245,7 +245,8 @@ def test_write_bundle_survives_explainer_failure(tmp_path):
     ):
         # must not raise
         write_bundle(
-            output_path, _make_log("Agent 0"), _make_log("B/C"), brief, "prompt"
+            output_path, _make_log("Agent 0"), _make_log("B/C"), brief, "prompt",
+            include_html=True,
         )
 
 
@@ -268,7 +269,8 @@ def test_write_bundle_logs_are_present_after_explainer_failure(tmp_path):
         side_effect=RuntimeError("explainer failed"),
     ):
         write_bundle(
-            output_path, _make_log("Agent 0"), _make_log("B/C"), brief, "prompt"
+            output_path, _make_log("Agent 0"), _make_log("B/C"), brief, "prompt",
+            include_html=True,
         )
     assert (tmp_path / "cartoon" / "agent0_log.txt").exists()
     assert (tmp_path / "cartoon" / "bc_log.txt").exists()
@@ -409,6 +411,56 @@ def test_write_bundle_skips_summary_txt_when_telemetry_none(tmp_path):
     output_path = str(tmp_path / "cartoon.png")
     write_bundle(output_path, _make_log("Agent 0"), _make_log("B/C"), None, None)
     assert not (tmp_path / "cartoon" / "summary.txt").exists()
+
+
+def _make_brief():
+    from agents.types import EnrichedBrief
+
+    return EnrichedBrief(
+        target_audience="test",
+        output_language="English",
+        tone="dry",
+        cultural_angle="angle",
+        culturally_loaded_references=["ref"],
+    )
+
+
+def test_write_bundle_skips_html_by_default(tmp_path):
+    # HTML generation costs an extra Claude + Gemini round trip on every run; it must
+    # stay off unless the caller explicitly opts in via include_html.
+    from agents.bundle_writer import write_bundle
+
+    output_path = str(tmp_path / "cartoon.png")
+    with patch(
+        "agents.bundle_writer.agent_explainer.generate_html",
+        return_value=("in-lang", "english"),
+    ) as mock_generate:
+        write_bundle(
+            output_path, _make_log("Agent 0"), _make_log("B/C"),
+            _make_brief(), "prompt",
+        )
+    mock_generate.assert_not_called()
+    assert not (tmp_path / "cartoon" / "explanation.html").exists()
+    assert not (tmp_path / "cartoon" / "deep_dive_en.html").exists()
+
+
+def test_write_bundle_generates_html_when_requested(tmp_path):
+    # Passing include_html=True must restore the original behavior so operators who
+    # want the explanation pages can still get them on demand.
+    from agents.bundle_writer import write_bundle
+
+    output_path = str(tmp_path / "cartoon.png")
+    with patch(
+        "agents.bundle_writer.agent_explainer.generate_html",
+        return_value=("in-lang", "english"),
+    ) as mock_generate:
+        write_bundle(
+            output_path, _make_log("Agent 0"), _make_log("B/C"),
+            _make_brief(), "prompt", include_html=True,
+        )
+    mock_generate.assert_called_once()
+    assert (tmp_path / "cartoon" / "explanation.html").read_text() == "in-lang"
+    assert (tmp_path / "cartoon" / "deep_dive_en.html").read_text() == "english"
 
 
 def test_write_bundle_summary_txt_matches_format_summary(tmp_path):

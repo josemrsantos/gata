@@ -58,6 +58,11 @@ def main() -> None:
         "--layout", default=None, metavar="DIR",
         help="panel direction: horizontal or vertical (default horizontal)"
     )
+    parser.add_argument(
+        "--html",
+        action="store_true",
+        help="also generate explanation.html and deep_dive_en.html (default off)",
+    )
     args = parser.parse_args()
     # Reject an empty --community immediately — blank string is not a valid description
     if args.community is not None and not args.community.strip():
@@ -145,7 +150,10 @@ def main() -> None:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         logger.info("manual mode: topic=%r, output=%r", topic, output_path)
         try:
-            run_pipeline(topic, seed_brief, output_path, humor=humor, layout=layout)
+            run_pipeline(
+                topic, seed_brief, output_path, humor=humor, layout=layout,
+                include_html=args.html,
+            )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
             sys.exit(1)
@@ -183,7 +191,10 @@ def main() -> None:
             output_path,
         )
         try:
-            run_pipeline(topic, seed_brief, output_path, humor=humor, layout=layout)
+            run_pipeline(
+                topic, seed_brief, output_path, humor=humor, layout=layout,
+                include_html=args.html,
+            )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
             sys.exit(1)
@@ -264,7 +275,7 @@ def main() -> None:
         try:
             run_pipeline(
                 topic, seed_brief, output_path, news_headline=headline, humor=humor,
-                layout=layout,
+                layout=layout, include_html=args.html,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -307,7 +318,7 @@ def main() -> None:
         try:
             run_pipeline(
                 topic, seed_brief, output_path, news_headline=headline, humor=humor,
-                layout=layout,
+                layout=layout, include_html=args.html,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)

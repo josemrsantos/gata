@@ -27,6 +27,7 @@ def run_pipeline(
     news_headline: Headline | None = None,
     humor: HumorConfig | None = None,
     layout: CartoonLayout | None = None,
+    include_html: bool = False,
 ) -> RunTelemetry:
     """Run the full pipeline for a single topic and write the output image."""
     agent0_log: ConversationLog | None = None
@@ -67,6 +68,7 @@ def run_pipeline(
             enriched_brief,
             image_prompt,
             telemetry=telemetry,
+            include_html=include_html,
         )
         logger.info("run summary:\n%s", bundle_writer.format_summary(telemetry))
     return telemetry
