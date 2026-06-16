@@ -5,31 +5,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["agents*"]
 
-[project]
-name = "gata"
-version = "1.5.1"
-description = "Automated multi-agent pipeline that transforms news into satirical cartoons starring Gata"
-readme = "README.md"
-license = { text = "MIT" }
-authors = [{ name = "Jose Santos", email = "josemrsantos@gmail.com" }]
-requires-python = ">=3.10"
-dependencies = [
-    "anthropic",
-    "google-genai",
-    "httpx",
-    "python-dotenv",
-    "pyyaml",
-    "unidecode",
-]
-
-[project.scripts]
-gata = "agents.cli:main"
-
-[project.optional-dependencies]
-dev = [
-    "pytest",
-    "ruff",
-]
 
 [tool.ruff]
 line-length = 88
@@ -41,6 +16,7 @@ select = ["E", "F", "I"]
 # ---------------------------------------------------------------------------
 # python-semantic-release v9
 # ---------------------------------------------------------------------------
+
 
 [tool.semantic_release]
 # Keep pyproject.toml and __version__.py in sync on every release.
@@ -72,3 +48,30 @@ token = { env = "GH_TOKEN" }
 # Attach built dist artefacts to the GitHub Release.
 dist_artifacts = ["dist/*"]
 upload_to_vcs_release = true
+
+[project]
+name = "gata"
+version = "1.4.0"
+description = "Automated multi-agent pipeline that transforms news into satirical cartoons starring Gata"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Jose Santos", email = "josemrsantos@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic",
+    "google-genai",
+    "httpx",
+    "python-dotenv",
+    "pyyaml",
+    "unidecode",
+]
+
+[project.scripts]
+gata = "agents.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+
