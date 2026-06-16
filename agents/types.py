@@ -11,12 +11,17 @@ _COST_PER_M: dict[str, tuple[float, float]] = {
     "gemini-2.0-flash":               (0.10,   0.40),
     "gemini-3.1-flash-lite":          (0.10,   0.40),
     "gemini-3.1-pro-preview":         (1.25,  10.00),
-    # Image models are billed per image, not per token
-    "gemini-3.1-flash-image-preview": (0.0,    0.0),
-    "gemini-3.1-flash-image":         (0.0,    0.0),
-    "gemini-3-pro-image-preview":     (0.0,    0.0),
-    "gemini-3-pro-image":             (0.0,    0.0),
-    "gemini-2.5-flash-image":         (0.0,    0.0),
+    # Image-model output rate is the per-million-token price for image tokens, per
+    # https://ai.google.dev/gemini-api/docs/pricing. The -preview aliases aren't
+    # listed there; priced identically to their GA counterparts (see
+    # specs/014-image-cost-pricing). gemini-2.5-flash-image is legacy and billed
+    # flat at $0.039/image (1290 tokens/image); its rate below is a derived
+    # equivalent, not a published per-token price.
+    "gemini-3.1-flash-image-preview": (0.50,  60.00),
+    "gemini-3.1-flash-image":         (0.50,  60.00),
+    "gemini-3-pro-image-preview":     (2.00, 120.00),
+    "gemini-3-pro-image":             (2.00, 120.00),
+    "gemini-2.5-flash-image":         (0.30,  30.23),
 }
 
 
