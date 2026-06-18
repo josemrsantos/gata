@@ -303,14 +303,14 @@ _LOOP_OUTPUT_MULTI = LoopOutput(
 def test_satirist_prompt_mentions_comic_strip_when_multi_panel():
     # When layout.panels > 1 the TASK section must describe a comic strip, not
     # a single-panel cartoon, so the model knows to produce multi-panel output.
-    prompt = _build_satirist_system_prompt(BRIEF, layout=_LAYOUT_3H)
+    prompt = _build_satirist_system_prompt(BRIEF, layout_override=_LAYOUT_3H)
     assert "comic strip" in prompt.lower() or "3-panel" in prompt.lower()
 
 
 def test_satirist_prompt_mentions_json_when_multi_panel():
     # When layout.panels > 1 the TASK section must instruct the model to return JSON
     # so the verdict can be parsed deterministically.
-    prompt = _build_satirist_system_prompt(BRIEF, layout=_LAYOUT_3H)
+    prompt = _build_satirist_system_prompt(BRIEF, layout_override=_LAYOUT_3H)
     assert "JSON" in prompt
 
 
@@ -326,7 +326,7 @@ def test_run_multi_panel_populates_concept_panels():
     # CartoonConcept.panels populated so the image generator can assemble the strip.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT_MULTI
-        concept, _ = run(TOPIC, BRIEF, layout=_LAYOUT_3H)
+        concept, _ = run(TOPIC, BRIEF, layout_override=_LAYOUT_3H)
     assert concept.panels is not None
     assert len(concept.panels) == 3
     assert concept.panels[0].beat == "setup"
@@ -338,7 +338,7 @@ def test_run_multi_panel_concept_has_empty_image_prompt():
     # generator builds the full prompt from the panels list, not this field.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT_MULTI
-        concept, _ = run(TOPIC, BRIEF, layout=_LAYOUT_3H)
+        concept, _ = run(TOPIC, BRIEF, layout_override=_LAYOUT_3H)
     assert concept.image_prompt == ""
 
 
@@ -352,7 +352,7 @@ def test_run_multi_panel_fallback_on_malformed_json(caplog):
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = bad_output
         with caplog.at_level(logging.WARNING, logger="agents.agent_satirist"):
-            concept, _ = run(TOPIC, BRIEF, layout=_LAYOUT_3H)
+            concept, _ = run(TOPIC, BRIEF, layout_override=_LAYOUT_3H)
     assert concept.panels is None
     assert concept.image_prompt == "not valid JSON at all"
     assert any("fall" in r.message.lower() for r in caplog.records)
@@ -375,7 +375,7 @@ def test_run_multi_panel_fallback_on_wrong_panel_count(caplog):
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = short_output
         with caplog.at_level(logging.WARNING, logger="agents.agent_satirist"):
-            concept, _ = run(TOPIC, BRIEF, layout=_LAYOUT_3H)
+            concept, _ = run(TOPIC, BRIEF, layout_override=_LAYOUT_3H)
     assert concept.panels is None
 
 

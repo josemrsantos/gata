@@ -19,28 +19,30 @@ from agents.types import CartoonLayout, StrategyBrief
 logger = logging.getLogger(__name__)
 
 
-def _panel_filename_prefix(layout: CartoonLayout) -> str:
-    # Returns e.g. "3h_" for 3-panel horizontal, "2v_" for 2-panel vertical, "" for 1.
-    if layout.panels <= 1:
+def _panel_filename_prefix(layout: CartoonLayout | None) -> str:
+    # Returns e.g. "3h_" for explicit 3-panel horizontal, "" otherwise (auto or 1).
+    if layout is None or layout.panels <= 1:
         return ""
     direction_char = "h" if layout.direction == "horizontal" else "v"
     return f"{layout.panels}{direction_char}_"
 
 
-def _resolve_layout(args, community: object | None = None) -> CartoonLayout:
-    # CLI > community config > defaults (FR-004)
-    panels = (
-        args.panels
-        if args.panels is not None
-        else (getattr(community, "panels", 1) if community else 1)
-    )
+def _resolve_layout(args, community: object | None = None) -> CartoonLayout | None:
+    # Return None when no explicit override — Satirist/Critic will decide layout.
+    # Community panels default is 1 (same as "not set"), so only treat > 1 as override.
+    panels = args.panels
+    if panels is None and community is not None:
+        community_panels = getattr(community, "panels", 1)
+        if community_panels > 1:
+            panels = community_panels
+    if panels is None:
+        return None
     direction = (
         args.layout
         if args.layout is not None
-        else (getattr(community, "layout", "horizontal") if community else "horizontal")
+        else getattr(community, "layout", "horizontal")
     )
     return CartoonLayout(panels=panels, direction=direction)
-
 
 
 def main() -> None:

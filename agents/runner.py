@@ -42,13 +42,13 @@ def run_pipeline(
         )
         telemetry.agents.append(agent0_tel)
         print("  Satirist/Critic...", flush=True)
-        concept, bc_log, bc_tel = agent_satirist.run(
-            topic, enriched_brief, humor=humor, layout=layout
+        concept, bc_log, bc_tel, chosen_layout = agent_satirist.run(
+            topic, enriched_brief, humor=humor, layout_override=layout
         )
         telemetry.agents.append(bc_tel)
         print("  Image Generator...", flush=True)
         _image_path, image_tel = agent_image_generator.generate(
-            concept, enriched_brief, output_path, layout=layout
+            concept, enriched_brief, output_path, layout=chosen_layout
         )
         telemetry.agents.append(image_tel)
     except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
