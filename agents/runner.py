@@ -36,16 +36,17 @@ def run_pipeline(
     concept = None
     telemetry = RunTelemetry()
     try:
-        logger.info("Cultural Strategist: analyzing topic...")
+        print("  Cultural Strategist...", flush=True)
         enriched_brief, agent0_log, agent0_tel = agent_cultural_strategist.run(
             topic, seed_brief, news_brief=news_headline, humor=humor
         )
         telemetry.agents.append(agent0_tel)
-        logger.info("Satirist/Critic: creating concept...")
+        print("  Satirist/Critic...", flush=True)
         concept, bc_log, bc_tel = agent_satirist.run(
             topic, enriched_brief, humor=humor, layout=layout
         )
         telemetry.agents.append(bc_tel)
+        print("  Image Generator...", flush=True)
         _image_path, image_tel = agent_image_generator.generate(
             concept, enriched_brief, output_path, layout=layout
         )
@@ -70,5 +71,5 @@ def run_pipeline(
             telemetry=telemetry,
             include_html=include_html,
         )
-        logger.info("run summary:\n%s", bundle_writer.format_summary(telemetry))
+        print(bundle_writer.format_summary(telemetry))
     return telemetry

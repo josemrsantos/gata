@@ -159,23 +159,23 @@ def test_generate_failure_preserves_existing_file(tmp_path):
 
 
 def test_generate_logs_model_and_prompt_length(caplog, tmp_path):
-    # generate() logs prompt length at INFO ("rendering") and model name at INFO
-    # ("saved"), giving operators key facts without the full prompt or per-model noise.
+    # generate() logs model name and prompt length at DEBUG so they are accessible
+    # when troubleshooting without polluting normal CLI output.
     out_file = tmp_path / "cartoon_output.png"
     response = _make_gemini_response(FAKE_PNG)
 
     with patch("agents.agent_image_generator._gemini_client") as mock_client:
         mock_client.models.generate_content.return_value = response
-        caplog.set_level(logging.INFO, logger="agents.agent_image_generator")
+        caplog.set_level(logging.DEBUG, logger="agents.agent_image_generator")
         agent_image_generator.generate(CONCEPT, BRIEF, output_path=str(out_file))
 
     assert any(
-        r.levelno == logging.INFO and "gemini-3.1-flash-image-preview" in r.message
+        r.levelno == logging.DEBUG and "gemini-3.1-flash-image-preview" in r.message
         for r in caplog.records
     )
     prompt_len = str(len(CONCEPT.image_prompt))
     assert any(
-        prompt_len in r.message for r in caplog.records if r.levelno == logging.INFO
+        prompt_len in r.message for r in caplog.records if r.levelno == logging.DEBUG
     )
 
 

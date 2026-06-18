@@ -127,7 +127,7 @@ def generate(
     else:
         prompt = concept.image_prompt
         logger.debug("image_prompt:\n%s", prompt)
-    logger.info("Image Generator: rendering (%d chars)", len(prompt))
+    logger.debug("Image Generator: rendering (%d chars)", len(prompt))
     global _gemini_client
     if _gemini_client is None:
         _gemini_client = genai.Client()
@@ -187,7 +187,7 @@ def generate(
             output_tokens=out_tok,
             cost_usd=cost_usd,
         ))
-        logger.info("Image Generator: saved — model=%s cost=$%.4f", model, cost_usd)
+        logger.debug("Image Generator: saved — model=%s cost=$%.4f", model, cost_usd)
         telemetry = AgentTelemetry(
             agent_name="Image Generator",
             duration_seconds=time.monotonic() - start,

@@ -68,22 +68,12 @@ def main() -> None:
         sys.exit(1)
     # Load .env from the caller's cwd if present, then configure logging
     found_dotenv = load_dotenv()
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
-    )
-    # Silence SDK HTTP noise — operators want agent-level output, not socket events
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("httpcore").setLevel(logging.WARNING)
-    logging.getLogger("google.genai").setLevel(logging.WARNING)
-    logging.getLogger("google_genai").setLevel(logging.WARNING)
-    logging.getLogger("anthropic").setLevel(logging.WARNING)
+    # WARNING level suppresses agent INFO chatter; print() handles user-visible output
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
     if found_dotenv:
-        logger.info("credentials loaded from .env file")
+        print("credentials loaded from .env file")
     else:
-        logger.info(
-            "no .env file found — reading credentials from environment variables"
-        )
+        print("no .env file found — reading credentials from environment variables")
     # Verify API keys before any network call
     if not os.getenv("ANTHROPIC_API_KEY"):
         logger.error("ANTHROPIC_API_KEY is not set")
@@ -97,16 +87,12 @@ def main() -> None:
         try:
             humor = load_humor_config("humor.yaml")
             if humor:
-                logger.info("humor config loaded from humor.yaml")
+                print("humor config loaded from humor.yaml")
         except ValueError as exc:
             logger.error("humor config error: %s", exc)
             sys.exit(1)
     # Infer audiences from the topic, then guarantee UK is always present
     audiences = _ensure_uk(infer_audiences(args.topic))
-    logger.info(
-        "audiences: %s",
-        ", ".join(f"{a.name}({a.language})" for a in audiences),
-    )
     # Output folder: subdirectory of cwd named after the sanitized topic
     topic_slug = sanitize_path_segment(args.topic)
     output_dir = os.path.join(os.getcwd(), topic_slug)
@@ -121,9 +107,7 @@ def main() -> None:
             tone=audience.tone,
         )
         output_path = os.path.join(output_dir, f"{audience.name}.png")
-        logger.info(
-            "[%d/%d] %s — %s", i, len(audiences), audience.name, audience.language
-        )
+        print(f"\n[{i}/{len(audiences)}] {audience.name} — {audience.language}")
         try:
             telemetry = run_pipeline(
                 args.topic, seed_brief, output_path, humor=humor,
@@ -133,25 +117,25 @@ def main() -> None:
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("failed for audience %r: %s", audience.name, exc)
             failures += 1
-    # Grand total across audiences — the number an operator actually wants
+    # Grand total across audiences — only shown when multiple audiences ran
     if audience_telemetry:
         summary = _format_grand_total(audience_telemetry)
-        logger.info("\n=== run summary ===\n%s", summary)
+        if len(audience_telemetry) > 1:
+            print(f"\n{summary}")
         try:
             Path(output_dir, "summary.txt").write_text(summary, encoding="utf-8")
         except OSError as exc:
             logger.error("could not write summary.txt: %s", exc)
     # Report overall result; partial success still produces useful output
     if failures == 0:
-        logger.info("all %d images saved to %s", len(audiences), output_dir)
+        print(f"\nAll {len(audiences)} image(s) saved to {output_dir}")
     elif failures < len(audiences):
-        logger.warning(
-            "%d/%d audiences failed — partial output in %s",
-            failures,
-            len(audiences),
-            output_dir,
+        n = len(audiences)
+        print(
+            f"\n{failures}/{n} audiences failed — partial output in {output_dir}",
+            file=sys.stderr,
         )
         sys.exit(1)
     else:
-        logger.error("all audiences failed — no output produced")
+        print("all audiences failed — no output produced", file=sys.stderr)
         sys.exit(1)
