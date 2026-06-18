@@ -1,6 +1,26 @@
 # CHANGELOG
 
 
+## v1.6.1 (2026-06-18)
+
+### Bug Fixes
+
+* fix: replace logger.info with print() in CLI output for human-friendly display
+
+Timestamps and [module] prefixes made gata output read like server logs.
+Fix: basicConfig raised to WARNING (silences all agent INFO); user-visible
+lines converted to print() so there are no prefixes or timestamps.
+
+- cli.py: basicConfig to WARNING; all logger.info → print(); remove redundant
+  audiences summary line; grand total only shown for 2+ audiences
+- runner.py: agent start messages and run summary → print()
+- agent_image_generator: "rendering" and "saved" demoted to DEBUG (info is
+  already in the run summary printed by runner.py)
+- test: update log-level assertion to DEBUG to match new image generator level
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`4649f4f`](https://github.com/josemrsantos/gata/commit/4649f4f275ee33ff3a470d10542ac70cc83780e6))
+
+
 ## v1.6.0 (2026-06-18)
 
 ### Documentation
