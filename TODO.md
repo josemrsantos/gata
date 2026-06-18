@@ -45,6 +45,18 @@ If the review fails, trigger a regeneration (up to N retries) before writing the
 
 ---
 
+## Gemini-only Satirist/Critic loop — co-satirist mode
+
+**Goal:** Replace Claude with Gemini in the Satirist role and redesign both agents as
+collaborators chasing the same goal (funniest possible concept) rather than creator vs.
+evaluator.
+
+**Reason:** Empirical observation that Gemini delivers stronger, more culturally-aware
+jokes than Claude; having both agents iterate towards the sharpest angle (rather than one
+creating and one gatekeeping) produces better output.
+
+---
+
 ## Gemini fact-check gate with FACT tag
 
 **Goal:** After Claude produces a concept proposal, Gemini must perform a thorough fact-check of every specific claim (dates, names, events, economic figures). If any claim is factually wrong, Gemini must return it to Claude with an explicit `FACT:` tag that Claude cannot skip or override.

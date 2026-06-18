@@ -41,7 +41,7 @@ def run_pipeline(
             topic, seed_brief, news_brief=news_headline, humor=humor
         )
         telemetry.agents.append(agent0_tel)
-        print("  Satirist/Critic...", flush=True)
+        print("  Satirist/Co-Satirist...", flush=True)
         concept, bc_log, bc_tel, chosen_layout = agent_satirist.run(
             topic, enriched_brief, humor=humor, layout_override=layout
         )

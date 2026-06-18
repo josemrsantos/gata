@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from agents.agent_satirist import (
-    _build_critic_system_prompt,
+    _build_co_satirist_prompt,
     _build_satirist_system_prompt,
     run,
 )
@@ -47,7 +47,7 @@ TOPIC = "Cats take over the UN Security Council"
 _VALID_IMAGE_PROMPT = "A cat sits at the UN table, wielding a gavel made of fish."
 _LOOP_OUTPUT = LoopOutput(
     verdict=_VALID_IMAGE_PROMPT,
-    log=ConversationLog(loop_name="Satirist/Critic"),
+    log=ConversationLog(loop_name="Satirist/Co-Satirist"),
 )
 
 
@@ -167,12 +167,12 @@ def test_run_second_element_is_conversation_log():
 
 
 def test_run_log_has_loop_name_bc():
-    # The ConversationLog must carry loop_name="Satirist/Critic" so bundle_writer
+    # The ConversationLog must carry loop_name="Satirist/Co-Satirist" so bundle_writer
     # labels the log file header correctly without extra context from the caller.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
         _, log = run(TOPIC, BRIEF)
-    assert log.loop_name == "Satirist/Critic"
+    assert log.loop_name == "Satirist/Co-Satirist"
 
 
 def test_run_cartoon_concept_image_prompt_with_loop_output_mock():
@@ -241,32 +241,23 @@ def test_satirist_prompt_unchanged_without_humor():
     assert "joke_explanation" not in prompt
 
 
-def test_critic_prompt_includes_subversion_check_when_humor_set():
-    # With flag_if_no_subversion=True, the Critic prompt must include a subversion rule.
-    prompt = _build_critic_system_prompt(_BRIEF_WITH_JOKE_TYPE, _HUMOR)
-    assert "SUBVERSION CHECK" in prompt
+def test_co_satirist_prompt_asks_about_funniness():
+    # The Co-Satirist prompt must frame evaluation around funniness, not rules.
+    prompt = _build_co_satirist_prompt(_BRIEF_WITH_JOKE_TYPE, _HUMOR)
+    assert "funnier" in prompt.lower() or "funniest" in prompt.lower()
 
 
-def test_critic_prompt_includes_joke_mechanics_when_joke_type_set():
-    # When evaluate_joke_mechanics is True and joke_type is set, the Critic prompt must
-    # name the expected joke type so it can evaluate execution.
-    prompt = _build_critic_system_prompt(_BRIEF_WITH_JOKE_TYPE, _HUMOR)
-    assert "JOKE MECHANICS" in prompt
-    assert _BRIEF_WITH_JOKE_TYPE.joke_type in prompt
+def test_co_satirist_prompt_mentions_target_audience():
+    # The Co-Satirist must know the target audience to judge whether the joke lands.
+    prompt = _build_co_satirist_prompt(_BRIEF_WITH_JOKE_TYPE, _HUMOR)
+    assert _BRIEF_WITH_JOKE_TYPE.target_audience in prompt
 
 
-def test_critic_prompt_skips_joke_mechanics_when_joke_type_empty():
-    # When joke_type is empty (no humor config in upstream agent), JOKE MECHANICS rule
-    # must be omitted — there's nothing to evaluate.
-    brief_no_type = EnrichedBrief(
-        target_audience="general public",
-        output_language="English",
-        tone="dry wit",
-        cultural_angle="An angle.",
-        culturally_loaded_references=["A reference"],
-        joke_type="",
-    )
-    prompt = _build_critic_system_prompt(brief_no_type, _HUMOR)
+def test_co_satirist_prompt_has_no_rules_checklist():
+    # The Co-Satirist must not contain the old rules checklist — it chases jokes only.
+    prompt = _build_co_satirist_prompt(BRIEF)
+    assert "PUNCHING UP" not in prompt
+    assert "VISUAL-FIRST" not in prompt
     assert "JOKE MECHANICS" not in prompt
 
 
@@ -279,7 +270,9 @@ _LAYOUT_2V = CartoonLayout(panels=2, direction="vertical")
 
 _VALID_3_PANEL_JSON = json.dumps(
     {
-        "panels": [
+        "panels": 3,
+        "layout": "horizontal",
+        "content": [
             {
                 "scene": "Gata reads the headline",
                 "caption": "Day one.",
@@ -291,12 +284,12 @@ _VALID_3_PANEL_JSON = json.dumps(
                 "beat": "escalation",
             },
             {"scene": "Gata flips board", "caption": "Done.", "beat": "punchline"},
-        ]
+        ],
     }
 )
 _LOOP_OUTPUT_MULTI = LoopOutput(
     verdict=_VALID_3_PANEL_JSON,
-    log=ConversationLog(loop_name="Satirist/Critic"),
+    log=ConversationLog(loop_name="Satirist/Co-Satirist"),
 )
 
 
@@ -347,7 +340,7 @@ def test_run_multi_panel_fallback_on_malformed_json(caplog):
     # a single-panel CartoonConcept so the pipeline always produces some output.
     bad_output = LoopOutput(
         verdict="not valid JSON at all",
-        log=ConversationLog(loop_name="Satirist/Critic"),
+        log=ConversationLog(loop_name="Satirist/Co-Satirist"),
     )
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = bad_output
@@ -370,7 +363,7 @@ def test_run_multi_panel_fallback_on_wrong_panel_count(caplog):
         }
     )
     short_output = LoopOutput(
-        verdict=two_panels, log=ConversationLog(loop_name="Satirist/Critic")
+        verdict=two_panels, log=ConversationLog(loop_name="Satirist/Co-Satirist")
     )
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = short_output
@@ -430,14 +423,14 @@ def test_satirist_prompt_high_inconvenience_mentions_squirm():
 def test_critic_prompt_includes_inconvenience_when_nonzero():
     # When critic.inconvenience > 0 the Critic system prompt must contain
     # the INCONVENIENCE directive so the Critic also pushes toward uncomfortable truths.
-    prompt = _build_critic_system_prompt(BRIEF, _HUMOR_HIGH_INCONVENIENCE)
+    prompt = _build_co_satirist_prompt(BRIEF, _HUMOR_HIGH_INCONVENIENCE)
     assert "INCONVENIENCE" in prompt
 
 
 def test_critic_prompt_no_inconvenience_when_zero():
     # When critic.inconvenience == 0 no INCONVENIENCE directive appears in the Critic
     # prompt — existing adversarial-only behavior is unchanged.
-    prompt = _build_critic_system_prompt(BRIEF, _HUMOR_ZERO_INCONVENIENCE)
+    prompt = _build_co_satirist_prompt(BRIEF, _HUMOR_ZERO_INCONVENIENCE)
     assert "INCONVENIENCE" not in prompt
 
 
@@ -452,43 +445,32 @@ _HUMOR_DUAL_SATIRIST = HumorConfig(
 )
 
 
-def test_critic_prompt_dual_satirist_describes_collaboration():
-    # With dual_satirist=True the Critic prompt must describe a co-creating partner,
-    # not an adversarial evaluator, so the LLM takes the right collaborative role.
-    prompt = _build_critic_system_prompt(BRIEF, _HUMOR_DUAL_SATIRIST)
-    assert "Second Satirist" in prompt or "co-creat" in prompt.lower()
+def test_co_satirist_prompt_describes_collaboration():
+    # The Co-Satirist prompt must describe a co-creating partner, not an adversarial
+    # evaluator — collaboration is now the default regardless of humor config.
+    prompt = _build_co_satirist_prompt(BRIEF, _HUMOR_DUAL_SATIRIST)
+    assert "Co-Satirist" in prompt or "funnier" in prompt.lower()
 
 
-def test_critic_prompt_dual_satirist_has_no_numbered_rules():
-    # In dual satirist mode the numbered quality rules must not appear — the second
-    # satirist builds, it does not evaluate against a checklist.
-    prompt = _build_critic_system_prompt(BRIEF, _HUMOR_DUAL_SATIRIST)
+def test_co_satirist_prompt_has_no_numbered_rules():
+    # The Co-Satirist must never have a numbered rule checklist — it chases jokes.
+    prompt = _build_co_satirist_prompt(BRIEF, _HUMOR_DUAL_SATIRIST)
     assert "PUNCHING UP" not in prompt
     assert "VISUAL-FIRST" not in prompt
 
 
-def test_critic_prompt_standard_mode_has_rules():
-    # In standard mode the quality rules must still be present — regression guard.
-    prompt = _build_critic_system_prompt(BRIEF)
-    assert "PUNCHING UP" in prompt
-    assert "VISUAL-FIRST" in prompt
-
-
-def test_critic_prompt_dual_satirist_still_uses_approved_verdict():
-    # The second satirist must still use APPROVED to terminate the loop so no
-    # changes are needed to DualPersonaLoop's termination logic.
-    prompt = _build_critic_system_prompt(BRIEF, _HUMOR_DUAL_SATIRIST)
+def test_co_satirist_prompt_always_uses_approved_verdict():
+    # APPROVED must always be present so DualPersonaLoop termination logic is unchanged.
+    prompt = _build_co_satirist_prompt(BRIEF)
     assert "APPROVED" in prompt
 
 
-def test_critic_prompt_dual_satirist_with_inconvenience():
-    # dual_satirist mode must also respect the critic's inconvenience level —
-    # the two features are independent and must compose correctly.
+def test_co_satirist_prompt_inconvenience_directive_included():
+    # The Co-Satirist must include the INCONVENIENCE directive when inconvenience > 0.
     humor = HumorConfig(
         framer=FramerHumor(),
         satirist=SatiristHumor(),
-        critic=CriticHumor(dual_satirist=True, inconvenience=80),
+        critic=CriticHumor(inconvenience=80),
     )
-    prompt = _build_critic_system_prompt(BRIEF, humor)
-    assert "Second Satirist" in prompt or "co-creat" in prompt.lower()
+    prompt = _build_co_satirist_prompt(BRIEF, humor)
     assert "INCONVENIENCE" in prompt

@@ -18,17 +18,15 @@ from agents.types import (
 
 logger = logging.getLogger(__name__)
 
-_CLAUDE_MODELS = [
-    "claude-sonnet-4-6",
-    "claude-opus-4-7",
-    "claude-sonnet-4-5",
-    "claude-haiku-4-5-20251001",
+_GEMINI_SATIRIST_MODELS = [
+    "gemini-2.5-pro",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
 ]
-_GEMINI_CRITIC_MODELS = [
-    "gemini-3.1-flash-lite",
+_GEMINI_CO_SATIRIST_MODELS = [
     "gemini-2.5-flash",
     "gemini-2.5-pro",
-    "gemini-3.1-pro-preview",
+    "gemini-2.0-flash",
 ]
 
 # Verbatim from constitution.md Section 4
@@ -165,81 +163,40 @@ def _build_satirist_system_prompt(
     return "\n".join(lines)
 
 
-def _build_critic_system_prompt(
+def _build_co_satirist_prompt(
     brief: EnrichedBrief, humor: HumorConfig | None = None
 ) -> str:
-    # Dual satirist mode: replace the adversarial critic with a co-creating partner
-    if humor and humor.critic.dual_satirist:
-        return _build_second_satirist_prompt(brief, humor)
+    # Same goal as the Satirist — find the funniest concept — not a gatekeeper
     lines = [
-        "You are a rigorous cartoon quality critic for the Gata Newsroom.",
-        "Evaluate the proposed cartoon concept against these rules:",
+        "You are a Co-Satirist at Gata Newsroom.",
+        "Your partner has proposed a cartoon concept for the topic below.",
+        "Your only job: make the joke funnier, sharper, or more uncomfortable.",
         "",
-        "1. PUNCHING UP: satire must target systems of power or public figures,"
-        " not private individuals.",
-        "2. VISUAL-FIRST: the image must carry at least 50% of the humour;"
-        " caption-only jokes score below threshold.",
-        "3. GATA INTEGRITY: Gata must actively expose or challenge the subject"
-        " — not be passive or decorative.",
-        "4. ORIGINALITY: if the angle is the obvious first-read of the topic,"
-        " reject it and propose an alternative with a one-sentence rationale.",
-        f"5. AUDIENCE FIT: concept must be immediately accessible"
-        f" to {brief.target_audience}.",
-        f"6. LANGUAGE COMPLIANCE: ALL text must be in {brief.output_language}.",
-    ]
-    rule_num = 7
-    if humor and humor.critic.evaluate_joke_mechanics and brief.joke_type:
-        lines.append(
-            f"{rule_num}. JOKE MECHANICS: the selected joke type is"
-            f' "{brief.joke_type}"'
-            " — verify the concept executes it correctly, not just gestures at it."
-        )
-        rule_num += 1
-    if humor and humor.critic.flag_if_no_subversion:
-        lines.append(
-            f"{rule_num}. SUBVERSION CHECK: if the satirical angle plays it straight "
-            "with no twist or subverted expectation, reject it."
-        )
-    lines += [
-        "",
-        "RESPONSE FORMAT:",
-        "If the concept is sharp, specific, and genuinely cannot be improved:",
-        "<verdict>APPROVED</verdict>",
-        "",
-        "If any rule is violated or a material improvement exists:",
-        "<verdict>NEEDS REVISION</verdict>",
-        "followed by: which rule was violated or what is weak,"
-        " and one concrete alternative angle or fix.",
-        "Each iteration of feedback must differ from the previous one —"
-        " circular arguments are a protocol violation.",
-    ]
-    if humor:
-        directive = inconvenience_directive(humor.critic.inconvenience)
-        if directive:
-            lines += ["", directive]
-    return "\n".join(lines)
-
-
-def _build_second_satirist_prompt(
-    brief: EnrichedBrief, humor: HumorConfig | None = None
-) -> str:
-    # Replaces the adversarial Critic with a collaborative second Satirist voice.
-    lines = [
-        "You are the Second Satirist for Gata Newsroom.",
-        "Your partner has proposed a cartoon concept. Your job is to build upon it"
-        " — sharpen the angle, add the detail they missed, push the joke further.",
-        "You are not a critic. Do not evaluate rules. Do not reject.",
-        "Instead: contribute. Make the concept more surprising, more specific,"
-        " or more inconvenient than your partner dared.",
         f"Target audience: {brief.target_audience}.",
         f"Output language: {brief.output_language}"
-        " — ALL text in the cartoon must be in this language.",
+        " — ALL caption text must be in this language.",
         "",
-        "When the concept has reached its highest potential and you cannot improve"
-        " it further, respond with exactly:",
+        "HOW TO EVALUATE — ask yourself:",
+        f"Would {brief.target_audience} actually laugh at this?",
+        "Is there a more surprising angle being missed?",
+        "Is the image carrying the joke or is it caption-dependent?",
+        "Is the uncomfortable truth being named or just gestured at?",
+        "",
+        "IF the concept is already the funniest, most specific version you can imagine"
+        " — the kind that makes you wince because it is so accurate:",
         "<verdict>APPROVED</verdict>",
-        "Otherwise, contribute your improved version directly — no preamble,"
-        " no critique, just the sharper concept.",
+        "",
+        "IF you can make it funnier — sharper angle, better visual gag, more"
+        " uncomfortable truth, stronger caption — output your improved version"
+        " in the same JSON format inside <verdict>NEEDS REVISION</verdict>:",
+        "<verdict>NEEDS REVISION</verdict>",
+        "[your improved concept as the same JSON the Satirist uses]",
+        "",
+        "RULES:",
+        "- No meta-commentary. No 'this is good but...'."
+        " Just the improved JSON or APPROVED.",
+        "- Each iteration must be genuinely funnier than your previous one.",
+        "- You are not checking compliance. You are chasing the best joke.",
     ]
     if humor:
         directive = inconvenience_directive(humor.critic.inconvenience)
@@ -312,16 +269,16 @@ def run(
 ) -> tuple[CartoonConcept, ConversationLog, AgentTelemetry, CartoonLayout]:
     satirist = PersonaConfig(
         name="Satirist",
-        models=_CLAUDE_MODELS,
+        models=_GEMINI_SATIRIST_MODELS,
         system_prompt=_build_satirist_system_prompt(brief, humor, layout_override),
     )
-    critic = PersonaConfig(
-        name="Critic",
-        models=_GEMINI_CRITIC_MODELS,
-        system_prompt=_build_critic_system_prompt(brief, humor),
+    co_satirist = PersonaConfig(
+        name="Co-Satirist",
+        models=_GEMINI_CO_SATIRIST_MODELS,
+        system_prompt=_build_co_satirist_prompt(brief, humor),
     )
     loop = DualPersonaLoop(
-        satirist, critic, loop_name="Satirist/Critic", self_review_passes=3
+        satirist, co_satirist, loop_name="Satirist/Co-Satirist", self_review_passes=3
     )
     loop_output = loop.run(topic)
     concept, layout = _parse_verdict(loop_output.verdict, layout_override)
@@ -333,6 +290,6 @@ def run(
     )
     # telemetry is always populated by DualPersonaLoop; guard for safety
     telemetry = loop_output.telemetry or AgentTelemetry(
-        agent_name="Satirist/Critic", duration_seconds=0.0, iterations=0
+        agent_name="Satirist/Co-Satirist", duration_seconds=0.0, iterations=0
     )
     return concept, loop_output.log, telemetry, layout
