@@ -23,7 +23,11 @@ logger = logging.getLogger(__name__)
 
 _GEMINI_CLIENT: genai.Client | None = None
 
-_INFERENCE_MODEL = "gemini-2.5-flash"
+_INFERENCE_MODELS = [
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
+    "gemini-2.0-flash",
+]
 
 _AUDIENCE_INFERENCE_SYSTEM = (
     "Given a news topic, identify the single most relevant audience for satirical"
@@ -56,49 +60,52 @@ _AUDIENCE_FALLBACK: list[AudienceProfile] = [
 
 
 def infer_audiences(topic: str) -> list[AudienceProfile]:
-    """Infer relevant audiences for a topic via a single Gemini call.
+    """Infer relevant audiences for a topic, trying each model in turn.
 
-    Returns a parsed list of AudienceProfile objects. On any failure falls back
-    to _AUDIENCE_FALLBACK so the caller always receives a usable list.
+    Returns a parsed list of AudienceProfile objects. Falls back to
+    _AUDIENCE_FALLBACK only when all models are exhausted.
     """
     global _GEMINI_CLIENT
     if _GEMINI_CLIENT is None:
         _GEMINI_CLIENT = genai.Client()
-    try:
-        response = _GEMINI_CLIENT.models.generate_content(
-            model=_INFERENCE_MODEL,
-            contents=f"News topic: {topic}",
-            config=genai_types.GenerateContentConfig(
-                system_instruction=_AUDIENCE_INFERENCE_SYSTEM,
-                temperature=0.2,
-            ),
-        )
-        # Strip markdown fences defensively before JSON parse
-        raw = response.text.strip()
-        raw = re.sub(r"^```(?:json)?\s*", "", raw)
-        raw = re.sub(r"\s*```$", "", raw)
-        parsed = json.loads(raw)
-        if not isinstance(parsed, list) or not parsed:
-            raise ValueError(f"inference returned non-list: {raw!r}")
-        profiles = []
-        for item in parsed:
-            profiles.append(AudienceProfile(
-                name=str(item.get("name", "audience")).lower().replace(" ", "_"),
-                audience=str(item.get("audience", "")),
-                language=str(item.get("language", "English")),
-                tone=str(item.get("tone", "wit")),
-            ))
-        logger.info(
-            "infer_audiences: inferred %d audiences for topic %r",
-            len(profiles),
-            topic[:60],
-        )
-        return profiles
-    except Exception as exc:
-        logger.warning(
-            "infer_audiences: failed (%s) — using fallback audience list", exc
-        )
-        return list(_AUDIENCE_FALLBACK)
+    for model in _INFERENCE_MODELS:
+        try:
+            response = _GEMINI_CLIENT.models.generate_content(
+                model=model,
+                contents=f"News topic: {topic}",
+                config=genai_types.GenerateContentConfig(
+                    system_instruction=_AUDIENCE_INFERENCE_SYSTEM,
+                    temperature=0.2,
+                ),
+            )
+            # Strip markdown fences defensively before JSON parse
+            raw = response.text.strip()
+            raw = re.sub(r"^```(?:json)?\s*", "", raw)
+            raw = re.sub(r"\s*```$", "", raw)
+            parsed = json.loads(raw)
+            if not isinstance(parsed, list) or not parsed:
+                raise ValueError(f"inference returned non-list: {raw!r}")
+            profiles = [
+                AudienceProfile(
+                    name=str(item.get("name", "audience")).lower().replace(" ", "_"),
+                    audience=str(item.get("audience", "")),
+                    language=str(item.get("language", "English")),
+                    tone=str(item.get("tone", "wit")),
+                )
+                for item in parsed
+            ]
+            logger.info(
+                "infer_audiences: inferred %d audiences for topic %r",
+                len(profiles),
+                topic[:60],
+            )
+            return profiles
+        except Exception as exc:
+            logger.debug(
+                "infer_audiences: model %s failed (%s) — trying next", model, exc
+            )
+    logger.warning("infer_audiences: all models failed — using fallback audience")
+    return list(_AUDIENCE_FALLBACK)
 
 
 _MOOD_INFERENCE_SYSTEM = (
@@ -120,48 +127,51 @@ def infer_mood(topic: str, audience: str, language: str) -> MoodBrief | None:
     """Return the current emotional mood of an audience toward a topic.
 
     Uses Gemini with Google Search grounding for real-time accuracy.
-    Returns None on any failure so callers can proceed without mood context.
+    Tries each model in turn; returns None only when all are exhausted so
+    callers can proceed without mood context.
     """
     global _GEMINI_CLIENT
     if _GEMINI_CLIENT is None:
         _GEMINI_CLIENT = genai.Client()
-    try:
-        response = _GEMINI_CLIENT.models.generate_content(
-            model=_INFERENCE_MODEL,
-            contents=(
-                f"Topic: {topic}\n"
-                f"Audience: {audience}\n"
-                f"Language: {language}"
-            ),
-            config=genai_types.GenerateContentConfig(
-                system_instruction=_MOOD_INFERENCE_SYSTEM,
-                tools=[genai_types.Tool(google_search=genai_types.GoogleSearch())],
-                temperature=0.2,
-            ),
-        )
-        # Strip markdown fences defensively before JSON parse
-        raw = response.text.strip()
-        raw = re.sub(r"^```(?:json)?\s*", "", raw)
-        raw = re.sub(r"\s*```$", "", raw)
-        parsed = json.loads(raw)
-        triggers = parsed.get("key_triggers", [])
-        if not isinstance(triggers, list):
-            triggers = []
-        mood = MoodBrief(
-            mood_summary=str(parsed.get("mood_summary", "")),
-            emotional_posture=str(parsed.get("emotional_posture", "")),
-            key_triggers=[str(t) for t in triggers],
-        )
-        logger.info(
-            "infer_mood: posture=%r triggers=%d for audience=%r",
-            mood.emotional_posture,
-            len(mood.key_triggers),
-            audience,
-        )
-        return mood
-    except Exception as exc:
-        logger.warning("infer_mood: failed (%s) — proceeding without mood context", exc)
-        return None
+    for model in _INFERENCE_MODELS:
+        try:
+            response = _GEMINI_CLIENT.models.generate_content(
+                model=model,
+                contents=(
+                    f"Topic: {topic}\n"
+                    f"Audience: {audience}\n"
+                    f"Language: {language}"
+                ),
+                config=genai_types.GenerateContentConfig(
+                    system_instruction=_MOOD_INFERENCE_SYSTEM,
+                    tools=[genai_types.Tool(google_search=genai_types.GoogleSearch())],
+                    temperature=0.2,
+                ),
+            )
+            # Strip markdown fences defensively before JSON parse
+            raw = response.text.strip()
+            raw = re.sub(r"^```(?:json)?\s*", "", raw)
+            raw = re.sub(r"\s*```$", "", raw)
+            parsed = json.loads(raw)
+            triggers = parsed.get("key_triggers", [])
+            if not isinstance(triggers, list):
+                triggers = []
+            mood = MoodBrief(
+                mood_summary=str(parsed.get("mood_summary", "")),
+                emotional_posture=str(parsed.get("emotional_posture", "")),
+                key_triggers=[str(t) for t in triggers],
+            )
+            logger.info(
+                "infer_mood: posture=%r triggers=%d for audience=%r",
+                mood.emotional_posture,
+                len(mood.key_triggers),
+                audience,
+            )
+            return mood
+        except Exception as exc:
+            logger.debug("infer_mood: model %s failed (%s) — trying next", model, exc)
+    logger.warning("infer_mood: all models failed — proceeding without mood context")
+    return None
 
 
 _FRAMER_MODELS = [
