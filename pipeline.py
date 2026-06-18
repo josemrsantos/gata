@@ -81,6 +81,12 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
     )
+    # Silence SDK HTTP noise — operators want agent-level output, not socket events
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+    logging.getLogger("google.genai").setLevel(logging.WARNING)
+    logging.getLogger("google_genai").setLevel(logging.WARNING)
+    logging.getLogger("anthropic").setLevel(logging.WARNING)
     # Explicit source log lets operators know which credential path is active
     if found_dotenv:
         logger.info("credentials loaded from .env file")

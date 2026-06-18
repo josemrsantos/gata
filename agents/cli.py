@@ -72,6 +72,12 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
     )
+    # Silence SDK HTTP noise — operators want agent-level output, not socket events
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+    logging.getLogger("google.genai").setLevel(logging.WARNING)
+    logging.getLogger("google_genai").setLevel(logging.WARNING)
+    logging.getLogger("anthropic").setLevel(logging.WARNING)
     if found_dotenv:
         logger.info("credentials loaded from .env file")
     else:
@@ -108,7 +114,7 @@ def main() -> None:
     # Run the pipeline once per audience; log each failure and continue
     failures = 0
     audience_telemetry: list[tuple[str, RunTelemetry]] = []
-    for audience in audiences:
+    for i, audience in enumerate(audiences, 1):
         seed_brief = StrategyBrief(
             target_audience=audience.audience,
             output_language=audience.language,
@@ -116,10 +122,7 @@ def main() -> None:
         )
         output_path = os.path.join(output_dir, f"{audience.name}.png")
         logger.info(
-            "generating for audience=%r language=%r output=%r",
-            audience.audience,
-            audience.language,
-            output_path,
+            "[%d/%d] %s — %s", i, len(audiences), audience.name, audience.language
         )
         try:
             telemetry = run_pipeline(
@@ -133,7 +136,7 @@ def main() -> None:
     # Grand total across audiences — the number an operator actually wants
     if audience_telemetry:
         summary = _format_grand_total(audience_telemetry)
-        logger.info("run summary (all audiences):\n%s", summary)
+        logger.info("\n=== run summary ===\n%s", summary)
         try:
             Path(output_dir, "summary.txt").write_text(summary, encoding="utf-8")
         except OSError as exc:

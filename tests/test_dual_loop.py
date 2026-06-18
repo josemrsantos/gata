@@ -284,9 +284,9 @@ def test_reviewer_missing_verdict_tag_treated_as_needs_revision():
 # -- logging: FR-010 --
 
 
-def test_run_logs_iteration_outcome_at_info(caplog):
-    # FR-010: every iteration must produce an INFO log with the iteration number and
-    # verdict so the operator can trace the negotiation without inspecting code.
+def test_run_logs_completion_outcome_at_info(caplog):
+    # FR-010: the loop must log start and completion at INFO so operators can see
+    # agent progress without wading through per-iteration debug output.
     loop = _make_loop()
     with caplog.at_level(logging.INFO, logger="agents.dual_loop"):
         with patch(
@@ -295,8 +295,9 @@ def test_run_logs_iteration_outcome_at_info(caplog):
         ):
             loop.run("input")
     info_messages = [r.message for r in caplog.records if r.levelno == logging.INFO]
+    # "approved after 1 iteration(s)" contains both the count and outcome
     assert any("1" in m for m in info_messages)
-    assert any("APPROVED" in m.upper() for m in info_messages)
+    assert any("approved" in m.lower() for m in info_messages)
 
 
 # -- LoopOutput return type (T003) --

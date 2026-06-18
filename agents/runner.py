@@ -36,20 +36,20 @@ def run_pipeline(
     concept = None
     telemetry = RunTelemetry()
     try:
+        logger.info("Cultural Strategist: analyzing topic...")
         enriched_brief, agent0_log, agent0_tel = agent_cultural_strategist.run(
             topic, seed_brief, news_brief=news_headline, humor=humor
         )
         telemetry.agents.append(agent0_tel)
+        logger.info("Satirist/Critic: creating concept...")
         concept, bc_log, bc_tel = agent_satirist.run(
             topic, enriched_brief, humor=humor, layout=layout
         )
         telemetry.agents.append(bc_tel)
-        logger.info("creative loop complete — calling image generator")
         _image_path, image_tel = agent_image_generator.generate(
             concept, enriched_brief, output_path, layout=layout
         )
         telemetry.agents.append(image_tel)
-        logger.info("done: cartoon saved to %s", output_path)
     except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
         logger.error("pipeline failed: %s", exc)
         raise

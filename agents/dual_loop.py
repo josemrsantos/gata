@@ -171,7 +171,8 @@ class DualPersonaLoop:
         log = ConversationLog(loop_name=self._loop_name)
         token_calls: list[TokenUsage] = []
         iterations_run = 0
-
+        logger.info("%s: starting", self._loop_name)
+        # each iteration runs proposer then reviewer; APPROVED exits early
         for iteration in range(1, self._max_iterations + 1):
             if time.monotonic() - start > self._timeout_seconds:
                 raise TimeoutError(
@@ -205,7 +206,7 @@ class DualPersonaLoop:
             token_calls.append(reviewer_usage)
             verdict = _parse_reviewer_verdict(reviewer_response)
             iterations_run = iteration
-            logger.info(
+            logger.debug(
                 "%s: iteration %d/%d verdict=%s",
                 self._proposer.name,
                 iteration,
@@ -227,6 +228,11 @@ class DualPersonaLoop:
                     iterations=iterations_run,
                     calls=token_calls,
                 )
+                logger.info(
+                    "%s: complete — approved after %d iteration(s)",
+                    self._loop_name,
+                    iterations_run,
+                )
                 return LoopOutput(
                     verdict=last_proposer_verdict, log=log, telemetry=telemetry
                 )
@@ -246,11 +252,7 @@ class DualPersonaLoop:
             )
             proposer_messages.append({"role": "user", "content": reviewer_response})
 
-        logger.info(
-            "%s: final_say=True — returning iteration-%d output",
-            self._proposer.name,
-            self._max_iterations,
-        )
+        logger.info("%s: complete — max iterations reached", self._loop_name)
         telemetry = AgentTelemetry(
             agent_name=self._loop_name,
             duration_seconds=time.monotonic() - start,

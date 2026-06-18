@@ -118,7 +118,7 @@ def generate(
     # Build the prompt: multi-panel composite when panels present, verbatim otherwise
     if concept.panels is not None and layout is not None:
         prompt = _build_multi_panel_prompt(concept.panels, layout)
-        logger.info(
+        logger.debug(
             "generate: multi-panel mode panels=%d direction=%s prompt_length=%d",
             layout.panels,
             layout.direction,
@@ -126,16 +126,15 @@ def generate(
         )
     else:
         prompt = concept.image_prompt
-        logger.info("image_prompt:\n%s", prompt)
+        logger.debug("image_prompt:\n%s", prompt)
+    logger.info("Image Generator: rendering (%d chars)", len(prompt))
     global _gemini_client
     if _gemini_client is None:
         _gemini_client = genai.Client()
-
+    # try each model in priority order; stop on first successful image write
     for model in _MODELS:
-        logger.info(
-            "generate: trying model=%s, prompt_length=%d chars",
-            model,
-            len(prompt),
+        logger.debug(
+            "generate: trying model=%s, prompt_length=%d chars", model, len(prompt)
         )
         try:
             response = _gemini_client.models.generate_content(
@@ -181,12 +180,14 @@ def generate(
         meta = getattr(response, "usage_metadata", None)
         in_tok = getattr(meta, "prompt_token_count", 0) or 0
         out_tok = getattr(meta, "candidates_token_count", 0) or 0
+        cost_usd = compute_cost(model, in_tok, out_tok)
         token_calls.append(TokenUsage(
             model=model,
             input_tokens=in_tok,
             output_tokens=out_tok,
-            cost_usd=compute_cost(model, in_tok, out_tok),
+            cost_usd=cost_usd,
         ))
+        logger.info("Image Generator: saved — model=%s cost=$%.4f", model, cost_usd)
         telemetry = AgentTelemetry(
             agent_name="Image Generator",
             duration_seconds=time.monotonic() - start,

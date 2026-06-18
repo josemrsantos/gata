@@ -159,7 +159,8 @@ def test_generate_failure_preserves_existing_file(tmp_path):
 
 
 def test_generate_logs_model_and_prompt_length(caplog, tmp_path):
-    # generate() logs each model name tried and the prompt length at INFO level.
+    # generate() logs prompt length at INFO ("rendering") and model name at INFO
+    # ("saved"), giving operators key facts without the full prompt or per-model noise.
     out_file = tmp_path / "cartoon_output.png"
     response = _make_gemini_response(FAKE_PNG)
 
