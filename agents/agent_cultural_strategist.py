@@ -288,7 +288,9 @@ def run(
         models=_RESONATOR_MODELS,
         system_prompt=_RESONATOR_SYSTEM,
     )
-    loop = DualPersonaLoop(framer, resonator, loop_name="Agent 0", self_review_passes=3)
+    loop = DualPersonaLoop(
+        framer, resonator, loop_name="Cultural Strategist", self_review_passes=3
+    )
     news_context = ""
     if news_brief and (news_brief.abstract or news_brief.source):
         parts = []
@@ -317,10 +319,13 @@ def run(
     loop_output = loop.run(initial_input)
     cultural_angle, references, joke_type = _parse_verdict(loop_output.verdict)
     if not cultural_angle:
-        raise ValueError("Agent 0: cultural_angle is empty — enrichment failed")
+        raise ValueError(
+            "Cultural Strategist: cultural_angle is empty — enrichment failed"
+        )
     if not references:
         raise ValueError(
-            "Agent 0: culturally_loaded_references is empty — enrichment failed"
+            "Cultural Strategist: culturally_loaded_references is empty"
+            " — enrichment failed"
         )
     enriched = EnrichedBrief(
         target_audience=seed_brief.target_audience,
@@ -338,6 +343,6 @@ def run(
     )
     # telemetry is always populated by DualPersonaLoop; guard for safety
     telemetry = loop_output.telemetry or AgentTelemetry(
-        agent_name="Agent 0", duration_seconds=0.0, iterations=0
+        agent_name="Cultural Strategist", duration_seconds=0.0, iterations=0
     )
     return enriched, loop_output.log, telemetry

@@ -339,12 +339,12 @@ def test_loop_output_log_is_conversation_log():
 def test_loop_output_log_has_correct_loop_name():
     # ConversationLog.loop_name must match the loop_name argument passed to
     # DualPersonaLoop so bundle_writer can label each log file correctly.
-    loop = DualPersonaLoop(_PROPOSER, _REVIEWER, loop_name="Agent 0")
+    loop = DualPersonaLoop(_PROPOSER, _REVIEWER, loop_name="TestLoop")
     with patch(
         "agents.dual_loop._call_model", side_effect=[_PROPOSER_OK, _REVIEWER_APPROVED]
     ):
         result = loop.run("input")
-    assert result.log.loop_name == "Agent 0"
+    assert result.log.loop_name == "TestLoop"
 
 
 def test_loop_output_log_has_two_turns_per_iteration():

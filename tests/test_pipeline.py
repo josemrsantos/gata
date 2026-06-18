@@ -19,8 +19,8 @@ FAKE_CONCEPT = CartoonConcept(
     image_prompt="A cat at the UN.",
     iteration=1,
 )
-FAKE_AGENT0_LOG = ConversationLog(loop_name="Agent 0")
-FAKE_BC_LOG = ConversationLog(loop_name="B/C")
+FAKE_AGENT0_LOG = ConversationLog(loop_name="Cultural Strategist")
+FAKE_BC_LOG = ConversationLog(loop_name="Satirist/Critic")
 
 # Single-topic communities keep topic selection deterministic without patching
 # random.choice.

@@ -47,7 +47,7 @@ TOPIC = "Cats take over the UN Security Council"
 _VALID_IMAGE_PROMPT = "A cat sits at the UN table, wielding a gavel made of fish."
 _LOOP_OUTPUT = LoopOutput(
     verdict=_VALID_IMAGE_PROMPT,
-    log=ConversationLog(loop_name="B/C"),
+    log=ConversationLog(loop_name="Satirist/Critic"),
 )
 
 
@@ -167,12 +167,12 @@ def test_run_second_element_is_conversation_log():
 
 
 def test_run_log_has_loop_name_bc():
-    # The ConversationLog must carry loop_name="B/C" so bundle_writer labels the
-    # log file header correctly without extra context from the caller.
+    # The ConversationLog must carry loop_name="Satirist/Critic" so bundle_writer
+    # labels the log file header correctly without extra context from the caller.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
         _, log = run(TOPIC, BRIEF)
-    assert log.loop_name == "B/C"
+    assert log.loop_name == "Satirist/Critic"
 
 
 def test_run_cartoon_concept_image_prompt_with_loop_output_mock():
@@ -277,16 +277,26 @@ def test_critic_prompt_skips_joke_mechanics_when_joke_type_empty():
 _LAYOUT_3H = CartoonLayout(panels=3, direction="horizontal")
 _LAYOUT_2V = CartoonLayout(panels=2, direction="vertical")
 
-_VALID_3_PANEL_JSON = json.dumps({
-    "panels": [
-        {"scene": "Gata reads the headline", "caption": "Day one.", "beat": "setup"},
-        {"scene": "Gata raises an eyebrow", "caption": "Really?", "beat": "escalation"},
-        {"scene": "Gata flips board", "caption": "Done.", "beat": "punchline"},
-    ]
-})
+_VALID_3_PANEL_JSON = json.dumps(
+    {
+        "panels": [
+            {
+                "scene": "Gata reads the headline",
+                "caption": "Day one.",
+                "beat": "setup",
+            },
+            {
+                "scene": "Gata raises an eyebrow",
+                "caption": "Really?",
+                "beat": "escalation",
+            },
+            {"scene": "Gata flips board", "caption": "Done.", "beat": "punchline"},
+        ]
+    }
+)
 _LOOP_OUTPUT_MULTI = LoopOutput(
     verdict=_VALID_3_PANEL_JSON,
-    log=ConversationLog(loop_name="B/C"),
+    log=ConversationLog(loop_name="Satirist/Critic"),
 )
 
 
@@ -336,7 +346,8 @@ def test_run_multi_panel_fallback_on_malformed_json(caplog):
     # When the verdict is not valid JSON, run() must log WARNING and fall back to
     # a single-panel CartoonConcept so the pipeline always produces some output.
     bad_output = LoopOutput(
-        verdict="not valid JSON at all", log=ConversationLog(loop_name="B/C")
+        verdict="not valid JSON at all",
+        log=ConversationLog(loop_name="Satirist/Critic"),
     )
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = bad_output
@@ -350,13 +361,17 @@ def test_run_multi_panel_fallback_on_malformed_json(caplog):
 def test_run_multi_panel_fallback_on_wrong_panel_count(caplog):
     # When verdict JSON has fewer panels than requested, run() must log WARNING and
     # fall back to single-panel — an incomplete strip must not reach the image model.
-    two_panels = json.dumps({
-        "panels": [
-            {"scene": "s1", "caption": "c1", "beat": "setup"},
-            {"scene": "s2", "caption": "c2", "beat": "punchline"},
-        ]
-    })
-    short_output = LoopOutput(verdict=two_panels, log=ConversationLog(loop_name="B/C"))
+    two_panels = json.dumps(
+        {
+            "panels": [
+                {"scene": "s1", "caption": "c1", "beat": "setup"},
+                {"scene": "s2", "caption": "c2", "beat": "punchline"},
+            ]
+        }
+    )
+    short_output = LoopOutput(
+        verdict=two_panels, log=ConversationLog(loop_name="Satirist/Critic")
+    )
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = short_output
         with caplog.at_level(logging.WARNING, logger="agents.agent_satirist"):

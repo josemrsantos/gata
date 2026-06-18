@@ -20,7 +20,7 @@ _VALID_VERDICT = (
 )
 _LOOP_OUTPUT = LoopOutput(
     verdict=_VALID_VERDICT,
-    log=ConversationLog(loop_name="Agent 0"),
+    log=ConversationLog(loop_name="Cultural Strategist"),
 )
 
 
@@ -70,7 +70,7 @@ def test_run_accepts_single_reference():
     single_ref = "CULTURAL ANGLE: A valid angle.\nREFERENCES:\n- Only one reference"
     with patch("agents.agent_cultural_strategist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = LoopOutput(
-            verdict=single_ref, log=ConversationLog(loop_name="Agent 0")
+            verdict=single_ref, log=ConversationLog(loop_name="Cultural Strategist")
         )
         enriched_brief, _ = run(_TOPIC, _SEED)
     assert len(enriched_brief.culturally_loaded_references) == 1
@@ -84,7 +84,7 @@ def test_run_raises_value_error_on_empty_cultural_angle():
     empty_angle = "CULTURAL ANGLE: \nREFERENCES:\n- Some reference"
     with patch("agents.agent_cultural_strategist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = LoopOutput(
-            verdict=empty_angle, log=ConversationLog(loop_name="Agent 0")
+            verdict=empty_angle, log=ConversationLog(loop_name="Cultural Strategist")
         )
         with pytest.raises(ValueError, match="cultural_angle"):
             run(_TOPIC, _SEED)
@@ -95,7 +95,7 @@ def test_run_raises_value_error_on_empty_references_list():
     no_refs = "CULTURAL ANGLE: A valid angle.\nREFERENCES:\n"
     with patch("agents.agent_cultural_strategist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = LoopOutput(
-            verdict=no_refs, log=ConversationLog(loop_name="Agent 0")
+            verdict=no_refs, log=ConversationLog(loop_name="Cultural Strategist")
         )
         with pytest.raises(ValueError, match="culturally_loaded_references"):
             run(_TOPIC, _SEED)
@@ -166,12 +166,12 @@ def test_run_second_element_is_conversation_log():
 
 
 def test_run_log_has_loop_name_agent_0():
-    # The ConversationLog must carry loop_name="Agent 0" so bundle_writer labels the
-    # file header without needing extra context from the caller.
+    # The ConversationLog must carry loop_name="Cultural Strategist" so bundle_writer
+    # labels the file header without needing extra context from the caller.
     with patch("agents.agent_cultural_strategist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
         _, log = run(_TOPIC, _SEED)
-    assert log.loop_name == "Agent 0"
+    assert log.loop_name == "Cultural Strategist"
 
 
 def test_run_enriched_brief_content_unchanged_with_loop_output_mock():
@@ -196,7 +196,7 @@ _VERDICT_WITH_JOKE_TYPE = (
 )
 _LOOP_OUTPUT_WITH_JOKE_TYPE = LoopOutput(
     verdict=_VERDICT_WITH_JOKE_TYPE,
-    log=ConversationLog(loop_name="Agent 0"),
+    log=ConversationLog(loop_name="Cultural Strategist"),
 )
 
 
@@ -230,11 +230,13 @@ def test_run_references_not_contaminated_by_joke_type_line():
 # Framer inconvenience level (Stage 10)
 # ---------------------------------------------------------------------------
 
+
 def test_framer_prompt_includes_inconvenience_when_nonzero():
     # When framer.inconvenience > 0 the Framer system prompt must contain the
     # INCONVENIENCE directive so the cultural angle is pushed toward discomfort.
     from agents.agent_cultural_strategist import _build_framer_system_prompt
     from agents.types import CriticHumor, FramerHumor, HumorConfig, SatiristHumor
+
     humor = HumorConfig(
         framer=FramerHumor(inconvenience=70),
         satirist=SatiristHumor(),
@@ -249,6 +251,7 @@ def test_framer_prompt_no_inconvenience_when_zero():
     # framer prompt is unchanged from baseline behavior.
     from agents.agent_cultural_strategist import _build_framer_system_prompt
     from agents.types import CriticHumor, FramerHumor, HumorConfig, SatiristHumor
+
     humor = HumorConfig(
         framer=FramerHumor(inconvenience=0),
         satirist=SatiristHumor(),
@@ -267,14 +270,13 @@ def test_infer_audiences_returns_exactly_one_profile_on_success():
     # infer_audiences() must return a list with exactly one AudienceProfile when
     # the LLM responds correctly — the prompt now asks for a single audience.
     from agents.agent_cultural_strategist import infer_audiences
+
     mock_response = MagicMock()
     mock_response.text = (
         '[{"name":"swiss","audience":"Swiss public",'
         '"language":"Swiss German","tone":"dry Swiss wit"}]'
     )
-    with patch(
-        "agents.agent_cultural_strategist._GEMINI_CLIENT"
-    ) as mock_client:
+    with patch("agents.agent_cultural_strategist._GEMINI_CLIENT") as mock_client:
         mock_client.models.generate_content.return_value = mock_response
         profiles = infer_audiences("Swiss election results")
     assert len(profiles) == 1
@@ -285,9 +287,8 @@ def test_infer_audiences_fallback_returns_one_profile():
     # On LLM failure the fallback list must contain exactly one entry so the
     # "main + UK" shape is preserved even in degraded mode.
     from agents.agent_cultural_strategist import infer_audiences
-    with patch(
-        "agents.agent_cultural_strategist._GEMINI_CLIENT"
-    ) as mock_client:
+
+    with patch("agents.agent_cultural_strategist._GEMINI_CLIENT") as mock_client:
         mock_client.models.generate_content.side_effect = RuntimeError("network error")
         profiles = infer_audiences("some topic")
     assert len(profiles) == 1
@@ -297,5 +298,6 @@ def test_infer_audiences_system_prompt_asks_for_single_audience():
     # The system prompt must ask for the single most relevant audience, not a list
     # of 2-4, so the LLM doesn't return more than one entry.
     from agents.agent_cultural_strategist import _AUDIENCE_INFERENCE_SYSTEM
+
     assert "single" in _AUDIENCE_INFERENCE_SYSTEM.lower()
     assert "2 to 4" not in _AUDIENCE_INFERENCE_SYSTEM

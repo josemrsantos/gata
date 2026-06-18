@@ -34,7 +34,7 @@ def test_format_log_contains_iteration_header():
     # any iteration without reading the entire log.
     from agents.bundle_writer import format_log
 
-    log = _make_log("Agent 0", n_iterations=2)
+    log = _make_log("Cultural Strategist", n_iterations=2)
     text = format_log(log)
     assert "=== Iteration 1 ===" in text
     assert "=== Iteration 2 ===" in text
@@ -45,7 +45,7 @@ def test_format_log_contains_proposer_role_name():
     # which side is speaking in each iteration.
     from agents.bundle_writer import format_log
 
-    log = _make_log("Agent 0", n_iterations=1)
+    log = _make_log("Cultural Strategist", n_iterations=1)
     text = format_log(log)
     assert "Proposer" in text
 
@@ -55,7 +55,7 @@ def test_format_log_approved_verdict_label():
     # can grep for approvals without parsing the full text.
     from agents.bundle_writer import format_log
 
-    log = _make_log("Agent 0", n_iterations=1)
+    log = _make_log("Cultural Strategist", n_iterations=1)
     text = format_log(log)
     assert "Verdict: APPROVED" in text
 
@@ -65,7 +65,7 @@ def test_format_log_needs_revision_verdict_label():
     # distinguish rejections from approvals at a glance.
     from agents.bundle_writer import format_log
 
-    log = _make_log("Agent 0", n_iterations=2)
+    log = _make_log("Cultural Strategist", n_iterations=2)
     text = format_log(log)
     assert "Verdict: NEEDS REVISION" in text
 
@@ -75,7 +75,7 @@ def test_format_log_final_say_verdict_label():
     # the Final Say Protocol was triggered rather than consensus being reached.
     from agents.bundle_writer import format_log
 
-    log = ConversationLog(loop_name="B/C")
+    log = ConversationLog(loop_name="Satirist/Critic")
     log.turns.append(
         ConversationTurn(
             iteration=5, role="Satirist", text="Final proposal", verdict=""
@@ -95,7 +95,7 @@ def test_format_log_iterations_separated_by_dashes():
     # scan between iterations without relying on indentation alone.
     from agents.bundle_writer import format_log
 
-    log = _make_log("B/C", n_iterations=2)
+    log = _make_log("Satirist/Critic", n_iterations=2)
     text = format_log(log)
     assert "---" in text
 
@@ -105,7 +105,7 @@ def test_format_log_proposer_text_in_output():
     # the log useless for auditing what was actually proposed.
     from agents.bundle_writer import format_log
 
-    log = _make_log("Agent 0", n_iterations=1)
+    log = _make_log("Cultural Strategist", n_iterations=1)
     text = format_log(log)
     assert "Proposal 1" in text
 
@@ -115,7 +115,7 @@ def test_format_log_reviewer_text_in_output():
     # it impossible to see what feedback caused a revision.
     from agents.bundle_writer import format_log
 
-    log = _make_log("Agent 0", n_iterations=1)
+    log = _make_log("Cultural Strategist", n_iterations=1)
     text = format_log(log)
     assert "Review 1" in text
 
@@ -129,7 +129,13 @@ def test_write_bundle_creates_bundle_dir(tmp_path):
     from agents.bundle_writer import write_bundle
 
     output_path = str(tmp_path / "cartoon.png")
-    write_bundle(output_path, _make_log("Agent 0"), _make_log("B/C"), None, None)
+    write_bundle(
+        output_path,
+        _make_log("Cultural Strategist"),
+        _make_log("Satirist/Critic"),
+        None,
+        None,
+    )
     assert (tmp_path / "cartoon").is_dir()
 
 
@@ -139,7 +145,13 @@ def test_write_bundle_creates_agent0_log(tmp_path):
     from agents.bundle_writer import write_bundle
 
     output_path = str(tmp_path / "cartoon.png")
-    write_bundle(output_path, _make_log("Agent 0"), _make_log("B/C"), None, None)
+    write_bundle(
+        output_path,
+        _make_log("Cultural Strategist"),
+        _make_log("Satirist/Critic"),
+        None,
+        None,
+    )
     assert (tmp_path / "cartoon" / "agent0_log.txt").exists()
 
 
@@ -149,7 +161,13 @@ def test_write_bundle_creates_bc_log(tmp_path):
     from agents.bundle_writer import write_bundle
 
     output_path = str(tmp_path / "cartoon.png")
-    write_bundle(output_path, _make_log("Agent 0"), _make_log("B/C"), None, None)
+    write_bundle(
+        output_path,
+        _make_log("Cultural Strategist"),
+        _make_log("Satirist/Critic"),
+        None,
+        None,
+    )
     assert (tmp_path / "cartoon" / "bc_log.txt").exists()
 
 
@@ -159,7 +177,13 @@ def test_write_bundle_agent0_log_content(tmp_path):
     from agents.bundle_writer import write_bundle
 
     output_path = str(tmp_path / "cartoon.png")
-    write_bundle(output_path, _make_log("Agent 0"), _make_log("B/C"), None, None)
+    write_bundle(
+        output_path,
+        _make_log("Cultural Strategist"),
+        _make_log("Satirist/Critic"),
+        None,
+        None,
+    )
     content = (tmp_path / "cartoon" / "agent0_log.txt").read_text()
     assert "=== Iteration 1 ===" in content
     assert "Proposal 1" in content
@@ -171,7 +195,13 @@ def test_write_bundle_bc_log_content(tmp_path):
     from agents.bundle_writer import write_bundle
 
     output_path = str(tmp_path / "cartoon.png")
-    write_bundle(output_path, _make_log("Agent 0"), _make_log("B/C"), None, None)
+    write_bundle(
+        output_path,
+        _make_log("Cultural Strategist"),
+        _make_log("Satirist/Critic"),
+        None,
+        None,
+    )
     content = (tmp_path / "cartoon" / "bc_log.txt").read_text()
     assert "=== Iteration 1 ===" in content
 
@@ -182,7 +212,7 @@ def test_write_bundle_skips_none_agent0_log(tmp_path):
     from agents.bundle_writer import write_bundle
 
     output_path = str(tmp_path / "cartoon.png")
-    write_bundle(output_path, None, _make_log("B/C"), None, None)
+    write_bundle(output_path, None, _make_log("Satirist/Critic"), None, None)
     assert not (tmp_path / "cartoon" / "agent0_log.txt").exists()
 
 
@@ -192,7 +222,7 @@ def test_write_bundle_skips_none_bc_log(tmp_path):
     from agents.bundle_writer import write_bundle
 
     output_path = str(tmp_path / "cartoon.png")
-    write_bundle(output_path, _make_log("Agent 0"), None, None, None)
+    write_bundle(output_path, _make_log("Cultural Strategist"), None, None, None)
     assert not (tmp_path / "cartoon" / "bc_log.txt").exists()
 
 
@@ -205,7 +235,13 @@ def test_write_bundle_overwrites_existing_files(tmp_path):
     bundle_dir = tmp_path / "cartoon"
     bundle_dir.mkdir()
     (bundle_dir / "agent0_log.txt").write_text("old content")
-    write_bundle(output_path, _make_log("Agent 0"), _make_log("B/C"), None, None)
+    write_bundle(
+        output_path,
+        _make_log("Cultural Strategist"),
+        _make_log("Satirist/Critic"),
+        None,
+        None,
+    )
     content = (bundle_dir / "agent0_log.txt").read_text()
     assert content != "old content"
 
@@ -217,7 +253,11 @@ def test_write_bundle_returns_bundle_path(tmp_path):
 
     output_path = str(tmp_path / "cartoon.png")
     result = write_bundle(
-        output_path, _make_log("Agent 0"), _make_log("B/C"), None, None
+        output_path,
+        _make_log("Cultural Strategist"),
+        _make_log("Satirist/Critic"),
+        None,
+        None,
     )
     assert result == str(tmp_path / "cartoon")
 
@@ -245,7 +285,11 @@ def test_write_bundle_survives_explainer_failure(tmp_path):
     ):
         # must not raise
         write_bundle(
-            output_path, _make_log("Agent 0"), _make_log("B/C"), brief, "prompt",
+            output_path,
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            brief,
+            "prompt",
             include_html=True,
         )
 
@@ -269,7 +313,11 @@ def test_write_bundle_logs_are_present_after_explainer_failure(tmp_path):
         side_effect=RuntimeError("explainer failed"),
     ):
         write_bundle(
-            output_path, _make_log("Agent 0"), _make_log("B/C"), brief, "prompt",
+            output_path,
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            brief,
+            "prompt",
             include_html=True,
         )
     assert (tmp_path / "cartoon" / "agent0_log.txt").exists()
@@ -291,8 +339,8 @@ def test_write_bundle_creates_prompt_card(tmp_path):
     ):
         write_bundle(
             output_path,
-            _make_log("Agent 0"),
-            _make_log("B/C"),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
             None,
             "the exact image prompt",
         )
@@ -312,8 +360,8 @@ def test_write_bundle_prompt_card_verbatim_content(tmp_path):
     ):
         write_bundle(
             output_path,
-            _make_log("Agent 0"),
-            _make_log("B/C"),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
             None,
             image_prompt,
         )
@@ -327,7 +375,13 @@ def test_write_bundle_skips_prompt_card_when_none(tmp_path):
     from agents.bundle_writer import write_bundle
 
     output_path = str(tmp_path / "cartoon.png")
-    write_bundle(output_path, _make_log("Agent 0"), _make_log("B/C"), None, None)
+    write_bundle(
+        output_path,
+        _make_log("Cultural Strategist"),
+        _make_log("Satirist/Critic"),
+        None,
+        None,
+    )
     assert not (tmp_path / "cartoon" / "prompt_card.txt").exists()
 
 
@@ -336,11 +390,17 @@ def test_write_bundle_skips_prompt_card_when_none(tmp_path):
 
 def _make_telemetry() -> RunTelemetry:
     agent0 = AgentTelemetry(
-        agent_name="Agent 0",
+        agent_name="Cultural Strategist",
         duration_seconds=18.3,
         iterations=2,
-        calls=[TokenUsage(model="claude-sonnet-4-6", input_tokens=900,
-                           output_tokens=350, cost_usd=0.008)],
+        calls=[
+            TokenUsage(
+                model="claude-sonnet-4-6",
+                input_tokens=900,
+                output_tokens=350,
+                cost_usd=0.008,
+            )
+        ],
     )
     image_gen = AgentTelemetry(
         agent_name="Image Generator", duration_seconds=5.0, iterations=1
@@ -354,7 +414,7 @@ def test_format_summary_lists_each_agent_by_name():
     from agents.bundle_writer import format_summary
 
     text = format_summary(_make_telemetry())
-    assert "Agent 0" in text
+    assert "Cultural Strategist" in text
     assert "Image Generator" in text
 
 
@@ -397,7 +457,11 @@ def test_write_bundle_creates_summary_txt_when_telemetry_given(tmp_path):
 
     output_path = str(tmp_path / "cartoon.png")
     write_bundle(
-        output_path, _make_log("Agent 0"), _make_log("B/C"), None, None,
+        output_path,
+        _make_log("Cultural Strategist"),
+        _make_log("Satirist/Critic"),
+        None,
+        None,
         telemetry=_make_telemetry(),
     )
     assert (tmp_path / "cartoon" / "summary.txt").exists()
@@ -409,7 +473,13 @@ def test_write_bundle_skips_summary_txt_when_telemetry_none(tmp_path):
     from agents.bundle_writer import write_bundle
 
     output_path = str(tmp_path / "cartoon.png")
-    write_bundle(output_path, _make_log("Agent 0"), _make_log("B/C"), None, None)
+    write_bundle(
+        output_path,
+        _make_log("Cultural Strategist"),
+        _make_log("Satirist/Critic"),
+        None,
+        None,
+    )
     assert not (tmp_path / "cartoon" / "summary.txt").exists()
 
 
@@ -436,8 +506,11 @@ def test_write_bundle_skips_html_by_default(tmp_path):
         return_value=("in-lang", "english"),
     ) as mock_generate:
         write_bundle(
-            output_path, _make_log("Agent 0"), _make_log("B/C"),
-            _make_brief(), "prompt",
+            output_path,
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            _make_brief(),
+            "prompt",
         )
     mock_generate.assert_not_called()
     assert not (tmp_path / "cartoon" / "explanation.html").exists()
@@ -455,8 +528,12 @@ def test_write_bundle_generates_html_when_requested(tmp_path):
         return_value=("in-lang", "english"),
     ) as mock_generate:
         write_bundle(
-            output_path, _make_log("Agent 0"), _make_log("B/C"),
-            _make_brief(), "prompt", include_html=True,
+            output_path,
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            _make_brief(),
+            "prompt",
+            include_html=True,
         )
     mock_generate.assert_called_once()
     assert (tmp_path / "cartoon" / "explanation.html").read_text() == "in-lang"
@@ -471,7 +548,11 @@ def test_write_bundle_summary_txt_matches_format_summary(tmp_path):
     output_path = str(tmp_path / "cartoon.png")
     telemetry = _make_telemetry()
     write_bundle(
-        output_path, _make_log("Agent 0"), _make_log("B/C"), None, None,
+        output_path,
+        _make_log("Cultural Strategist"),
+        _make_log("Satirist/Critic"),
+        None,
+        None,
         telemetry=telemetry,
     )
     content = (tmp_path / "cartoon" / "summary.txt").read_text()

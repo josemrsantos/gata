@@ -45,7 +45,10 @@ def test_generate_html_returns_tuple():
             verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="explainer-lang")
         )
         result = generate_html(
-            _make_brief(), _make_log("Agent 0"), _make_log("B/C"), "prompt"
+            _make_brief(),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            "prompt",
         )
     assert isinstance(result, tuple)
     assert len(result) == 2
@@ -63,7 +66,10 @@ def test_generate_html_first_element_is_in_language_html():
             LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en")),
         ]
         in_lang, _ = generate_html(
-            _make_brief(), _make_log("Agent 0"), _make_log("B/C"), "prompt"
+            _make_brief(),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            "prompt",
         )
     assert in_lang == _IN_LANG_HTML
 
@@ -80,7 +86,10 @@ def test_generate_html_second_element_is_english_html():
             LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en")),
         ]
         _, english = generate_html(
-            _make_brief(), _make_log("Agent 0"), _make_log("B/C"), "prompt"
+            _make_brief(),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            "prompt",
         )
     assert english == _EN_HTML
 
@@ -96,7 +105,12 @@ def test_generate_html_calls_dual_loop_twice():
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
             LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en")),
         ]
-        generate_html(_make_brief(), _make_log("Agent 0"), _make_log("B/C"), "prompt")
+        generate_html(
+            _make_brief(),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            "prompt",
+        )
     assert mock_instance.run.call_count == 2
 
 
@@ -112,7 +126,10 @@ def test_generate_html_in_lang_contains_doctype():
             LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en")),
         ]
         in_lang, _ = generate_html(
-            _make_brief(), _make_log("Agent 0"), _make_log("B/C"), "prompt"
+            _make_brief(),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            "prompt",
         )
     assert "<!DOCTYPE html>" in in_lang
 
@@ -129,7 +146,10 @@ def test_generate_html_in_lang_contains_utf8_charset():
             LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en")),
         ]
         in_lang, _ = generate_html(
-            _make_brief(), _make_log("Agent 0"), _make_log("B/C"), "prompt"
+            _make_brief(),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            "prompt",
         )
     assert 'charset="UTF-8"' in in_lang or "charset='UTF-8'" in in_lang.lower()
 
@@ -144,7 +164,10 @@ def test_generate_html_raises_when_all_models_exhausted():
         mock_instance.run.side_effect = RuntimeError("all models exhausted")
         with pytest.raises(RuntimeError):
             generate_html(
-                _make_brief(), _make_log("Agent 0"), _make_log("B/C"), "prompt"
+                _make_brief(),
+                _make_log("Cultural Strategist"),
+                _make_log("Satirist/Critic"),
+                "prompt",
             )
 
 
@@ -163,7 +186,10 @@ def test_generate_html_english_contains_doctype():
             LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en")),
         ]
         _, english = generate_html(
-            _make_brief(), _make_log("Agent 0"), _make_log("B/C"), "prompt"
+            _make_brief(),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            "prompt",
         )
     assert "<!DOCTYPE html>" in english
 
@@ -180,7 +206,10 @@ def test_generate_html_english_contains_utf8_charset():
             LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en")),
         ]
         _, english = generate_html(
-            _make_brief(), _make_log("Agent 0"), _make_log("B/C"), "prompt"
+            _make_brief(),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            "prompt",
         )
     assert 'charset="UTF-8"' in english or "charset='utf-8'" in english.lower()
 
@@ -197,7 +226,10 @@ def test_generate_html_english_lang_attribute_is_en():
             LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en")),
         ]
         _, english = generate_html(
-            _make_brief(), _make_log("Agent 0"), _make_log("B/C"), "prompt"
+            _make_brief(),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            "prompt",
         )
     assert 'lang="en"' in english
 
@@ -222,7 +254,12 @@ def test_generate_html_uses_distinct_prompts_for_each_call():
             return LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en"))
 
         mock_instance.run.side_effect = capture_and_return
-        generate_html(_make_brief(), _make_log("Agent 0"), _make_log("B/C"), "prompt")
+        generate_html(
+            _make_brief(),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            "prompt",
+        )
 
     assert len(captured_inputs) == 2
     assert captured_inputs[0] != captured_inputs[1]
@@ -248,6 +285,9 @@ def test_generate_html_utf8_present_for_non_latin_language():
             LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en")),
         ]
         in_lang, _ = generate_html(
-            _make_brief("Korean"), _make_log("Agent 0"), _make_log("B/C"), "prompt"
+            _make_brief("Korean"),
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            "prompt",
         )
     assert 'charset="UTF-8"' in in_lang or "charset='utf-8'" in in_lang.lower()

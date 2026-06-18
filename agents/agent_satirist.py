@@ -246,7 +246,9 @@ def run(
         models=_GEMINI_CRITIC_MODELS,
         system_prompt=_build_critic_system_prompt(brief, humor),
     )
-    loop = DualPersonaLoop(satirist, critic, loop_name="B/C", self_review_passes=3)
+    loop = DualPersonaLoop(
+        satirist, critic, loop_name="Satirist/Critic", self_review_passes=3
+    )
     loop_output = loop.run(topic)
     verdict_content = loop_output.verdict
     # Multi-panel path: parse JSON verdict into a list of PanelConcept objects
@@ -266,7 +268,7 @@ def run(
     )
     # telemetry is always populated by DualPersonaLoop; guard for safety
     telemetry = loop_output.telemetry or AgentTelemetry(
-        agent_name="B/C", duration_seconds=0.0, iterations=0
+        agent_name="Satirist/Critic", duration_seconds=0.0, iterations=0
     )
     return concept, loop_output.log, telemetry
 

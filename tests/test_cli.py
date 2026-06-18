@@ -4,7 +4,7 @@ from agents.types import AgentTelemetry, RunTelemetry, TokenUsage
 def _tel(duration: float, cost: float) -> RunTelemetry:
     return RunTelemetry(
         agents=[AgentTelemetry(
-            agent_name="Agent 0", duration_seconds=duration, iterations=1,
+            agent_name="Cultural Strategist", duration_seconds=duration, iterations=1,
             calls=[TokenUsage(model="claude-sonnet-4-6", input_tokens=0,
                                output_tokens=0, cost_usd=cost)],
         )]
