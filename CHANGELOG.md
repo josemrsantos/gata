@@ -1,6 +1,28 @@
 # CHANGELOG
 
 
+## v1.7.0 (2026-06-18)
+
+### Features
+
+* feat: auto-layout — Satirist/Critic decides panel count and direction
+
+The Satirist now always outputs structured JSON that includes panels (1–4)
+and layout (horizontal/vertical) alongside the cartoon concept. When no
+explicit --panels override is given, the agent chooses the format that best
+fits the narrative: 1-panel for punch-at-a-glance, 2 for setup/punchline,
+3 for escalation, etc. Callers can still force a specific layout by passing
+layout_override.
+
+  - agent_satirist: unified JSON output format, auto-layout prompt, new
+    _parse_verdict(), run() returns 4-tuple including CartoonLayout
+  - runner: unpacks chosen_layout from Satirist and passes it to image gen
+  - pipeline: _resolve_layout() returns None (auto) when no --panels flag
+    and community panels ≤ 1 (the default); _panel_filename_prefix handles None
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`cdddb26`](https://github.com/josemrsantos/gata/commit/cdddb267f3f5d0fc59716108232693b76f9bf360))
+
+
 ## v1.6.2 (2026-06-18)
 
 ### Bug Fixes
