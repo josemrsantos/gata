@@ -1,6 +1,20 @@
 # CHANGELOG
 
 
+## v1.8.0 (2026-06-18)
+
+### Features
+
+* feat: Stage 021 — Gemini-only Satirist/Co-Satirist loop
+
+Replace Claude with Gemini in the Satirist role. Both agents are now
+Gemini-based co-collaborators chasing the funniest possible concept
+rather than creator vs. gatekeeper. The Co-Satirist can propose an
+improved JSON concept in NEEDS REVISION; APPROVED terminates the loop.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`b3936f4`](https://github.com/josemrsantos/gata/commit/b3936f4b9c40aa71f8db5007c6b8be72e3da22cb))
+
+
 ## v1.7.0 (2026-06-18)
 
 ### Features
