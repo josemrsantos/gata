@@ -1,6 +1,29 @@
 # CHANGELOG
 
 
+## v1.6.2 (2026-06-18)
+
+### Bug Fixes
+
+* fix: rename Agent 0 → Cultural Strategist, B/C → Satirist/Critic (RULE 9)
+
+Single-char and numeric agent names violate RULE 9. All occurrences of
+"Agent 0" and "B/C" replaced with their human-readable names across
+source files, test fixtures, and log assertions.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`97ed51a`](https://github.com/josemrsantos/gata/commit/97ed51a5baccc58bcabf4393d3b8cb03ad24d21c))
+
+* fix: add model fallback chain to infer_audiences and infer_mood
+
+Both functions previously used a single gemini-2.5-flash call and gave up
+immediately on any failure (including transient 503 overloads). They now
+try gemini-2.5-flash → gemini-2.5-pro → gemini-2.0-flash in order, logging
+each per-model failure at DEBUG and only surfacing a WARNING when all
+models are exhausted — matching the retry pattern used by every other agent.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`2b56b3d`](https://github.com/josemrsantos/gata/commit/2b56b3dbb30f884d5edf625d4614c8b1217cf1b8))
+
+
 ## v1.6.1 (2026-06-18)
 
 ### Bug Fixes
