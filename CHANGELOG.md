@@ -1,6 +1,36 @@
 # CHANGELOG
 
 
+## v1.6.0 (2026-06-18)
+
+### Documentation
+
+* docs: update README with stages 12-15, richer gata examples, and synced TODO list
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`7a8932c`](https://github.com/josemrsantos/gata/commit/7a8932c307ca319c9a65dc10c8493b76f36b5584))
+
+### Features
+
+* feat: clean logging output — silence SDK noise, add agent start/done INFO
+
+Operators can now see per-agent start, completion, cost, and grand total
+without HTTP-level SDK chatter obscuring the output.
+
+- Silence httpx, httpcore, google.genai, google_genai, anthropic to WARNING
+  in both cli.py and pipeline.py entry points
+- dual_loop: per-iteration verdict demoted to DEBUG; add start + completion
+  INFO (e.g. "Agent 0: complete — approved after 2 iteration(s)")
+- agent_image_generator: full prompt and per-model logs demoted to DEBUG;
+  add concise "rendering (N chars)" start and "saved — model=X cost=$Y" done
+- runner: add "Cultural Strategist: analyzing topic..." and
+  "Satirist/Critic: creating concept..." start logs; remove now-redundant
+  "creative loop complete" and "done: cartoon saved" lines
+- cli: cleaner [1/2] audience header; grand total now shown as === run summary ===
+- Update FR-010 test to match new completion-at-INFO contract
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`8b1c511`](https://github.com/josemrsantos/gata/commit/8b1c51153d3d26c86946979e33571c8e08a3cf26))
+
+
 ## v1.5.0 (2026-06-16)
 
 ### Features
