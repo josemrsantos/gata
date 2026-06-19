@@ -67,6 +67,20 @@ a third provider also adds redundancy and lets the pipeline mix voices across ag
 
 ---
 
+## Image Evaluator — concept fidelity check
+
+**Goal:** Extend the Image Evaluator to explicitly verify that the rendered image shows the
+*specific* intended concept, not just something thematically plausible. The evaluator must
+compare named elements from the approved concept (labels, diagrams, objects, scenes) against
+what is actually visible, and reject the image if the model substituted a different visual.
+
+**Reason:** Demonstrated by a chicken-crossing-the-road run: `gemini-3.1-flash-image-preview`
+ignored the approved spider-diagram prompt and rendered a British weather cycle instead. The
+image was visually convincing and passed the existing checks, but depicted a completely
+different concept. Thematic similarity is not concept fidelity.
+
+---
+
 ## Post-generation image evaluator — vision model checks for LLM artifacts and rates funniness
 
 **Goal:** After the image is saved, pass it to a vision model that checks for LLM rendering

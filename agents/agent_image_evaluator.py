@@ -43,7 +43,7 @@ _GATA_CHARACTER = (
 _SYSTEM_PROMPT = (
     "You are the Image Evaluator at Gata Newsroom.\n"
     "You receive a finished cartoon image and the concept that produced it.\n"
-    "Your job: decide APPROVED or REJECTED based on two criteria.\n"
+    "Your job: decide APPROVED or REJECTED based on three criteria.\n"
     "\n"
     "OUTPUT FORMAT — return ONLY valid JSON, no markdown fences:\n"
     "{\n"
@@ -54,6 +54,11 @@ _SYSTEM_PROMPT = (
     ' for the target audience",\n'
     '  "verdict": "APPROVED" or "REJECTED"\n'
     "}\n"
+    "\n"
+    "The artifacts list covers both technical rendering problems AND concept fidelity\n"
+    "failures. Prefix each entry so failures can be diagnosed:\n"
+    '- Technical artifact: "Artifact: [description]"\n'
+    '- Wrong concept rendered: "Fidelity failure: intended [X], image shows [Y]"\n'
     "\n"
     "VERDICT RULES:\n"
     "- REJECTED if artifacts list is non-empty\n"
@@ -88,15 +93,26 @@ def _build_eval_prompt(
         concept_desc,
         panel_note,
         "",
+        "CONCEPT FIDELITY CHECK — does the image show the specific scene above?",
+        "Thematic similarity is NOT sufficient. If the image depicts something"
+        " plausible but different — e.g. a British weather diagram instead of a"
+        " chicken-joke spider diagram — that is a fidelity failure, even if Gata"
+        " and the newsroom setting look correct.",
+        "Ask yourself:",
+        "- Is the specific scene described above (not just the general theme) visible?",
+        "- Are the named elements — diagrams, labels, objects, board text — present?",
+        "- Has the image model silently substituted a different-but-related visual?",
+        'If the image does not match, report: "Fidelity failure: intended [X],'
+        ' image shows [Y]"',
+        "",
         f"TARGET AUDIENCE: {brief.target_audience}",
         f"CULTURAL CONTEXT: {brief.cultural_angle}",
         "",
-        "ARTIFACT CHECKLIST — report every problem you find:",
-        "- Duplicate text: the same word, label, or caption appears more than once",
-        "- Garbled text: chalkboard text that is illegible, backwards, or misspelled",
-        "- Character failure: Gata is absent, has wrong colours, or wears"
-        " accessories/clothing",
-        "- Missing element: a load-bearing visual from the concept is absent",
+        "TECHNICAL ARTIFACT CHECKLIST — report every problem you find:",
+        '- Duplicate text: prefix "Artifact: duplicate [text]"',
+        '- Garbled text: prefix "Artifact: garbled text [description]"',
+        "- Character failure: Gata absent, wrong colours, or wearing"
+        ' accessories — prefix "Artifact: character [description]"',
         "",
         f"FUNNINESS CHECK — would {brief.target_audience} actually laugh at this?",
         "- Does the visual joke land without reading the caption?",

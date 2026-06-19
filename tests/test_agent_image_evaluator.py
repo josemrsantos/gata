@@ -326,6 +326,74 @@ def test_eval_prompt_multi_panel_mentions_layout():
 
 
 # ---------------------------------------------------------------------------
+# Concept fidelity check (Stage 023)
+# ---------------------------------------------------------------------------
+
+_FIDELITY_FAILURE_JSON = {
+    "artifacts": [
+        "Fidelity failure: intended chicken-joke spider diagram,"
+        " image shows British weather cycle"
+    ],
+    "is_funny": True,
+    "funny_notes": "Weather cycle is funny but it is not the approved concept.",
+    "verdict": "REJECTED",
+}
+
+
+def test_eval_prompt_contains_fidelity_check_section():
+    # _build_eval_prompt must include an explicit fidelity check section so the model
+    # knows to compare the image against the specific intended concept, not just theme.
+    prompt = _build_eval_prompt(_CONCEPT, _BRIEF, None)
+    assert "CONCEPT FIDELITY CHECK" in prompt
+
+
+def test_eval_prompt_warns_thematic_similarity_not_sufficient():
+    # _build_eval_prompt must explicitly state that thematic similarity is not enough,
+    # so the model catches cases where the image model substituted a different visual.
+    prompt = _build_eval_prompt(_CONCEPT, _BRIEF, None)
+    assert "Thematic similarity is NOT sufficient" in prompt
+
+
+def test_eval_prompt_instructs_fidelity_failure_prefix():
+    # _build_eval_prompt must instruct the model to prefix wrong-concept entries with
+    # "Fidelity failure:" so they are distinguishable from technical artifacts in logs.
+    prompt = _build_eval_prompt(_CONCEPT, _BRIEF, None)
+    assert "Fidelity failure" in prompt
+
+
+def test_evaluate_rejected_on_fidelity_failure(tmp_path):
+    # evaluate() must return REJECTED when Gemini reports a fidelity failure, so a
+    # plausible-but-wrong image triggers regeneration just like a technical artifact.
+    image_path = _write_fake_image(tmp_path)
+    resp = _make_response(_FIDELITY_FAILURE_JSON)
+    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
+        mock_client.models.generate_content.return_value = resp
+        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    assert result.verdict == "REJECTED"
+    assert any("Fidelity failure" in a for a in result.artifacts)
+
+
+def test_evaluate_fidelity_failure_preserved_in_artifacts(tmp_path):
+    # evaluate() must preserve the full fidelity failure description in the artifacts
+    # list so operators can diagnose exactly what the image model substituted.
+    image_path = _write_fake_image(tmp_path)
+    resp = _make_response(_FIDELITY_FAILURE_JSON)
+    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
+        mock_client.models.generate_content.return_value = resp
+        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    assert "chicken-joke spider diagram" in result.artifacts[0]
+
+
+def test_eval_prompt_fidelity_section_precedes_funniness():
+    # The fidelity check must appear before the funniness check in the prompt so the
+    # model resolves the objective question (right concept?) before the subjective one.
+    prompt = _build_eval_prompt(_CONCEPT, _BRIEF, None)
+    fidelity_pos = prompt.index("CONCEPT FIDELITY CHECK")
+    funniness_pos = prompt.index("FUNNINESS CHECK")
+    assert fidelity_pos < funniness_pos
+
+
+# ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
 
