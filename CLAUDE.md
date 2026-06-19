@@ -39,7 +39,7 @@ checking and why it matters.
 RULE 4 — Never proceed to the next task without an explicit 'approved' or 'proceed' from the human. Enthusiasm,
 momentum, and task context are not substitutes for explicit approval.
 
-RULE 5 — Every new stage (whether SDD/Speckit-driven or ad-hoc) must start with a new git branch. No stage work
+RULE 5 — Every new stage (whether SDD/Speckit-driven) must start with a new git branch. No stage work
 on main.
 
 RULE 13 — At the start of every conversation, before anything else:
