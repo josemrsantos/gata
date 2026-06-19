@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v1.9.0 (2026-06-19)
+
+### Features
+
+* feat: Stage 022 — Image Evaluator agent
+
+After image generation, a Gemini vision model checks for LLM rendering
+artifacts (duplicate text, garbled text, character failures) and rates
+whether the cartoon is genuinely funny for the target audience. Rejects
+trigger regeneration up to 2 times before accepting the last image.
+Fails open on parse error or model exhaustion so the pipeline is never
+blocked.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`8a58038`](https://github.com/josemrsantos/gata/commit/8a58038c84a2983e7ab76988b862b12d7bf76092))
+
+
 ## v1.8.0 (2026-06-18)
 
 ### Features
