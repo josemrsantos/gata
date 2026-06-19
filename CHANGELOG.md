@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v1.10.0 (2026-06-19)
+
+### Features
+
+* feat: Stage 023 — concept fidelity check in Image Evaluator
+
+Extend the evaluator prompt with an explicit fidelity check that
+distinguishes between thematically plausible and actually correct
+images. The model is now instructed that thematic similarity is not
+sufficient, given a concrete counter-example (British weather cycle
+instead of the approved chicken-joke spider diagram), and told to
+prefix wrong-concept rejections as "Fidelity failure: intended [X],
+image shows [Y]" so failures are diagnosable in logs.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`646e926`](https://github.com/josemrsantos/gata/commit/646e92690dc6e604272be8550f63779c8a0c3c9d))
+
+
 ## v1.9.0 (2026-06-19)
 
 ### Features
