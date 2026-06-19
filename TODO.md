@@ -57,6 +57,28 @@ creating and one gatekeeping) produces better output.
 
 ---
 
+## Grok integration — add xAI Grok as a third LLM provider
+
+**Goal:** Add xAI's Grok as a third LLM option alongside Gemini and Claude.
+
+**Reason:** Grok's irreverent, culture-aware personality may strengthen satirical output;
+a third provider also adds redundancy and lets the pipeline mix voices across agents
+(e.g. Grok as Co-Satirist).
+
+---
+
+## Post-generation image evaluator — vision model checks for LLM artifacts and rates funniness
+
+**Goal:** After the image is saved, pass it to a vision model that checks for LLM rendering
+artifacts *and* rates whether the image is actually funny to a human viewer before the bundle
+is accepted.
+
+**Reason:** The pipeline currently has no feedback loop on whether the final image lands as
+funny; an evaluator that flags artifact failures and low-humour scores in one pass catches
+two failure modes together, and sets up the voting system with a baseline quality floor.
+
+---
+
 ## Gemini fact-check gate with FACT tag
 
 **Goal:** After Claude produces a concept proposal, Gemini must perform a thorough fact-check of every specific claim (dates, names, events, economic figures). If any claim is factually wrong, Gemini must return it to Claude with an explicit `FACT:` tag that Claude cannot skip or override.

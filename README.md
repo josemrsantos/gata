@@ -41,8 +41,9 @@ All agents use prioritised model fallback chains. Both dual-loop pairs (Framer/R
 |---|---|---|---|
 | **Trend Scout** | — | Gemini | Fetches today's headlines from NewsAPI.org and picks the top 3 ranked by satirical potential for the community |
 | **Cultural Strategist** | Framer, Resonator | Claude (Framer) · Gemini (Resonator) | Framer proposes a cultural angle and audience references; Resonator approves or challenges until the angle is specific and sharp |
-| **Creative Loop** | Satirist, Critic | Claude (Satirist) · Gemini (Critic) | Satirist writes the cartoon concept and image prompt; Critic evaluates it against six quality rules and rejects with a concrete fix if any fail; loops up to 5 iterations |
+| **Creative Loop** | Satirist, Co-Satirist | Gemini (Satirist) · Gemini (Co-Satirist) | Both agents are Gemini co-collaborators chasing the funniest concept; Satirist proposes, Co-Satirist either approves or counters with a sharper version; loops up to 5 iterations |
 | **Image Generator** | — | Gemini image models | Renders the approved image prompt into a PNG; tries up to 5 models in order before failing |
+| **Image Evaluator** | — | Gemini vision models | After image generation, checks for LLM rendering artifacts (duplicate text, garbled text, character failures) and rates whether the cartoon is genuinely funny for the target audience; triggers regeneration up to 2 times on rejection |
 | **Explainer** | Writer, Editor | Claude (Writer) · Gemini (Editor) | Writer drafts two HTML pages (in-language for end users, English for operators); Editor approves or requests revision |
 
 ## Quick start

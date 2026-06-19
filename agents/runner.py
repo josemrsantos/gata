@@ -4,6 +4,7 @@ from google.genai.errors import APIError as GeminiAPIError
 
 from agents import (
     agent_cultural_strategist,
+    agent_image_evaluator,
     agent_image_generator,
     agent_satirist,
     bundle_writer,
@@ -47,10 +48,34 @@ def run_pipeline(
         )
         telemetry.agents.append(bc_tel)
         print("  Image Generator...", flush=True)
-        _image_path, image_tel = agent_image_generator.generate(
-            concept, enriched_brief, output_path, layout=chosen_layout
-        )
-        telemetry.agents.append(image_tel)
+        _MAX_IMAGE_RETRIES = 2
+        for _attempt in range(_MAX_IMAGE_RETRIES + 1):
+            _image_path, image_tel = agent_image_generator.generate(
+                concept, enriched_brief, output_path, layout=chosen_layout
+            )
+            telemetry.agents.append(image_tel)
+            print("  Image Evaluator...", flush=True)
+            _eval_result, eval_tel = agent_image_evaluator.evaluate(
+                _image_path, concept, enriched_brief, layout=chosen_layout
+            )
+            telemetry.agents.append(eval_tel)
+            if _eval_result.verdict == "APPROVED":
+                break
+            if _attempt < _MAX_IMAGE_RETRIES:
+                logger.warning(
+                    "image evaluator: REJECTED (attempt %d/%d)"
+                    " artifacts=%r funny=%s — regenerating",
+                    _attempt + 1,
+                    _MAX_IMAGE_RETRIES + 1,
+                    _eval_result.artifacts,
+                    _eval_result.is_funny,
+                )
+            else:
+                logger.warning(
+                    "image evaluator: REJECTED after %d attempt(s)"
+                    " — using last image",
+                    _MAX_IMAGE_RETRIES + 1,
+                )
     except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
         logger.error("pipeline failed: %s", exc)
         raise

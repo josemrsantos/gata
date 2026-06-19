@@ -249,3 +249,12 @@ class LoopOutput:
     verdict: str
     log: ConversationLog
     telemetry: AgentTelemetry | None = None
+
+
+@dataclass
+class ImageEvaluation:
+    verdict: str  # "APPROVED" or "REJECTED"
+    artifacts: list[str]
+    is_funny: bool
+    funny_notes: str
+    model_used: str
