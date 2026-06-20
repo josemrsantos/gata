@@ -27,22 +27,10 @@ def _panel_filename_prefix(layout: CartoonLayout | None) -> str:
     return f"{layout.panels}{direction_char}_"
 
 
-def _resolve_layout(args, community: object | None = None) -> CartoonLayout | None:
-    # Return None when no explicit override — Satirist/Critic will decide layout.
-    # Community panels default is 1 (same as "not set"), so only treat > 1 as override.
-    panels = args.panels
-    if panels is None and community is not None:
-        community_panels = getattr(community, "panels", 1)
-        if community_panels > 1:
-            panels = community_panels
-    if panels is None:
+def _resolve_layout(args) -> CartoonLayout | None:
+    if args.panels <= 1:
         return None
-    direction = (
-        args.layout
-        if args.layout is not None
-        else getattr(community, "layout", "horizontal")
-    )
-    return CartoonLayout(panels=panels, direction=direction)
+    return CartoonLayout(panels=args.panels, direction=args.layout)
 
 
 def main() -> None:
@@ -53,11 +41,11 @@ def main() -> None:
     parser.add_argument("--language", help="output language for manual mode")
     parser.add_argument("--tone", help="tone for manual mode")
     parser.add_argument(
-        "--panels", type=int, default=None, metavar="N",
+        "--panels", type=int, default=1, metavar="N",
         help="number of panels 1-4 (default 1)"
     )
     parser.add_argument(
-        "--layout", default=None, metavar="DIR",
+        "--layout", default='horizontal', metavar="DIR",
         help="panel direction: horizontal or vertical (default horizontal)"
     )
     parser.add_argument(
@@ -184,7 +172,7 @@ def main() -> None:
             # Free-text community: infer brief from description, skip Trend Scout
             seed_brief = trend_scout.infer_brief_from_description(args.community)
             folder = sanitize_path_segment(args.community)
-        layout = _resolve_layout(args, community)
+        layout = _resolve_layout(args)
         prefix = _panel_filename_prefix(layout)
         output_path = (
             f"output/{folder}"
@@ -239,7 +227,7 @@ def main() -> None:
                 topic,
             )
             seed_brief = community.to_brief()
-            layout = _resolve_layout(args, community)
+            layout = _resolve_layout(args)
             prefix = _panel_filename_prefix(layout)
             output_path = (
                 f"output/{sanitize_path_segment(community.name)}"
@@ -309,7 +297,7 @@ def main() -> None:
             "community=%r topic source=%s topic=%r", community.name, topic_source, topic
         )
         seed_brief = community.to_brief()
-        layout = _resolve_layout(args, community)
+        layout = _resolve_layout(args)
         prefix = _panel_filename_prefix(layout)
         output_path = (
             f"output/{sanitize_path_segment(community.name)}"
