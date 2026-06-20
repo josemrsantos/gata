@@ -32,6 +32,27 @@ Things to figure out:
 a third provider also adds redundancy and lets the pipeline mix voices across agents
 (e.g. Grok as Co-Satirist).
 
+**Dependency:** Requires spec 024 (LLM provider abstraction) to be complete first. Once
+`llm/` exists, Grok is added by creating `llm/grok.py` (GrokProvider) and wiring it into
+`core/runner.py` — no existing agent code changes required.
+
+---
+
+## LLM communication protocol framework
+
+**Goal:** Build a protocol framework inside `llm/` that supports different kinds of
+structured conversations between LLM agents — not just the current proposer/reviewer
+dual-loop, but other topologies (e.g. round-table, chain-of-thought relay, parallel
+panel with aggregation).
+
+**Reason:** `dual_loop.py` is the first inter-LLM protocol but it hardcodes a single
+conversation shape. As the pipeline grows, new interaction patterns will be needed.
+A protocol framework gives each pattern a clean, testable home and lets agents be wired
+into different conversation topologies without changing their own code.
+
+**Dependency:** Requires spec 024 (LLM provider abstraction + `llm/` folder) to be
+complete first.
+
 ---
 
 ## Gemini fact-check gate with FACT tag
