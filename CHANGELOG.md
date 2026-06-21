@@ -1,6 +1,117 @@
 # CHANGELOG
 
 
+## v1.11.0 (2026-06-21)
+
+### Documentation
+
+* docs: add spec 024 — LLM provider abstraction + project restructure
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`cc91f39`](https://github.com/josemrsantos/gata/commit/cc91f391d9e093b5bee734bdaa2dd8ec7b0bdfaf))
+
+* docs: remove "ad-hoc" from RULE 5
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`6ab736a`](https://github.com/josemrsantos/gata/commit/6ab736a32cf411976e4cb2b9503e139049d7cfa8))
+
+* docs: remove implemented items from TODO.md
+
+Remove 5 completed stages (multi-audience CLI, post-generation image
+review, Gemini co-satirist, image evaluator, fidelity check). Also
+update the fact-check gate description to reflect the current
+Satirist/Co-Satirist architecture (no longer references B/C or Claude).
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`2eda305`](https://github.com/josemrsantos/gata/commit/2eda3050949353d8112609dd2757685d45ed6678))
+
+* docs: backfill specs for stages 019–023
+
+Add spec.md files for all stages completed since spec 016:
+- 019: inference model fallback + agent rename
+- 020: auto-layout (Satirist chooses panel count/direction)
+- 021: Gemini-only Satirist/Co-Satirist loop
+- 022: Image Evaluator agent
+- 023: Image Evaluator concept fidelity check
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`32023ed`](https://github.com/josemrsantos/gata/commit/32023ed5c0a888f48b709db31921370bbf5a423d))
+
+### Features
+
+* feat: Stage 025 — Grok integration as Co-Satirist primary
+
+Adds GrokProvider (llm/grok.py) using the xAI OpenAI-compatible API.
+Grok-3 becomes the Co-Satirist primary; Gemini Flash / 2.0-Flash are
+fallbacks. Cost table covers grok-3, grok-3-mini, grok-3-fast,
+grok-3-mini-fast. 10 new unit tests added (test_grok_provider.py).
+
+Also fixes two bugs surfaced by live testing:
+- GeminiProvider.generate() now raises RuntimeError on empty response.text
+  (Gemini 2.5-pro returns None for thinking-only turns) so the fallback
+  chain can try the next provider instead of passing "" downstream.
+- GrokProvider.generate() applies the same guard for empty message.content.
+
+README updated: Co-Satirist LLM, XAI_API_KEY added to env-vars table.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`531278e`](https://github.com/josemrsantos/gata/commit/531278ec62069aef41a8782d773c1640c13a17b3))
+
+### Refactoring
+
+* refactor: Stage 024 — LLM provider abstraction + project restructure
+
+Introduces llm/ package (LLMProvider ABC, ClaudeProvider, GeminiProvider,
+DualPersonaLoop) and core/ package (types, config_loader, runner, bundle_writer,
+humor_utils, cli, __version__). agents/ now contains only Gata agents.
+
+Post-review fixes applied:
+- DualPersonaLoop final-say suffix uses .replace() not .format() to prevent
+  KeyError when reviewer LLM output contains curly braces
+- GeminiProvider.generate() now forwards max_output_tokens to GenerateContentConfig
+  so PersonaConfig.max_tokens=8192 (Explainer Writer) is honoured
+- ClaudeProvider.generate() guards against empty content list (IndexError)
+- GeminiProvider.generate() uses self.compute_cost() instead of inline formula
+- Expose get_gemini_client() publicly; infer_audiences/infer_mood/trend_scout
+  call it directly instead of creating throwaway GeminiProvider wrappers
+- _GEMINI_EVAL_CHAIN aliased to _GEMINI_PRO_CHAIN (identical model lists)
+- README agent table updated: Satirist now uses Claude (was Gemini)
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`4cfbe0e`](https://github.com/josemrsantos/gata/commit/4cfbe0e535c46749c5d036f03c112c7ff343db6f))
+
+* refactor: simplify _resolve_layout using explicit argparse defaults
+
+Set --panels default to 1 and --layout default to 'horizontal' so args
+always carry real values; remove the now-dead community config fallback
+and the None-sentinel checks from _resolve_layout.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`39d9b19`](https://github.com/josemrsantos/gata/commit/39d9b19c0be6f6fdc3e57cddae47b28511c64ee9))
+
+### Unknown
+
+* 2.1.1
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`eb8fc9f`](https://github.com/josemrsantos/gata/commit/eb8fc9f8f6c7e687063a32f1d024efcb2d1c680c))
+
+* docs+test: Stage 025 code review — fix stale README and add missing guard test
+
+- Fix 8 stale "Critic" references in README (Tech Stack, narrative, stage table,
+  bundle docs, .env/.export/Actions setup examples)
+- Add XAI_API_KEY to all three setup examples (.env, Option B export, GitHub Actions)
+- Add test_generate_raises_runtime_error_on_none_content covering the if-not-text
+  guard (non-empty choices, None message.content path)
+- Fix RULE 14: replace bare blank line inside test function body with inline comment
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`988c3ef`](https://github.com/josemrsantos/gata/commit/988c3ef13303c9a25bab350f1d50bc91e17e12d2))
+
+* 2.1.0
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`70fe61b`](https://github.com/josemrsantos/gata/commit/70fe61b9984828877c21bb809b738e930a008c61))
+
+* 2.0.0
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`e583624`](https://github.com/josemrsantos/gata/commit/e5836245f7970d014fc2ab473bd4f6b341a2d5f7))
+
+* 1.10.1
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`92643dc`](https://github.com/josemrsantos/gata/commit/92643dc63d6e569d55c46a18476c049f7327c06a))
+
+
 ## v1.10.0 (2026-06-19)
 
 ### Features

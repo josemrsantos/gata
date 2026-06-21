@@ -57,9 +57,10 @@ upload_to_vcs_release = true
 
 
 
+
 [project]
 name = "gata"
-version = "2.1.1"
+version = "1.11.0"
 description = "Automated multi-agent pipeline that transforms news into satirical cartoons starring Gata"
 readme = "README.md"
 license = { text = "MIT" }
