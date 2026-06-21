@@ -8,7 +8,7 @@ An automated multi-agent pipeline that transforms daily topics into a recurring 
 
 | Stage | Name | Status |
 |-------|------|--------|
-| 1 | Core pipeline (Satirist/Critic creative loop + image generation) | ✅ Complete |
+| 1 | Core pipeline (Satirist/Co-Satirist creative loop + image generation) | ✅ Complete |
 | 2 | Community config + model fallback chains | ✅ Complete |
 | 3 | Cultural Strategist (Framer + Resonator) | ✅ Complete |
 | 4 | Text Output Bundle (logs, HTML explanations, prompt card) | ✅ Complete |
@@ -28,12 +28,12 @@ An automated multi-agent pipeline that transforms daily topics into a recurring 
 
 1. **Trend Scout** fetches today's top headlines for the community and ranks them by satirical potential. For free-text communities, it infers the appropriate country and news category in a single Gemini call (`infer_community_profile`). In `--community + --topic` mode, Trend Scout is bypassed entirely.
 2. **Cultural Strategist** (Framer + Resonator loop) negotiates a cultural angle and audience-specific references for the chosen topic
-3. **Satirist + Critic loop** iterates on a satirical cartoon concept until approved (up to 5 iterations)
+3. **Satirist + Co-Satirist loop** iterates on a satirical cartoon concept until approved (up to 5 iterations)
 4. **Image Generator** renders the approved concept into a PNG via a fallback chain of Gemini image models
 5. **Explainer** (opt-in via `--html`) produces two HTML explanation pages: one in the target language, one in English for operators
 6. **Bundle writer** saves the full output package: image, conversation logs, prompt card, telemetry, and summary — plus the HTML files when `--html` is set
 
-All agents use prioritised model fallback chains. Both dual-loop pairs (Framer/Resonator and Satirist/Critic) include a 3-pass self-review injected into both personas.
+All agents use prioritised model fallback chains. Both dual-loop pairs (Framer/Resonator and Satirist/Co-Satirist) include a 3-pass self-review injected into both personas.
 
 ## Agents
 
@@ -98,6 +98,7 @@ Create a `.env` file in the project root. It is git-ignored and never committed.
 ```
 ANTHROPIC_API_KEY=your_anthropic_key_here
 GEMINI_API_KEY=your_gemini_key_here
+XAI_API_KEY=your_xai_key_here
 NEWSAPI_ORG_KEY=your_newsapi_key_here
 ```
 
@@ -110,6 +111,7 @@ Export the variables in your shell before running the pipeline. The pipeline det
 ```bash
 export ANTHROPIC_API_KEY=your_anthropic_key_here
 export GEMINI_API_KEY=your_gemini_key_here
+export XAI_API_KEY=your_xai_key_here
 export NEWSAPI_ORG_KEY=your_newsapi_key_here
 python pipeline.py --community uk-politics
 ```
@@ -120,6 +122,7 @@ In GitHub Actions, add the three values as repository secrets (`Settings → Sec
 env:
   ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   NEWSAPI_ORG_KEY: ${{ secrets.NEWSAPI_ORG_KEY }}
 ```
 
@@ -192,7 +195,7 @@ Output is saved to a bundle folder:
 Each bundle contains:
 - `cartoon.png` — the generated image
 - `agent0_log.txt` — Agent 0 negotiation history (cultural strategy)
-- `bc_log.txt` — B/C creative loop history (satirist + critic exchange)
+- `bc_log.txt` — B/C creative loop history (satirist + co-satirist exchange)
 - `prompt_card.txt` — verbatim image prompt for standalone reuse
 - `telemetry.json` — per-agent timing, token counts, and cost (machine-readable)
 - `summary.txt` — per-agent time, iterations, and cost, plus a run total (human-readable)
@@ -247,7 +250,7 @@ To add a new community, add an entry to `communities.yaml` — no code changes r
 - **Framer** — Anthropic Claude (`claude-sonnet-4-6` → `claude-opus-4-7` → `claude-haiku-4-5-20251001`)
 - **Resonator** — Google Gemini (`gemini-2.5-pro` → `gemini-2.5-flash` → `gemini-2.0-flash`)
 - **Satirist** — Anthropic Claude (same fallback chain as Framer)
-- **Critic** — Google Gemini (`gemini-3.1-flash-lite` → `gemini-2.5-flash` → `gemini-2.5-pro` → `gemini-3.1-pro-preview`)
+- **Co-Satirist** — xAI Grok (`grok-3` → `gemini-2.5-flash` → `gemini-2.0-flash` Gemini fallback)
 - **Image Generator** — Google Gemini image models (`gemini-3.1-flash-image-preview` → `gemini-3.1-flash-image` → `gemini-3-pro-image-preview` → `gemini-3-pro-image` → `gemini-2.5-flash-image`)
 - **Explainer Writer** — Anthropic Claude (`claude-sonnet-4-6`, max 8192 tokens)
 - **Explainer Editor** — Google Gemini (`gemini-2.5-flash` → `gemini-2.5-pro` → `gemini-2.0-flash`)

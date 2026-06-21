@@ -106,6 +106,20 @@ def test_generate_raises_runtime_error_on_empty_choices():
             provider.generate("sys", [{"role": "user", "content": "q"}])
 
 
+def test_generate_raises_runtime_error_on_none_content():
+    # generate() must raise RuntimeError when choices are non-empty but message.content
+    # is None (tool-use-only response), so the fallback chain tries the next provider.
+    provider = GrokProvider("grok-3")
+    resp = MagicMock()
+    choice = MagicMock()
+    choice.message.content = None
+    resp.choices = [choice]
+    with patch("llm.grok._get_client") as mock_client_fn:
+        mock_client_fn.return_value.chat.completions.create.return_value = resp
+        with pytest.raises(RuntimeError, match="empty response content"):
+            provider.generate("sys", [{"role": "user", "content": "q"}])
+
+
 # ---------------------------------------------------------------------------
 # cost calculation
 # ---------------------------------------------------------------------------
@@ -159,7 +173,7 @@ def test_grok_provider_failure_falls_through_to_next_provider():
     # rather than propagating the exception — ensuring Gemini fallback works.
     from core.types import PersonaConfig, TokenUsage
     from llm.dual_loop import DualPersonaLoop
-
+    # real GrokProvider wired to fail; mocks simulate fallback and reviewer
     grok = GrokProvider("grok-3")
     fallback = MagicMock()
     fallback.model_id = "gemini-2.5-flash"
