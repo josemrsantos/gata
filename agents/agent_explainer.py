@@ -1,20 +1,11 @@
 import logging
 
-from agents.dual_loop import DualPersonaLoop
-from agents.types import ConversationLog, EnrichedBrief, PersonaConfig
+from core.types import ConversationLog, EnrichedBrief, PersonaConfig
+from llm import LLMProvider
+from llm.dual_loop import DualPersonaLoop
 
 logger = logging.getLogger(__name__)
 
-_WRITER_MODELS = [
-    "claude-sonnet-4-6",
-    "claude-opus-4-7",
-    "claude-haiku-4-5-20251001",
-]
-_EDITOR_MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-    "gemini-2.0-flash",
-]
 
 _WRITER_SYSTEM = (
     "You are an HTML content writer for Gata Newsroom.\n"
@@ -74,17 +65,19 @@ def generate_html(
     agent0_log: ConversationLog | None,
     bc_log: ConversationLog | None,
     image_prompt: str,
+    writer_providers: list[LLMProvider],
+    editor_providers: list[LLMProvider],
 ) -> tuple[str, str]:
     """Generate in-language and English HTML explanation files via a dual-LLM loop."""
     writer = PersonaConfig(
         name="Writer",
-        models=_WRITER_MODELS,
+        providers=writer_providers,
         system_prompt=_WRITER_SYSTEM,
         max_tokens=8192,
     )
     editor = PersonaConfig(
         name="Editor",
-        models=_EDITOR_MODELS,
+        providers=editor_providers,
         system_prompt=_EDITOR_SYSTEM,
     )
     context = _build_context(enriched_brief, agent0_log, bc_log, image_prompt)

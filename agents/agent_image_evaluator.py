@@ -4,29 +4,20 @@ import mimetypes
 import re
 import time
 
-from google import genai
 from google.genai import types as genai_types
 from google.genai.errors import APIError
 
-from agents.types import (
+from core.types import (
     AgentTelemetry,
     CartoonConcept,
     CartoonLayout,
     EnrichedBrief,
     ImageEvaluation,
     TokenUsage,
-    compute_cost,
 )
+from llm import GeminiProvider
 
 logger = logging.getLogger(__name__)
-
-_gemini_client: genai.Client | None = None
-
-_GEMINI_EVALUATOR_MODELS = [
-    "gemini-2.5-pro",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-]
 
 # Verbatim from constitution.md Section 4 — duplicated to avoid circular imports
 _GATA_CHARACTER = (
@@ -159,23 +150,22 @@ def evaluate(
     image_path: str,
     concept: CartoonConcept,
     brief: EnrichedBrief,
+    evaluator_providers: list[GeminiProvider],
     layout: CartoonLayout | None = None,
 ) -> tuple[ImageEvaluation, AgentTelemetry]:
     start = time.monotonic()
     token_calls: list[TokenUsage] = []
-    # Read the image once; reuse bytes across all model attempts
+    # Read the image once; reuse bytes across all provider attempts
     with open(image_path, "rb") as fh:
         image_bytes = fh.read()
     mime_type = mimetypes.guess_type(image_path)[0] or "image/png"
     user_prompt = _build_eval_prompt(concept, brief, layout)
-    global _gemini_client
-    if _gemini_client is None:
-        _gemini_client = genai.Client()
     last_exc: Exception | None = None
-    # Try each model in priority order; stop on first successful evaluation
-    for model in _GEMINI_EVALUATOR_MODELS:
+    # Try each provider in priority order; stop on first successful evaluation
+    for provider in evaluator_providers:
+        model = provider.model_id
         try:
-            response = _gemini_client.models.generate_content(
+            response = provider.client.models.generate_content(
                 model=model,
                 contents=[
                     genai_types.Part(
@@ -208,7 +198,7 @@ def evaluate(
                 model=model,
                 input_tokens=in_tok,
                 output_tokens=out_tok,
-                cost_usd=compute_cost(model, in_tok, out_tok),
+                cost_usd=provider.compute_cost(in_tok, out_tok),
             )
         )
         evaluation = _parse_evaluation(response.text, model)

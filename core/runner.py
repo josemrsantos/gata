@@ -7,9 +7,9 @@ from agents import (
     agent_image_evaluator,
     agent_image_generator,
     agent_satirist,
-    bundle_writer,
 )
-from agents.types import (
+from core import bundle_writer
+from core.types import (
     CartoonLayout,
     ConversationLog,
     Headline,
@@ -17,8 +17,27 @@ from agents.types import (
     RunTelemetry,
     StrategyBrief,
 )
+from llm import ClaudeProvider, GeminiProvider, GrokProvider
 
 logger = logging.getLogger(__name__)
+
+# Provider chains created once; each chain tries models in priority order on failure.
+_CLAUDE_CHAIN = [
+    ClaudeProvider("claude-sonnet-4-6"),
+    ClaudeProvider("claude-opus-4-7"),
+    ClaudeProvider("claude-haiku-4-5-20251001"),
+]
+_GEMINI_PRO_CHAIN = [
+    GeminiProvider("gemini-2.5-pro"),
+    GeminiProvider("gemini-2.5-flash"),
+    GeminiProvider("gemini-2.0-flash"),
+]
+_GROK_CO_SATIRIST_CHAIN = [
+    GrokProvider("grok-3"),
+    GeminiProvider("gemini-2.5-flash"),
+    GeminiProvider("gemini-2.0-flash"),
+]
+_GEMINI_EVAL_CHAIN = _GEMINI_PRO_CHAIN  # same model priority as resonator chain
 
 
 def run_pipeline(
@@ -39,12 +58,22 @@ def run_pipeline(
     try:
         print("  Cultural Strategist...", flush=True)
         enriched_brief, agent0_log, agent0_tel = agent_cultural_strategist.run(
-            topic, seed_brief, news_brief=news_headline, humor=humor
+            topic,
+            seed_brief,
+            framer_providers=_CLAUDE_CHAIN,
+            resonator_providers=_GEMINI_PRO_CHAIN,
+            news_brief=news_headline,
+            humor=humor,
         )
         telemetry.agents.append(agent0_tel)
         print("  Satirist/Co-Satirist...", flush=True)
         concept, bc_log, bc_tel, chosen_layout = agent_satirist.run(
-            topic, enriched_brief, humor=humor, layout_override=layout
+            topic,
+            enriched_brief,
+            satirist_providers=_CLAUDE_CHAIN,
+            co_satirist_providers=_GROK_CO_SATIRIST_CHAIN,
+            humor=humor,
+            layout_override=layout,
         )
         telemetry.agents.append(bc_tel)
         print("  Image Generator...", flush=True)
@@ -56,7 +85,11 @@ def run_pipeline(
             telemetry.agents.append(image_tel)
             print("  Image Evaluator...", flush=True)
             _eval_result, eval_tel = agent_image_evaluator.evaluate(
-                _image_path, concept, enriched_brief, layout=chosen_layout
+                _image_path,
+                concept,
+                enriched_brief,
+                evaluator_providers=_GEMINI_EVAL_CHAIN,
+                layout=chosen_layout,
             )
             telemetry.agents.append(eval_tel)
             if _eval_result.verdict == "APPROVED":
@@ -80,8 +113,6 @@ def run_pipeline(
         logger.error("pipeline failed: %s", exc)
         raise
     finally:
-        # multi-panel: full_text is the JSON verdict
-        # single-panel: full_text equals image_prompt
         if concept is not None:
             has_panels = concept.panels is not None
             image_prompt = concept.full_text if has_panels else concept.image_prompt

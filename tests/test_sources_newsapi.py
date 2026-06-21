@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import httpx
 
 from agents.sources.newsapi import NewsApiAdapter
-from agents.types import Community, Headline, NewsSource
+from core.types import Community, Headline, NewsSource
 
 _COMMUNITY_SOURCES = Community(
     name="test-community",

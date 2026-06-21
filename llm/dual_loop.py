@@ -1,25 +1,19 @@
+from __future__ import annotations
+
 import logging
 import re
 import time
 
-import anthropic
-from google import genai
-from google.genai import types as genai_types
-
-from agents.types import (
+from core.types import (
     AgentTelemetry,
     ConversationLog,
     ConversationTurn,
     LoopOutput,
     PersonaConfig,
     TokenUsage,
-    compute_cost,
 )
 
 logger = logging.getLogger(__name__)
-
-_anthropic_client: anthropic.Anthropic | None = None
-_gemini_client: genai.Client | None = None
 
 _SELF_REVIEW_SUFFIX = """
 
@@ -52,56 +46,6 @@ Wrap your output in <verdict>...</verdict> tags as usual.
 Last reviewer feedback:
 {last_feedback}
 """
-
-
-def _call_model(
-    model: str, system_prompt: str, messages: list[dict], max_tokens: int = 2048
-) -> tuple[str, TokenUsage]:
-    global _anthropic_client, _gemini_client
-    if model.startswith("claude"):
-        if _anthropic_client is None:
-            _anthropic_client = anthropic.Anthropic()
-        response = _anthropic_client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            system=system_prompt,
-            messages=messages,
-        )
-        text = response.content[0].text
-        # usage is always present on Anthropic responses
-        in_tok = getattr(response.usage, "input_tokens", 0) or 0
-        out_tok = getattr(response.usage, "output_tokens", 0) or 0
-        return text, TokenUsage(
-            model=model,
-            input_tokens=in_tok,
-            output_tokens=out_tok,
-            cost_usd=compute_cost(model, in_tok, out_tok),
-        )
-    if _gemini_client is None:
-        _gemini_client = genai.Client()
-    # Format conversation history as a single string (consistent with agent_satirist.py)
-    prompt = "\n\n".join(
-        f"{'Assistant' if m['role'] == 'assistant' else 'User'}: {m['content']}"
-        for m in messages
-    )
-    response = _gemini_client.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=genai_types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            temperature=0.2,
-        ),
-    )
-    # usage_metadata may be absent on some Gemini models — guard defensively
-    meta = getattr(response, "usage_metadata", None)
-    in_tok = getattr(meta, "prompt_token_count", 0) or 0
-    out_tok = getattr(meta, "candidates_token_count", 0) or 0
-    return response.text, TokenUsage(
-        model=model,
-        input_tokens=in_tok,
-        output_tokens=out_tok,
-        cost_usd=compute_cost(model, in_tok, out_tok),
-    )
 
 
 def _extract_proposer_verdict(text: str) -> str:
@@ -149,19 +93,19 @@ class DualPersonaLoop:
     ) -> tuple[str, TokenUsage]:
         base = system_prompt if system_prompt is not None else persona.system_prompt
         effective_system = base + self._self_review_suffix
-        for model in persona.models:
+        for provider in persona.providers:
             try:
-                return _call_model(
-                    model, effective_system, messages, max_tokens=persona.max_tokens
+                return provider.generate(
+                    effective_system, messages, max_tokens=persona.max_tokens
                 )
             except Exception as exc:
                 logger.warning(
-                    "%s: model %s failed — %s — trying next model",
+                    "%s: provider %s failed — %s — trying next provider",
                     persona.name,
-                    model,
+                    provider.model_id,
                     exc,
                 )
-        raise RuntimeError(f"all models exhausted for {persona.name}")
+        raise RuntimeError(f"all providers exhausted for {persona.name}")
 
     def run(self, initial_input: str) -> LoopOutput:
         start = time.monotonic()
@@ -180,9 +124,10 @@ class DualPersonaLoop:
                 )
             is_final = iteration == self._max_iterations and last_feedback
             if is_final:
+                # str.replace avoids KeyError if reviewer feedback contains {braces}
                 proposer_system = (
                     self._proposer.system_prompt
-                    + _FINAL_SAY_SUFFIX.format(last_feedback=last_feedback)
+                    + _FINAL_SAY_SUFFIX.replace("{last_feedback}", last_feedback)
                 )
             else:
                 proposer_system = self._proposer.system_prompt
@@ -251,7 +196,7 @@ class DualPersonaLoop:
                 {"role": "assistant", "content": proposer_response}
             )
             proposer_messages.append({"role": "user", "content": reviewer_response})
-
+        # for-loop exhausted without APPROVED; build final telemetry and return
         logger.info("%s: complete — max iterations reached", self._loop_name)
         telemetry = AgentTelemetry(
             agent_name=self._loop_name,

@@ -1,10 +1,11 @@
 import logging
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 import pipeline
-from agents.types import (
+from core.types import (
+    AgentTelemetry,
     CartoonConcept,
     CartoonLayout,
     Community,
@@ -58,6 +59,21 @@ FAKE_ENRICHED_BRIEF = EnrichedBrief(
     culturally_loaded_references=["ChatGPT moment", "Tech layoffs 2023"],
 )
 
+FAKE_AGENT0_TEL = AgentTelemetry(
+    agent_name="Cultural Strategist", duration_seconds=0.0, iterations=1
+)
+FAKE_BC_TEL = AgentTelemetry(
+    agent_name="Satirist/Co-Satirist", duration_seconds=0.0, iterations=1
+)
+FAKE_IMAGE_TEL = AgentTelemetry(
+    agent_name="Image Generator", duration_seconds=0.0, iterations=1
+)
+FAKE_EVAL_TEL = AgentTelemetry(
+    agent_name="Image Evaluator", duration_seconds=0.0, iterations=1
+)
+_FAKE_EVAL_RESULT = MagicMock()
+_FAKE_EVAL_RESULT.verdict = "APPROVED"
+
 # Minimal env vars so the API-key guard in main() does not exit early.
 ENV = {"ANTHROPIC_API_KEY": "fake-anthropic", "GEMINI_API_KEY": "fake-gemini"}
 
@@ -104,11 +120,21 @@ def test_community_mode_selects_correct_brief():
         patch("sys.argv", ["pipeline.py", "--community", "uk-tech-engineers"]),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ) as mock_agent_0,
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -126,14 +152,21 @@ def test_community_mode_agent_bc_receives_enriched_brief():
         patch("sys.argv", ["pipeline.py", "--community", "uk-tech-engineers"]),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
         patch(
-            "pipeline.agent_satirist.run",
-            return_value=(FAKE_CONCEPT, FAKE_BC_LOG),
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
         ) as mock_bc,
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -150,11 +183,21 @@ def test_community_mode_output_path():
         patch("sys.argv", ["pipeline.py", "--community", "uk-tech-engineers"]),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -185,11 +228,21 @@ def test_named_community_calls_get_topics_not_free_text():
             create=True,
         ) as mock_free,
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -211,11 +264,21 @@ def test_named_community_output_folder_uses_community_name():
         ),
         patch("pipeline.trend_scout.get_topics_for_description", create=True),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -239,11 +302,21 @@ def test_random_mode_calls_choice_on_communities():
             side_effect=[COMMUNITY_PT, "Housing crisis"],
         ) as mock_choice,
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -263,11 +336,21 @@ def test_random_mode_uses_selected_community_topics():
             side_effect=[COMMUNITY_PT, "Housing crisis"],
         ),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -300,11 +383,21 @@ def test_manual_mode_does_not_call_trend_scout():
         patch("pipeline.load_communities"),
         patch("agents.trend_scout.get_topics") as mock_ts,
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -320,11 +413,21 @@ def test_manual_mode_does_not_load_communities():
         patch("sys.argv", _MANUAL_ARGV),
         patch("pipeline.load_communities") as mock_load,
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -340,11 +443,21 @@ def test_manual_mode_output_path():
         patch("sys.argv", _MANUAL_ARGV),
         patch("pipeline.load_communities"),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -370,9 +483,16 @@ def test_manual_mode_missing_flag_exits_1():
                 "English",
             ],
         ),
-        patch("pipeline.agent_cultural_strategist.run") as mock_a0,
-        patch("pipeline.agent_satirist.run") as mock_run,
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch("core.runner.agent_cultural_strategist.run") as mock_a0,
+        patch("core.runner.agent_satirist.run") as mock_run,
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
     ):
         with pytest.raises(SystemExit) as exc_info:
             pipeline.main()
@@ -394,9 +514,16 @@ def test_community_with_context_flag_exits_1():
             ["pipeline.py", "--community", "uk-tech-engineers",
              "--audience", "developers"],
         ),
-        patch("pipeline.agent_cultural_strategist.run") as mock_a0,
-        patch("pipeline.agent_satirist.run") as mock_run,
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch("core.runner.agent_cultural_strategist.run") as mock_a0,
+        patch("core.runner.agent_satirist.run") as mock_run,
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
     ):
         with pytest.raises(SystemExit) as exc_info:
             pipeline.main()
@@ -420,9 +547,16 @@ def test_config_missing_file_exits_1():
             "pipeline.load_communities",
             side_effect=ValueError("Config file not found: communities.yaml"),
         ),
-        patch("pipeline.agent_cultural_strategist.run") as mock_a0,
-        patch("pipeline.agent_satirist.run") as mock_run,
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch("core.runner.agent_cultural_strategist.run") as mock_a0,
+        patch("core.runner.agent_satirist.run") as mock_run,
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
     ):
         with pytest.raises(SystemExit) as exc_info:
             pipeline.main()
@@ -443,9 +577,16 @@ def test_config_invalid_yaml_exits_1():
             "pipeline.load_communities",
             side_effect=ValueError("communities.yaml is not valid YAML"),
         ),
-        patch("pipeline.agent_cultural_strategist.run") as mock_a0,
-        patch("pipeline.agent_satirist.run") as mock_run,
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch("core.runner.agent_cultural_strategist.run") as mock_a0,
+        patch("core.runner.agent_satirist.run") as mock_run,
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
     ):
         with pytest.raises(SystemExit) as exc_info:
             pipeline.main()
@@ -466,9 +607,16 @@ def test_config_duplicate_name_exits_1():
             "pipeline.load_communities",
             side_effect=ValueError("Duplicate community name: 'my-community'"),
         ),
-        patch("pipeline.agent_cultural_strategist.run") as mock_a0,
-        patch("pipeline.agent_satirist.run") as mock_run,
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch("core.runner.agent_cultural_strategist.run") as mock_a0,
+        patch("core.runner.agent_satirist.run") as mock_run,
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
     ):
         with pytest.raises(SystemExit) as exc_info:
             pipeline.main()
@@ -491,19 +639,28 @@ def test_agent_0_called_before_agent_bc():
         patch("sys.argv", ["pipeline.py", "--community", "uk-tech-engineers"]),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
+            "core.runner.agent_cultural_strategist.run",
             side_effect=lambda *a, **kw: (
                 call_order.append("agent_cultural_strategist")
-                or (FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG)
+                or (FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL)
             ),
         ),
         patch(
-            "pipeline.agent_satirist.run",
+            "core.runner.agent_satirist.run",
             side_effect=lambda *a, **kw: (
-                call_order.append("agent_satirist") or (FAKE_CONCEPT, FAKE_BC_LOG)
+                call_order.append("agent_satirist")
+                or (FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None)
             ),
         ),
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -519,11 +676,19 @@ def test_pipeline_exits_before_agent_bc_on_agent_0_runtime_error():
         patch("sys.argv", ["pipeline.py", "--community", "uk-tech-engineers"]),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
+            "core.runner.agent_cultural_strategist.run",
             side_effect=RuntimeError("all models exhausted"),
         ),
-        patch("pipeline.agent_satirist.run") as mock_bc,
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch("core.runner.agent_satirist.run") as mock_bc,
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
         patch("os.makedirs"),
     ):
         with pytest.raises(SystemExit):
@@ -541,11 +706,19 @@ def test_pipeline_exits_before_agent_bc_on_agent_0_timeout_error():
         patch("sys.argv", ["pipeline.py", "--community", "uk-tech-engineers"]),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
+            "core.runner.agent_cultural_strategist.run",
             side_effect=TimeoutError("timeout after 900s"),
         ),
-        patch("pipeline.agent_satirist.run") as mock_bc,
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch("core.runner.agent_satirist.run") as mock_bc,
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
         patch("os.makedirs"),
     ):
         with pytest.raises(SystemExit):
@@ -568,19 +741,26 @@ def test_write_bundle_called_after_agent_d(tmp_path):
         patch("sys.argv", ["pipeline.py", "--community", "uk-tech-engineers"]),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
         patch(
-            "pipeline.agent_satirist.run",
-            return_value=(FAKE_CONCEPT, FAKE_BC_LOG),
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
         ),
         patch(
-            "pipeline.agent_image_generator.generate",
-            side_effect=lambda *a, **kw: call_order.append("agent_image_generator"),
+            "core.runner.agent_image_generator.generate",
+            side_effect=lambda *a, **kw: (
+                call_order.append("agent_image_generator")
+                or ("fake.png", FAKE_IMAGE_TEL)
+            ),
         ),
         patch(
-            "pipeline.bundle_writer.write_bundle",
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch(
+            "core.bundle_writer.write_bundle",
             side_effect=lambda *a, **kw: call_order.append("write_bundle") or "",
         ),
         patch("os.makedirs"),
@@ -599,12 +779,22 @@ def test_write_bundle_receives_correct_output_path(tmp_path):
         patch("sys.argv", ["pipeline.py", "--community", "uk-tech-engineers"]),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
-        patch("pipeline.bundle_writer.write_bundle", return_value="") as mock_wb,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_wb,
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -622,12 +812,22 @@ def test_write_bundle_receives_agent0_and_bc_logs(tmp_path):
         patch("sys.argv", ["pipeline.py", "--community", "uk-tech-engineers"]),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
-        patch("pipeline.bundle_writer.write_bundle", return_value="") as mock_wb,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_wb,
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -646,12 +846,22 @@ def test_write_bundle_receives_image_prompt(tmp_path):
         patch("sys.argv", ["pipeline.py", "--community", "uk-tech-engineers"]),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
-        patch("pipeline.bundle_writer.write_bundle", return_value="") as mock_wb,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_wb,
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -669,12 +879,19 @@ def test_write_bundle_called_with_agent0_log_on_bc_failure(tmp_path):
         patch("sys.argv", ["pipeline.py", "--community", "uk-tech-engineers"]),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", side_effect=RuntimeError("bc failed")),
-        patch("pipeline.agent_image_generator.generate"),
-        patch("pipeline.bundle_writer.write_bundle", return_value="") as mock_wb,
+        patch("core.runner.agent_satirist.run", side_effect=RuntimeError("bc failed")),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_wb,
         patch("os.makedirs"),
     ):
         with pytest.raises(SystemExit):
@@ -721,11 +938,21 @@ def test_free_text_community_calls_get_topics_for_description():
             create=True,
         ) as mock_gttfd,
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -747,11 +974,21 @@ def test_free_text_community_output_path_uses_sanitized_description():
             create=True,
         ),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -775,11 +1012,21 @@ def test_free_text_community_pipeline_uses_inferred_brief():
             create=True,
         ),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ) as mock_agent0,
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -800,9 +1047,16 @@ def test_empty_community_string_exits_1(caplog):
         patch.dict("os.environ", ENV),
         patch("pipeline.load_dotenv"),
         patch("sys.argv", ["pipeline.py", "--community", ""]),
-        patch("pipeline.agent_cultural_strategist.run") as mock_a0,
-        patch("pipeline.agent_satirist.run") as mock_run,
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch("core.runner.agent_cultural_strategist.run") as mock_a0,
+        patch("core.runner.agent_satirist.run") as mock_run,
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
     ):
         with pytest.raises(SystemExit) as exc_info:
             pipeline.main()
@@ -833,11 +1087,21 @@ def test_missing_communities_yaml_triggers_free_text_path():
             create=True,
         ),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -863,9 +1127,16 @@ def test_free_text_empty_headlines_exits_1():
             return_value=([], _INFERRED_BRIEF, "none"),
             create=True,
         ),
-        patch("pipeline.agent_cultural_strategist.run") as mock_a0,
-        patch("pipeline.agent_satirist.run") as mock_run,
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch("core.runner.agent_cultural_strategist.run") as mock_a0,
+        patch("core.runner.agent_satirist.run") as mock_run,
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
     ):
         with pytest.raises(SystemExit) as exc_info:
             pipeline.main()
@@ -953,18 +1224,25 @@ def test_panels_cli_flag_passed_as_cartoon_layout_to_satirist():
             return_value=([FAKE_HEADLINE], "seed"),
         ),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
         patch(
-            "pipeline.agent_satirist.run",
-            return_value=(FAKE_CONCEPT, FAKE_BC_LOG),
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
         ) as mock_satirist,
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
-    layout_arg = mock_satirist.call_args.kwargs.get("layout")
+    layout_arg = mock_satirist.call_args.kwargs.get("layout_override")
     assert isinstance(layout_arg, CartoonLayout)
     assert layout_arg.panels == 3
     assert layout_arg.direction == "horizontal"
@@ -986,18 +1264,25 @@ def test_community_panels_config_used_when_no_cli_flag():
             return_value=([FAKE_HEADLINE], "seed"),
         ),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
         patch(
-            "pipeline.agent_satirist.run",
-            return_value=(FAKE_CONCEPT, FAKE_BC_LOG),
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
         ) as mock_satirist,
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
-    layout_arg = mock_satirist.call_args.kwargs.get("layout")
+    layout_arg = mock_satirist.call_args.kwargs.get("layout_override")
     assert isinstance(layout_arg, CartoonLayout)
     assert layout_arg.panels == 3
 
@@ -1021,18 +1306,25 @@ def test_cli_panels_overrides_community_config():
             return_value=([FAKE_HEADLINE], "seed"),
         ),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
         patch(
-            "pipeline.agent_satirist.run",
-            return_value=(FAKE_CONCEPT, FAKE_BC_LOG),
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
         ) as mock_satirist,
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
-    layout_arg = mock_satirist.call_args.kwargs.get("layout")
+    layout_arg = mock_satirist.call_args.kwargs.get("layout_override")
     assert layout_arg.panels == 2
 
 
@@ -1058,11 +1350,21 @@ def test_multi_panel_filename_has_nh_prefix():
             return_value=([FAKE_HEADLINE], "seed"),
         ),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -1084,11 +1386,21 @@ def test_single_panel_filename_has_no_prefix():
             return_value=([FAKE_HEADLINE], "seed"),
         ),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -1128,12 +1440,22 @@ def test_community_topic_mode_skips_trend_scout():
         patch("pipeline.trend_scout.get_topics") as mock_get_topics,
         patch("pipeline.trend_scout.get_topics_for_description") as mock_gttfd,
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
-        patch("pipeline.bundle_writer.write_bundle"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle"),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -1156,12 +1478,22 @@ def test_community_topic_mode_passes_topic_to_agent():
         patch("os.path.exists", return_value=True),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ) as mock_a0,
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
-        patch("pipeline.bundle_writer.write_bundle"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle"),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -1184,12 +1516,22 @@ def test_community_topic_mode_named_community_uses_configured_brief():
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch("pipeline.trend_scout.infer_brief_from_description") as mock_infer,
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ) as mock_a0,
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
-        patch("pipeline.bundle_writer.write_bundle"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle"),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -1213,12 +1555,22 @@ def test_community_topic_mode_output_path_uses_community_folder():
         patch("os.path.exists", return_value=True),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate") as mock_gen,
-        patch("pipeline.bundle_writer.write_bundle"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle"),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -1245,11 +1597,21 @@ def test_pipeline_logs_when_dotenv_file_found(caplog):
             side_effect=[COMMUNITY_PT, "Housing crisis"],
         ),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()
@@ -1271,11 +1633,21 @@ def test_pipeline_logs_when_no_dotenv_file(caplog):
             side_effect=[COMMUNITY_PT, "Housing crisis"],
         ),
         patch(
-            "pipeline.agent_cultural_strategist.run",
-            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG),
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
         ),
-        patch("pipeline.agent_satirist.run", return_value=(FAKE_CONCEPT, FAKE_BC_LOG)),
-        patch("pipeline.agent_image_generator.generate"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
         patch("os.makedirs"),
     ):
         pipeline.main()

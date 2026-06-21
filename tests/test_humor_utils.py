@@ -1,4 +1,4 @@
-from agents.humor_utils import inconvenience_directive
+from core.humor_utils import inconvenience_directive
 
 
 def test_inconvenience_directive_zero_returns_empty():

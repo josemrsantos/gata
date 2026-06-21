@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from agents.types import Community, Headline
+from core.types import Community, Headline
 
 
 class SourceAdapter(ABC):
