@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v1.12.0 (2026-06-21)
+
+### Features
+
+* feat: Stage 026 — LLM Communication Protocol Framework + Parallel Panel
+
+feat: Stage 026 — LLM Communication Protocol Framework + Parallel Panel ([`26e3ca1`](https://github.com/josemrsantos/gata/commit/26e3ca16fbe7f48a6743460a466f8c96ef3a68ab))
+
+* feat: Stage 026 — LLM Communication Protocol Framework + Parallel Panel
+
+Introduces ConversationProtocol ABC as the shared interface for all
+conversation topologies. DualPersonaLoop now inherits it (no behaviour
+change). New ParallelPanel topology runs Claude, Grok, and Gemini as
+independent satirists; an Aggregator (Claude) picks the strongest concept.
+Replaces the DualPersonaLoop in agent_satirist.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`1febdf8`](https://github.com/josemrsantos/gata/commit/1febdf89dc3bfa68c70f3259cb0278159d2683d6))
+
+
 ## v1.11.0 (2026-06-21)
 
 ### Documentation
