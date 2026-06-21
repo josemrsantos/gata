@@ -32,10 +32,10 @@ _GEMINI_PRO_CHAIN = [
     GeminiProvider("gemini-2.5-flash"),
     GeminiProvider("gemini-2.0-flash"),
 ]
-_GROK_CO_SATIRIST_CHAIN = [
+_PARALLEL_PANELISTS = [
+    ClaudeProvider("claude-sonnet-4-6"),
     GrokProvider("grok-3"),
     GeminiProvider("gemini-2.5-flash"),
-    GeminiProvider("gemini-2.0-flash"),
 ]
 _GEMINI_EVAL_CHAIN = _GEMINI_PRO_CHAIN  # same model priority as resonator chain
 
@@ -70,8 +70,8 @@ def run_pipeline(
         concept, bc_log, bc_tel, chosen_layout = agent_satirist.run(
             topic,
             enriched_brief,
-            satirist_providers=_CLAUDE_CHAIN,
-            co_satirist_providers=_GROK_CO_SATIRIST_CHAIN,
+            panelist_providers=_PARALLEL_PANELISTS,
+            aggregator_providers=_CLAUDE_CHAIN,
             humor=humor,
             layout_override=layout,
         )

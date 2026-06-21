@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from agents.agent_satirist import (
-    _build_co_satirist_prompt,
+    _build_aggregator_prompt,
     _build_satirist_system_prompt,
     run,
 )
@@ -57,16 +57,16 @@ _LOOP_OUTPUT = LoopOutput(
 def test_run_returns_cartoon_concept():
     # run() first tuple element must be a CartoonConcept, confirming the output type
     # is stable.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(concept, CartoonConcept)
 
 
 def test_run_image_prompt_field_populated():
-    # CartoonConcept.image_prompt must be set from the DualPersonaLoop verdict content.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT
+    # CartoonConcept.image_prompt must be set from the ParallelPanel verdict content.
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert concept.image_prompt == _VALID_IMAGE_PROMPT
 
@@ -76,8 +76,8 @@ def test_run_image_prompt_field_populated():
 
 def test_run_accepts_enriched_brief():
     # run() must accept EnrichedBrief (not StrategyBrief) after migration.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(concept, CartoonConcept)
 
@@ -104,21 +104,21 @@ def test_cartoon_concept_image_prompt_field_name_unchanged():
     assert concept.image_prompt == "prompt"
 
 
-# -- error propagation from DualPersonaLoop --
+# -- error propagation from ParallelPanel --
 
 
 def test_run_propagates_timeout_error():
-    # TimeoutError from DualPersonaLoop must reach the caller so the pipeline exits.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.side_effect = TimeoutError("timeout")
+    # TimeoutError from ParallelPanel must reach the caller so the pipeline exits.
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.side_effect = TimeoutError("timeout")
         with pytest.raises(TimeoutError):
             run(TOPIC, BRIEF, [], [])
 
 
 def test_run_propagates_runtime_error():
     # RuntimeError (all models exhausted) must reach the caller so the pipeline exits.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.side_effect = RuntimeError("all models exhausted")
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.side_effect = RuntimeError("all models exhausted")
         with pytest.raises(RuntimeError):
             run(TOPIC, BRIEF, [], [])
 
@@ -128,8 +128,8 @@ def test_run_propagates_runtime_error():
 
 def test_run_logs_at_info(caplog):
     # run() must emit an INFO log so the operator can confirm agent_bc completed.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         with caplog.at_level(logging.INFO, logger="agents.agent_satirist"):
             _, *_ = run(TOPIC, BRIEF, [], [])
     assert any(r.levelno == logging.INFO for r in caplog.records)
@@ -140,8 +140,8 @@ def test_run_logs_at_info(caplog):
 
 def test_run_returns_tuple_of_cartoon_concept_and_log():
     # run() must return a 4-tuple: concept, log, telemetry, and resolved CartoonLayout.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         result = run(TOPIC, BRIEF, [], [])
     assert isinstance(result, tuple)
     assert len(result) == 4
@@ -150,8 +150,8 @@ def test_run_returns_tuple_of_cartoon_concept_and_log():
 def test_run_first_element_is_cartoon_concept():
     # The first tuple element must be CartoonConcept so callers can do
     # `concept, log = agent_bc.run(...)` without index lookups.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(concept, CartoonConcept)
 
@@ -159,8 +159,8 @@ def test_run_first_element_is_cartoon_concept():
 def test_run_second_element_is_conversation_log():
     # The second tuple element must be ConversationLog so bundle_writer can write
     # it to bc_log.txt without any transformation by the caller.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         _, log, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(log, ConversationLog)
 
@@ -168,8 +168,8 @@ def test_run_second_element_is_conversation_log():
 def test_run_log_has_loop_name_bc():
     # The ConversationLog must carry loop_name="Satirist/Co-Satirist" so bundle_writer
     # labels the log file header correctly without extra context from the caller.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         _, log, *_ = run(TOPIC, BRIEF, [], [])
     assert log.loop_name == "Satirist/Co-Satirist"
 
@@ -177,8 +177,8 @@ def test_run_log_has_loop_name_bc():
 def test_run_cartoon_concept_image_prompt_with_loop_output_mock():
     # CartoonConcept.image_prompt must equal the verdict from LoopOutput — confirming
     # the agent correctly unpacks LoopOutput.verdict before constructing CartoonConcept.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert concept.image_prompt == _VALID_IMAGE_PROMPT
 
@@ -240,24 +240,35 @@ def test_satirist_prompt_unchanged_without_humor():
     assert "joke_explanation" not in prompt
 
 
-def test_co_satirist_prompt_asks_about_funniness():
-    # The Co-Satirist prompt must frame evaluation around funniness, not rules.
-    prompt = _build_co_satirist_prompt(_BRIEF_WITH_JOKE_TYPE, _HUMOR)
-    assert "funnier" in prompt.lower() or "funniest" in prompt.lower()
+# -- aggregator prompt --
 
 
-def test_co_satirist_prompt_mentions_target_audience():
-    # The Co-Satirist must know the target audience to judge whether the joke lands.
-    prompt = _build_co_satirist_prompt(_BRIEF_WITH_JOKE_TYPE, _HUMOR)
-    assert _BRIEF_WITH_JOKE_TYPE.target_audience in prompt
+def test_aggregator_prompt_identifies_as_chief_editor():
+    # _build_aggregator_prompt must establish the "chief editor" role so the aggregator
+    # LLM frames its task as editorial selection, not generation.
+    prompt = _build_aggregator_prompt(BRIEF)
+    assert "chief editor" in prompt.lower()
 
 
-def test_co_satirist_prompt_has_no_rules_checklist():
-    # The Co-Satirist must not contain the old rules checklist — it chases jokes only.
-    prompt = _build_co_satirist_prompt(BRIEF)
-    assert "PUNCHING UP" not in prompt
-    assert "VISUAL-FIRST" not in prompt
-    assert "JOKE MECHANICS" not in prompt
+def test_aggregator_prompt_mentions_target_audience():
+    # Aggregator must know the target audience to judge which concept lands better
+    # for that specific readership.
+    prompt = _build_aggregator_prompt(BRIEF)
+    assert BRIEF.target_audience in prompt
+
+
+def test_aggregator_prompt_instructs_pick():
+    # Aggregator prompt must contain the PICK instruction so the model knows the
+    # expected output format and ParallelPanel can extract the selection.
+    prompt = _build_aggregator_prompt(BRIEF)
+    assert "PICK:" in prompt
+
+
+def test_aggregator_prompt_has_verdict_tags():
+    # Aggregator must wrap its output in <verdict> tags so _extract_proposer_verdict
+    # can parse the final concept without additional format handling.
+    prompt = _build_aggregator_prompt(BRIEF)
+    assert "<verdict>" in prompt
 
 
 # ---------------------------------------------------------------------------
@@ -316,8 +327,8 @@ def test_satirist_prompt_single_panel_unchanged_without_layout():
 def test_run_multi_panel_populates_concept_panels():
     # When layout.panels > 1 and the verdict is valid JSON, run() must return a
     # CartoonConcept.panels populated so the image generator can assemble the strip.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT_MULTI
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT_MULTI
         concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
     assert concept.panels is not None
     assert len(concept.panels) == 3
@@ -328,8 +339,8 @@ def test_run_multi_panel_populates_concept_panels():
 def test_run_multi_panel_concept_has_empty_image_prompt():
     # When panels are populated the image_prompt field must be empty — the image
     # generator builds the full prompt from the panels list, not this field.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT_MULTI
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT_MULTI
         concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
     assert concept.image_prompt == ""
 
@@ -341,8 +352,8 @@ def test_run_multi_panel_fallback_on_malformed_json(caplog):
         verdict="not valid JSON at all",
         log=ConversationLog(loop_name="Satirist/Co-Satirist"),
     )
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = bad_output
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = bad_output
         with caplog.at_level(logging.WARNING, logger="agents.agent_satirist"):
             concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
     assert concept.panels is None
@@ -364,8 +375,8 @@ def test_run_multi_panel_fallback_on_wrong_panel_count(caplog):
     short_output = LoopOutput(
         verdict=two_panels, log=ConversationLog(loop_name="Satirist/Co-Satirist")
     )
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = short_output
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = short_output
         with caplog.at_level(logging.WARNING, logger="agents.agent_satirist"):
             concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
     assert concept.panels is None
@@ -374,8 +385,8 @@ def test_run_multi_panel_fallback_on_wrong_panel_count(caplog):
 def test_run_single_panel_unchanged_with_default_layout():
     # run() called without a layout argument must behave exactly as before Stage 9 —
     # returning a CartoonConcept with image_prompt populated and panels=None.
-    with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
-        MockLoop.return_value.run.return_value = _LOOP_OUTPUT
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert concept.panels is None
     assert concept.image_prompt == _VALID_IMAGE_PROMPT
@@ -417,59 +428,3 @@ def test_satirist_prompt_high_inconvenience_mentions_squirm():
     # so the LLM receives the maximum discomfort instruction.
     prompt = _build_satirist_system_prompt(BRIEF, _HUMOR_HIGH_INCONVENIENCE)
     assert "squirm" in prompt.lower()
-
-
-def test_critic_prompt_includes_inconvenience_when_nonzero():
-    # When critic.inconvenience > 0 the Critic system prompt must contain
-    # the INCONVENIENCE directive so the Critic also pushes toward uncomfortable truths.
-    prompt = _build_co_satirist_prompt(BRIEF, _HUMOR_HIGH_INCONVENIENCE)
-    assert "INCONVENIENCE" in prompt
-
-
-def test_critic_prompt_no_inconvenience_when_zero():
-    # When critic.inconvenience == 0 no INCONVENIENCE directive appears in the Critic
-    # prompt — existing adversarial-only behavior is unchanged.
-    prompt = _build_co_satirist_prompt(BRIEF, _HUMOR_ZERO_INCONVENIENCE)
-    assert "INCONVENIENCE" not in prompt
-
-
-# ---------------------------------------------------------------------------
-# Dual satirist mode (Stage 10)
-# ---------------------------------------------------------------------------
-
-_HUMOR_DUAL_SATIRIST = HumorConfig(
-    framer=FramerHumor(),
-    satirist=SatiristHumor(),
-    critic=CriticHumor(dual_satirist=True),
-)
-
-
-def test_co_satirist_prompt_describes_collaboration():
-    # The Co-Satirist prompt must describe a co-creating partner, not an adversarial
-    # evaluator — collaboration is now the default regardless of humor config.
-    prompt = _build_co_satirist_prompt(BRIEF, _HUMOR_DUAL_SATIRIST)
-    assert "Co-Satirist" in prompt or "funnier" in prompt.lower()
-
-
-def test_co_satirist_prompt_has_no_numbered_rules():
-    # The Co-Satirist must never have a numbered rule checklist — it chases jokes.
-    prompt = _build_co_satirist_prompt(BRIEF, _HUMOR_DUAL_SATIRIST)
-    assert "PUNCHING UP" not in prompt
-    assert "VISUAL-FIRST" not in prompt
-
-
-def test_co_satirist_prompt_always_uses_approved_verdict():
-    # APPROVED must always be present so DualPersonaLoop termination logic is unchanged.
-    prompt = _build_co_satirist_prompt(BRIEF)
-    assert "APPROVED" in prompt
-
-
-def test_co_satirist_prompt_inconvenience_directive_included():
-    # The Co-Satirist must include the INCONVENIENCE directive when inconvenience > 0.
-    humor = HumorConfig(
-        framer=FramerHumor(),
-        satirist=SatiristHumor(),
-        critic=CriticHumor(inconvenience=80),
-    )
-    prompt = _build_co_satirist_prompt(BRIEF, humor)
-    assert "INCONVENIENCE" in prompt

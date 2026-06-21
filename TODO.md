@@ -24,20 +24,6 @@ Things to figure out:
 
 ---
 
-## Grok integration — add xAI Grok as a third LLM provider
-
-**Goal:** Add xAI's Grok as a third LLM option alongside Gemini and Claude.
-
-**Reason:** Grok's irreverent, culture-aware personality may strengthen satirical output;
-a third provider also adds redundancy and lets the pipeline mix voices across agents
-(e.g. Grok as Co-Satirist).
-
-**Dependency:** Requires spec 024 (LLM provider abstraction) to be complete first. Once
-`llm/` exists, Grok is added by creating `llm/grok.py` (GrokProvider) and wiring it into
-`core/runner.py` — no existing agent code changes required.
-
----
-
 ## LLM communication protocol framework
 
 **Goal:** Build a protocol framework inside `llm/` that supports different kinds of

@@ -15,7 +15,7 @@ from core.types import (
     PersonaConfig,
 )
 from llm import LLMProvider
-from llm.dual_loop import DualPersonaLoop
+from llm.parallel_panel import ParallelPanel
 
 logger = logging.getLogger(__name__)
 
@@ -154,45 +154,21 @@ def _build_satirist_system_prompt(
     return "\n".join(lines)
 
 
-def _build_co_satirist_prompt(
-    brief: EnrichedBrief, humor: HumorConfig | None = None
-) -> str:
-    # Same goal as the Satirist — find the funniest concept — not a gatekeeper
+def _build_aggregator_prompt(brief: EnrichedBrief) -> str:
     lines = [
-        "You are a Co-Satirist at Gata Newsroom.",
-        "Your partner has proposed a cartoon concept for the topic below.",
-        "Your only job: make the joke funnier, sharper, or more uncomfortable.",
-        "",
+        "You are a chief editor at Gata Newsroom.",
         f"Target audience: {brief.target_audience}.",
-        f"Output language: {brief.output_language}"
-        " — ALL caption text must be in this language.",
+        f"Output language for captions: {brief.output_language}.",
         "",
-        "HOW TO EVALUATE — ask yourself:",
-        f"Would {brief.target_audience} actually laugh at this?",
-        "Is there a more surprising angle being missed?",
-        "Is the image carrying the joke or is it caption-dependent?",
-        "Is the uncomfortable truth being named or just gestured at?",
+        "Several satirists have independently proposed cartoon concepts for a topic.",
+        "Pick the single funniest, most specific, most uncomfortable concept",
+        "— the kind that makes the audience wince because it is so accurate.",
         "",
-        "IF the concept is already the funniest, most specific version you can imagine"
-        " — the kind that makes you wince because it is so accurate:",
-        "<verdict>APPROVED</verdict>",
-        "",
-        "IF you can make it funnier — sharper angle, better visual gag, more"
-        " uncomfortable truth, stronger caption — output your improved version"
-        " in the same JSON format inside <verdict>NEEDS REVISION</verdict>:",
-        "<verdict>NEEDS REVISION</verdict>",
-        "[your improved concept as the same JSON the Satirist uses]",
-        "",
-        "RULES:",
-        "- No meta-commentary. No 'this is good but...'."
-        " Just the improved JSON or APPROVED.",
-        "- Each iteration must be genuinely funnier than your previous one.",
-        "- You are not checking compliance. You are chasing the best joke.",
+        "Respond with ONLY:",
+        "PICK: <number>",
+        "Then on the next line copy the chosen concept verbatim inside",
+        "<verdict>...</verdict> tags. No other text.",
     ]
-    if humor:
-        directive = inconvenience_directive(humor.critic.inconvenience)
-        if directive:
-            lines += ["", directive]
     return "\n".join(lines)
 
 
@@ -255,25 +231,26 @@ def _parse_verdict(
 def run(
     topic: str,
     brief: EnrichedBrief,
-    satirist_providers: list[LLMProvider],
-    co_satirist_providers: list[LLMProvider],
+    panelist_providers: list[LLMProvider],
+    aggregator_providers: list[LLMProvider],
     humor: HumorConfig | None = None,
     layout_override: CartoonLayout | None = None,
 ) -> tuple[CartoonConcept, ConversationLog, AgentTelemetry, CartoonLayout]:
-    satirist = PersonaConfig(
-        name="Satirist",
-        providers=satirist_providers,
-        system_prompt=_build_satirist_system_prompt(brief, humor, layout_override),
+    satirist_system = _build_satirist_system_prompt(brief, humor, layout_override)
+    # each panelist gets the same system prompt but uses its own provider independently
+    panelists = [
+        PersonaConfig(name=p.model_id, providers=[p], system_prompt=satirist_system)
+        for p in panelist_providers
+    ]
+    aggregator = PersonaConfig(
+        name="Aggregator",
+        providers=aggregator_providers,
+        system_prompt=_build_aggregator_prompt(brief),
     )
-    co_satirist = PersonaConfig(
-        name="Co-Satirist",
-        providers=co_satirist_providers,
-        system_prompt=_build_co_satirist_prompt(brief, humor),
+    panel = ParallelPanel(
+        panelists=panelists, aggregator=aggregator, panel_name="Satirist/Co-Satirist"
     )
-    loop = DualPersonaLoop(
-        satirist, co_satirist, loop_name="Satirist/Co-Satirist", self_review_passes=3
-    )
-    loop_output = loop.run(topic)
+    loop_output = panel.run(topic)
     concept, layout = _parse_verdict(loop_output.verdict, layout_override)
     logger.info(
         "satirist: concept produced — panels=%d layout=%s cultural_angle=%r",
@@ -281,7 +258,7 @@ def run(
         layout.direction,
         brief.cultural_angle[:60],
     )
-    # telemetry is always populated by DualPersonaLoop; guard for safety
+    # telemetry is always populated by ParallelPanel; guard for safety
     telemetry = loop_output.telemetry or AgentTelemetry(
         agent_name="Satirist/Co-Satirist", duration_seconds=0.0, iterations=0
     )
