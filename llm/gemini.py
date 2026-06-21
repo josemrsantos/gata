@@ -83,7 +83,14 @@ class GeminiProvider(LLMProvider):
         in_tok = getattr(meta, "prompt_token_count", 0) or 0
         out_tok = getattr(meta, "candidates_token_count", 0) or 0
         cost = self.compute_cost(in_tok, out_tok)
-        return response.text, TokenUsage(
+        text = response.text
+        if not text:
+            # Gemini returns None/empty when output is entirely thinking tokens;
+            # raise so the fallback chain tries the next provider.
+            raise RuntimeError(
+                f"GeminiProvider: empty response text for model {self._model}"
+            )
+        return text, TokenUsage(
             model=self._model,
             input_tokens=in_tok,
             output_tokens=out_tok,

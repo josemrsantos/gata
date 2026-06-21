@@ -41,7 +41,7 @@ All agents use prioritised model fallback chains. Both dual-loop pairs (Framer/R
 |---|---|---|---|
 | **Trend Scout** | — | Gemini | Fetches today's headlines from NewsAPI.org and picks the top 3 ranked by satirical potential for the community |
 | **Cultural Strategist** | Framer, Resonator | Claude (Framer) · Gemini (Resonator) | Framer proposes a cultural angle and audience references; Resonator approves or challenges until the angle is specific and sharp |
-| **Creative Loop** | Satirist, Co-Satirist | Claude (Satirist) · Gemini (Co-Satirist) | Satirist proposes the cartoon concept; Co-Satirist either approves or counters with a sharper version; loops up to 5 iterations |
+| **Creative Loop** | Satirist, Co-Satirist | Claude (Satirist) · Grok (Co-Satirist, Gemini fallback) | Satirist proposes the cartoon concept; Co-Satirist either approves or counters with a sharper version; loops up to 5 iterations |
 | **Image Generator** | — | Gemini image models | Renders the approved image prompt into a PNG; tries up to 5 models in order before failing |
 | **Image Evaluator** | — | Gemini vision models | After image generation, checks for LLM rendering artifacts (duplicate text, garbled text, character failures) and rates whether the cartoon is genuinely funny for the target audience; triggers regeneration up to 2 times on rejection |
 | **Explainer** | Writer, Editor | Claude (Writer) · Gemini (Editor) | Writer drafts two HTML pages (in-language for end users, English for operators); Editor approves or requests revision |
@@ -87,7 +87,8 @@ Three API keys are required:
 | Variable | Where to get it | Used by |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) | Cultural Strategist, Satirist, Explainer |
-| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) | Trend Scout, Critic, Image Generator, Resonator |
+| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) | Trend Scout, Image Generator, Resonator, Co-Satirist fallback |
+| `XAI_API_KEY` | [console.x.ai](https://console.x.ai) | Co-Satirist (Grok) |
 | `NEWSAPI_ORG_KEY` | [newsapi.org](https://newsapi.org) | Trend Scout (headline fetching) |
 
 ### Option A — `.env` file (recommended for local development)

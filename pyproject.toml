@@ -69,6 +69,7 @@ dependencies = [
     "anthropic",
     "google-genai",
     "httpx",
+    "openai>=2.43.0",
     "python-dotenv",
     "pyyaml",
     "unidecode",

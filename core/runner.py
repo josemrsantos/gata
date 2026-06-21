@@ -17,7 +17,7 @@ from core.types import (
     RunTelemetry,
     StrategyBrief,
 )
-from llm import ClaudeProvider, GeminiProvider
+from llm import ClaudeProvider, GeminiProvider, GrokProvider
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +32,9 @@ _GEMINI_PRO_CHAIN = [
     GeminiProvider("gemini-2.5-flash"),
     GeminiProvider("gemini-2.0-flash"),
 ]
-_GEMINI_FLASH_CHAIN = [
+_GROK_CO_SATIRIST_CHAIN = [
+    GrokProvider("grok-3"),
     GeminiProvider("gemini-2.5-flash"),
-    GeminiProvider("gemini-2.5-pro"),
     GeminiProvider("gemini-2.0-flash"),
 ]
 _GEMINI_EVAL_CHAIN = _GEMINI_PRO_CHAIN  # same model priority as resonator chain
@@ -71,7 +71,7 @@ def run_pipeline(
             topic,
             enriched_brief,
             satirist_providers=_CLAUDE_CHAIN,
-            co_satirist_providers=_GEMINI_FLASH_CHAIN,
+            co_satirist_providers=_GROK_CO_SATIRIST_CHAIN,
             humor=humor,
             layout_override=layout,
         )
