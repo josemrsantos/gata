@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from core.types import TokenUsage
+    from core.types import LoopOutput, TokenUsage
 
 
 class LLMProvider(ABC):
@@ -19,3 +19,8 @@ class LLMProvider(ABC):
         messages: list[dict],
         max_tokens: int = 2048,
     ) -> tuple[str, TokenUsage]: ...
+
+
+class ConversationProtocol(ABC):
+    @abstractmethod
+    def run(self, initial_input: str) -> LoopOutput: ...

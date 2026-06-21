@@ -73,3 +73,7 @@ RULE 14 — Within Python function bodies, do not use blank lines as logical pha
 short inline comment explaining why the code shifts focus at that point (e.g. what was just established, what is
 now being done, or what constraint the next block enforces). Standard PEP 8 blank lines between top-level
 definitions and import groups are unaffected by this rule.
+
+RULE 15 - Before pushing anything, make sure the version is up to date.
+
+RULE 16 - if you need secrets run: source set_gata.sh

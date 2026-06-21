@@ -12,6 +12,7 @@ from core.types import (
     PersonaConfig,
     TokenUsage,
 )
+from llm.base import ConversationProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ def _parse_reviewer_verdict(text: str) -> str:
     return "NEEDS REVISION"
 
 
-class DualPersonaLoop:
+class DualPersonaLoop(ConversationProtocol):
     def __init__(
         self,
         proposer: PersonaConfig,

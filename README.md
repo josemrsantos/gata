@@ -28,12 +28,12 @@ An automated multi-agent pipeline that transforms daily topics into a recurring 
 
 1. **Trend Scout** fetches today's top headlines for the community and ranks them by satirical potential. For free-text communities, it infers the appropriate country and news category in a single Gemini call (`infer_community_profile`). In `--community + --topic` mode, Trend Scout is bypassed entirely.
 2. **Cultural Strategist** (Framer + Resonator loop) negotiates a cultural angle and audience-specific references for the chosen topic
-3. **Satirist + Co-Satirist loop** iterates on a satirical cartoon concept until approved (up to 5 iterations)
+3. **Parallel Panel** — Claude, Grok, and Gemini each independently generate a cartoon concept; an Aggregator (Claude) picks the strongest one
 4. **Image Generator** renders the approved concept into a PNG via a fallback chain of Gemini image models
 5. **Explainer** (opt-in via `--html`) produces two HTML explanation pages: one in the target language, one in English for operators
 6. **Bundle writer** saves the full output package: image, conversation logs, prompt card, telemetry, and summary — plus the HTML files when `--html` is set
 
-All agents use prioritised model fallback chains. Both dual-loop pairs (Framer/Resonator and Satirist/Co-Satirist) include a 3-pass self-review injected into both personas.
+All agents use prioritised model fallback chains. The Framer/Resonator loop includes a 3-pass self-review injected into both personas. The Parallel Panel runs three independent satirists (Claude, Grok, Gemini) and an Aggregator (Claude) picks the strongest concept.
 
 ## Agents
 
@@ -41,7 +41,7 @@ All agents use prioritised model fallback chains. Both dual-loop pairs (Framer/R
 |---|---|---|---|
 | **Trend Scout** | — | Gemini | Fetches today's headlines from NewsAPI.org and picks the top 3 ranked by satirical potential for the community |
 | **Cultural Strategist** | Framer, Resonator | Claude (Framer) · Gemini (Resonator) | Framer proposes a cultural angle and audience references; Resonator approves or challenges until the angle is specific and sharp |
-| **Creative Loop** | Satirist, Co-Satirist | Claude (Satirist) · Grok (Co-Satirist, Gemini fallback) | Satirist proposes the cartoon concept; Co-Satirist either approves or counters with a sharper version; loops up to 5 iterations |
+| **Creative Loop** | Panelist (Claude), Panelist (Grok), Panelist (Gemini), Aggregator | Claude · Grok · Gemini (parallel) · Claude (Aggregator) | Claude, Grok, and Gemini each independently generate a cartoon concept; Aggregator (Claude) picks the strongest one |
 | **Image Generator** | — | Gemini image models | Renders the approved image prompt into a PNG; tries up to 5 models in order before failing |
 | **Image Evaluator** | — | Gemini vision models | After image generation, checks for LLM rendering artifacts (duplicate text, garbled text, character failures) and rates whether the cartoon is genuinely funny for the target audience; triggers regeneration up to 2 times on rejection |
 | **Explainer** | Writer, Editor | Claude (Writer) · Gemini (Editor) | Writer drafts two HTML pages (in-language for end users, English for operators); Editor approves or requests revision |
@@ -88,7 +88,7 @@ Three API keys are required:
 |---|---|---|
 | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) | Cultural Strategist, Satirist, Explainer |
 | `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) | Trend Scout, Image Generator, Resonator, Co-Satirist fallback |
-| `XAI_API_KEY` | [console.x.ai](https://console.x.ai) | Co-Satirist (Grok) |
+| `XAI_API_KEY` | [console.x.ai](https://console.x.ai) | Panelist (Grok) |
 | `NEWSAPI_ORG_KEY` | [newsapi.org](https://newsapi.org) | Trend Scout (headline fetching) |
 
 ### Option A — `.env` file (recommended for local development)
@@ -235,22 +235,18 @@ To add a new community, add an entry to `communities.yaml` — no code changes r
 | `satirist` | `subversion` | string | Subversion intensity (`high`, `medium`, `low`) |
 | `satirist` | `joke_explanation` | bool | Add a `<joke_explanation>` block after each concept |
 | `satirist` | `inconvenience` | 0–100 | How aggressively Satirist forces uncomfortable truths |
-| `critic` | `evaluate_joke_mechanics` | bool | Critic checks that the chosen joke type is executed correctly |
-| `critic` | `flag_if_no_subversion` | bool | Critic rejects straight-play concepts with no twist |
-| `critic` | `inconvenience` | 0–100 | How aggressively Critic demands uncomfortable truths |
-| `critic` | `dual_satirist` | bool | Replace adversarial Critic with a co-creating Second Satirist |
 
 **Inconvenience levels:** 0 = off; 1–33 = mild nudge ("look beneath the obvious"); 34–66 = medium push ("don't let the target off the hook"); 67–100 = maximum ("if the audience doesn't squirm, it isn't ready").
-
-**Dual satirist mode:** when `critic.dual_satirist: true`, the Critic becomes a Second Satirist who builds on the first Satirist's idea rather than evaluating it against rules. The loop still terminates when the Second Satirist responds with `APPROVED`.
 
 ## Tech Stack
 
 - Python 3.x
 - **Framer** — Anthropic Claude (`claude-sonnet-4-6` → `claude-opus-4-7` → `claude-haiku-4-5-20251001`)
 - **Resonator** — Google Gemini (`gemini-2.5-pro` → `gemini-2.5-flash` → `gemini-2.0-flash`)
-- **Satirist** — Anthropic Claude (same fallback chain as Framer)
-- **Co-Satirist** — xAI Grok (`grok-3` → `gemini-2.5-flash` → `gemini-2.0-flash` Gemini fallback)
+- **Panelist (Claude)** — Anthropic Claude (`claude-sonnet-4-6`) — independent concept generator
+- **Panelist (Grok)** — xAI Grok (`grok-3`) — independent concept generator
+- **Panelist (Gemini)** — Google Gemini (`gemini-2.5-flash`) — independent concept generator
+- **Aggregator** — Anthropic Claude (same fallback chain as Framer) — picks the strongest concept from the panel
 - **Image Generator** — Google Gemini image models (`gemini-3.1-flash-image-preview` → `gemini-3.1-flash-image` → `gemini-3-pro-image-preview` → `gemini-3-pro-image` → `gemini-2.5-flash-image`)
 - **Explainer Writer** — Anthropic Claude (`claude-sonnet-4-6`, max 8192 tokens)
 - **Explainer Editor** — Google Gemini (`gemini-2.5-flash` → `gemini-2.5-pro` → `gemini-2.0-flash`)
