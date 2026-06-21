@@ -1,16 +1,15 @@
 import json
 import logging
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from google.genai.errors import ServerError
 
 from agents.agent_image_evaluator import (
-    _GEMINI_EVALUATOR_MODELS,
     _build_eval_prompt,
     _parse_evaluation,
     evaluate,
 )
-from agents.types import (
+from core.types import (
     CartoonConcept,
     CartoonLayout,
     EnrichedBrief,
@@ -72,12 +71,35 @@ _NOT_FUNNY_JSON = {
     "verdict": "REJECTED",
 }
 
+_DEFAULT_MODELS = ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"]
+
 
 def _make_response(json_dict: dict, usage_metadata=None) -> MagicMock:
     resp = MagicMock()
     resp.text = json.dumps(json_dict)
     resp.usage_metadata = usage_metadata
     return resp
+
+
+def _make_provider(model_id: str, response=None, *, side_effect=None):
+    """Create a mock GeminiProvider for evaluate() tests."""
+    provider = MagicMock()
+    provider.model_id = model_id
+    provider.compute_cost.return_value = 0.0
+    if side_effect is not None:
+        provider.client.models.generate_content.side_effect = side_effect
+    elif response is not None:
+        provider.client.models.generate_content.return_value = response
+    return provider
+
+
+def _make_providers(response=None, *, side_effect=None):
+    """Create a standard 3-provider chain for tests that only care about the first."""
+    return [
+        _make_provider("gemini-2.5-pro", response, side_effect=side_effect),
+        _make_provider("gemini-2.5-flash"),
+        _make_provider("gemini-2.0-flash"),
+    ]
 
 
 def _write_fake_image(tmp_path) -> str:
@@ -94,10 +116,8 @@ def _write_fake_image(tmp_path) -> str:
 def test_evaluate_approved_when_no_artifacts_and_funny(tmp_path):
     # evaluate() must return APPROVED when Gemini finds no artifacts and rates it funny.
     image_path = _write_fake_image(tmp_path)
-    resp = _make_response(_APPROVED_JSON)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = resp
-        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    providers = _make_providers(_make_response(_APPROVED_JSON))
+    result, _tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
     assert result.verdict == "APPROVED"
     assert result.artifacts == []
     assert result.is_funny is True
@@ -111,10 +131,8 @@ def test_evaluate_approved_when_no_artifacts_and_funny(tmp_path):
 def test_evaluate_rejected_when_artifacts_found(tmp_path):
     # evaluate() must return REJECTED when Gemini reports rendering artifacts.
     image_path = _write_fake_image(tmp_path)
-    resp = _make_response(_ARTIFACT_JSON)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = resp
-        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    providers = _make_providers(_make_response(_ARTIFACT_JSON))
+    result, _tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
     assert result.verdict == "REJECTED"
     assert len(result.artifacts) > 0
 
@@ -122,10 +140,8 @@ def test_evaluate_rejected_when_artifacts_found(tmp_path):
 def test_evaluate_artifacts_list_preserved(tmp_path):
     # evaluate() must propagate artifact descriptions exactly as Gemini reports them.
     image_path = _write_fake_image(tmp_path)
-    resp = _make_response(_ARTIFACT_JSON)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = resp
-        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    providers = _make_providers(_make_response(_ARTIFACT_JSON))
+    result, _tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
     assert "Duplicate caption text" in result.artifacts[0]
 
 
@@ -137,10 +153,8 @@ def test_evaluate_artifacts_list_preserved(tmp_path):
 def test_evaluate_rejected_when_not_funny(tmp_path):
     # evaluate() must return REJECTED when Gemini rates is_funny as false.
     image_path = _write_fake_image(tmp_path)
-    resp = _make_response(_NOT_FUNNY_JSON)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = resp
-        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    providers = _make_providers(_make_response(_NOT_FUNNY_JSON))
+    result, _tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
     assert result.verdict == "REJECTED"
     assert result.is_funny is False
     assert result.artifacts == []
@@ -177,49 +191,53 @@ def test_parse_evaluation_approved_only_when_both_conditions_pass():
 
 
 # ---------------------------------------------------------------------------
-# Model fallback
+# Provider fallback
 # ---------------------------------------------------------------------------
 
 
 def test_evaluate_falls_back_on_api_error(tmp_path):
-    # evaluate() must try the next model when the current one raises an API error.
+    # evaluate() must try the next provider when the current one raises an API error.
     image_path = _write_fake_image(tmp_path)
-    resp = _make_response(_APPROVED_JSON)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.side_effect = [
-            ServerError(503, {"error": {"message": "overloaded"}}),
-            resp,
-        ]
-        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    p1 = _make_provider(
+        "gemini-2.5-pro",
+        side_effect=ServerError(503, {"error": {"message": "overloaded"}}),
+    )
+    p2 = _make_provider("gemini-2.5-flash", _make_response(_APPROVED_JSON))
+    result, _tel = evaluate(image_path, _CONCEPT, _BRIEF, [p1, p2])
     assert result.verdict == "APPROVED"
-    assert mock_client.models.generate_content.call_count == 2
+    assert p1.client.models.generate_content.call_count == 1
+    assert p2.client.models.generate_content.call_count == 1
 
 
-def test_evaluate_exhausts_all_models_before_failing_open(tmp_path):
-    # evaluate() must try every model in the chain before defaulting to APPROVED.
+def test_evaluate_exhausts_all_providers_before_failing_open(tmp_path):
+    # evaluate() must try every provider in the chain before defaulting to APPROVED.
     image_path = _write_fake_image(tmp_path)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.side_effect = ServerError(
-            503, {"error": {"message": "overloaded"}}
+    providers = [
+        _make_provider(
+            m,
+            side_effect=ServerError(503, {"error": {"message": "overloaded"}}),
         )
-        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
-    n_calls = mock_client.models.generate_content.call_count
-    assert n_calls == len(_GEMINI_EVALUATOR_MODELS)
+        for m in _DEFAULT_MODELS
+    ]
+    result, _tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
+    assert all(p.client.models.generate_content.call_count == 1 for p in providers)
     assert result.verdict == "APPROVED"
 
 
 # ---------------------------------------------------------------------------
-# Fail open — all models exhausted or parse failure
+# Fail open — all providers exhausted or parse failure
 # ---------------------------------------------------------------------------
 
 
-def test_evaluate_all_models_exhausted_defaults_to_approved(tmp_path):
-    # evaluate() must default to APPROVED rather than raising when all models fail,
+def test_evaluate_all_providers_exhausted_defaults_to_approved(tmp_path):
+    # evaluate() must default to APPROVED rather than raising when all providers fail,
     # so a transient API outage never blocks the pipeline.
     image_path = _write_fake_image(tmp_path)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.side_effect = Exception("network error")
-        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    providers = [
+        _make_provider(m, side_effect=Exception("network error"))
+        for m in _DEFAULT_MODELS
+    ]
+    result, _tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
     assert result.verdict == "APPROVED"
     assert "unavailable" in result.funny_notes
 
@@ -231,9 +249,8 @@ def test_evaluate_parse_failure_defaults_to_approved(tmp_path):
     bad_resp = MagicMock()
     bad_resp.text = "this is not JSON at all"
     bad_resp.usage_metadata = None
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = bad_resp
-        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    providers = _make_providers(bad_resp)
+    result, _tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
     assert result.verdict == "APPROVED"
 
 
@@ -245,21 +262,17 @@ def test_evaluate_parse_failure_defaults_to_approved(tmp_path):
 def test_evaluate_returns_telemetry_with_correct_agent_name(tmp_path):
     # evaluate() must tag its AgentTelemetry with agent_name="Image Evaluator".
     image_path = _write_fake_image(tmp_path)
-    resp = _make_response(_APPROVED_JSON)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = resp
-        _result, tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    providers = _make_providers(_make_response(_APPROVED_JSON))
+    _result, tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
     assert tel.agent_name == "Image Evaluator"
 
 
 def test_evaluate_records_model_used(tmp_path):
     # evaluate() must record which Gemini model produced the evaluation in model_used.
     image_path = _write_fake_image(tmp_path)
-    resp = _make_response(_APPROVED_JSON)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = resp
-        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
-    assert result.model_used == _GEMINI_EVALUATOR_MODELS[0]
+    providers = _make_providers(_make_response(_APPROVED_JSON))
+    result, _tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
+    assert result.model_used == _DEFAULT_MODELS[0]
 
 
 def test_evaluate_records_token_usage(tmp_path):
@@ -268,10 +281,8 @@ def test_evaluate_records_token_usage(tmp_path):
     meta = MagicMock()
     meta.prompt_token_count = 200
     meta.candidates_token_count = 80
-    resp = _make_response(_APPROVED_JSON, usage_metadata=meta)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = resp
-        _result, tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    providers = _make_providers(_make_response(_APPROVED_JSON, usage_metadata=meta))
+    _result, tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
     assert tel.calls[0].input_tokens == 200
     assert tel.calls[0].output_tokens == 80
 
@@ -365,10 +376,8 @@ def test_evaluate_rejected_on_fidelity_failure(tmp_path):
     # evaluate() must return REJECTED when Gemini reports a fidelity failure, so a
     # plausible-but-wrong image triggers regeneration just like a technical artifact.
     image_path = _write_fake_image(tmp_path)
-    resp = _make_response(_FIDELITY_FAILURE_JSON)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = resp
-        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    providers = _make_providers(_make_response(_FIDELITY_FAILURE_JSON))
+    result, _tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
     assert result.verdict == "REJECTED"
     assert any("Fidelity failure" in a for a in result.artifacts)
 
@@ -377,10 +386,8 @@ def test_evaluate_fidelity_failure_preserved_in_artifacts(tmp_path):
     # evaluate() must preserve the full fidelity failure description in the artifacts
     # list so operators can diagnose exactly what the image model substituted.
     image_path = _write_fake_image(tmp_path)
-    resp = _make_response(_FIDELITY_FAILURE_JSON)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = resp
-        result, _tel = evaluate(image_path, _CONCEPT, _BRIEF)
+    providers = _make_providers(_make_response(_FIDELITY_FAILURE_JSON))
+    result, _tel = evaluate(image_path, _CONCEPT, _BRIEF, providers)
     assert "chicken-joke spider diagram" in result.artifacts[0]
 
 
@@ -402,9 +409,7 @@ def test_evaluate_logs_verdict_at_info(tmp_path, caplog):
     # evaluate() must log the verdict at INFO level so operators can trace evaluation
     # results without enabling DEBUG.
     image_path = _write_fake_image(tmp_path)
-    resp = _make_response(_APPROVED_JSON)
-    with patch("agents.agent_image_evaluator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = resp
-        caplog.set_level(logging.INFO, logger="agents.agent_image_evaluator")
-        evaluate(image_path, _CONCEPT, _BRIEF)
+    providers = _make_providers(_make_response(_APPROVED_JSON))
+    caplog.set_level(logging.INFO, logger="agents.agent_image_evaluator")
+    evaluate(image_path, _CONCEPT, _BRIEF, providers)
     assert any("APPROVED" in r.message for r in caplog.records)

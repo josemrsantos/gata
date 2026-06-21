@@ -6,13 +6,13 @@ import re
 import sys
 
 from dotenv import load_dotenv
-from google import genai
 from google.genai import types as genai_types
 
-from agents.config_loader import load_communities
 from agents.sources.base import SourceAdapter
 from agents.sources.newsapi import NewsApiAdapter
-from agents.types import Community, Headline, NewsSource, StrategyBrief
+from core.config_loader import load_communities
+from core.types import Community, Headline, NewsSource, StrategyBrief
+from llm.gemini import get_gemini_client
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +63,6 @@ _SOURCE_DEFAULTS: dict[str, str] = {
     "news_country": "us",
     "news_category": "general",
 }
-_gemini_client: genai.Client | None = None
-
-
 def _rank_headlines(
     headlines: list[Headline],
     audience: str,
@@ -74,9 +71,7 @@ def _rank_headlines(
     description_hint: str,
     n: int,
 ) -> list[str]:
-    global _gemini_client
-    if _gemini_client is None:
-        _gemini_client = genai.Client()
+    client = get_gemini_client()
     # Community profile block: append raw description when provided so the
     # model has richer context than structured fields alone can convey.
     profile = (
@@ -98,7 +93,7 @@ def _rank_headlines(
         f"ranked by satirical potential for this community. "
         f"Return only the JSON array."
     )
-    response = _gemini_client.models.generate_content(
+    response = client.models.generate_content(
         model=_GEMINI_MODEL,
         contents=contents,
         config=genai_types.GenerateContentConfig(
@@ -180,11 +175,9 @@ def get_topics(
 
 
 def infer_brief_from_description(description: str) -> StrategyBrief:
-    global _gemini_client
-    if _gemini_client is None:
-        _gemini_client = genai.Client()
+    client = get_gemini_client()
     # Ask Gemini to interpret the free-text description and return structured fields
-    response = _gemini_client.models.generate_content(
+    response = client.models.generate_content(
         model=_GEMINI_MODEL,
         contents=f"Community description: {description}",
         config=genai_types.GenerateContentConfig(
@@ -238,11 +231,9 @@ def infer_community_profile(
     description: str,
 ) -> tuple[StrategyBrief, list[NewsSource]]:
     """Infer brief and news sources from a description in one Gemini call."""
-    global _gemini_client
-    if _gemini_client is None:
-        _gemini_client = genai.Client()
+    client = get_gemini_client()
     # Single call covers both brief inference and source selection to reduce latency
-    response = _gemini_client.models.generate_content(
+    response = client.models.generate_content(
         model=_GEMINI_MODEL,
         contents=f"Community description: {description}",
         config=genai_types.GenerateContentConfig(

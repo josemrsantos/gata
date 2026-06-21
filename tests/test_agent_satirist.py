@@ -9,7 +9,7 @@ from agents.agent_satirist import (
     _build_satirist_system_prompt,
     run,
 )
-from agents.types import (
+from core.types import (
     CartoonConcept,
     CartoonLayout,
     ConversationLog,
@@ -59,7 +59,7 @@ def test_run_returns_cartoon_concept():
     # is stable.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
-        concept, _ = run(TOPIC, BRIEF)
+        concept, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(concept, CartoonConcept)
 
 
@@ -67,7 +67,7 @@ def test_run_image_prompt_field_populated():
     # CartoonConcept.image_prompt must be set from the DualPersonaLoop verdict content.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
-        concept, _ = run(TOPIC, BRIEF)
+        concept, *_ = run(TOPIC, BRIEF, [], [])
     assert concept.image_prompt == _VALID_IMAGE_PROMPT
 
 
@@ -78,7 +78,7 @@ def test_run_accepts_enriched_brief():
     # run() must accept EnrichedBrief (not StrategyBrief) after migration.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
-        concept, _ = run(TOPIC, BRIEF)
+        concept, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(concept, CartoonConcept)
 
 
@@ -112,7 +112,7 @@ def test_run_propagates_timeout_error():
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.side_effect = TimeoutError("timeout")
         with pytest.raises(TimeoutError):
-            run(TOPIC, BRIEF)
+            run(TOPIC, BRIEF, [], [])
 
 
 def test_run_propagates_runtime_error():
@@ -120,7 +120,7 @@ def test_run_propagates_runtime_error():
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.side_effect = RuntimeError("all models exhausted")
         with pytest.raises(RuntimeError):
-            run(TOPIC, BRIEF)
+            run(TOPIC, BRIEF, [], [])
 
 
 # -- logging --
@@ -131,7 +131,7 @@ def test_run_logs_at_info(caplog):
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
         with caplog.at_level(logging.INFO, logger="agents.agent_satirist"):
-            _, _ = run(TOPIC, BRIEF)
+            _, *_ = run(TOPIC, BRIEF, [], [])
     assert any(r.levelno == logging.INFO for r in caplog.records)
 
 
@@ -139,13 +139,12 @@ def test_run_logs_at_info(caplog):
 
 
 def test_run_returns_tuple_of_cartoon_concept_and_log():
-    # run() must return a 2-tuple so pipeline.py can unpack CartoonConcept and
-    # ConversationLog for bundle writing in a single assignment.
+    # run() must return a 4-tuple: concept, log, telemetry, and resolved CartoonLayout.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
-        result = run(TOPIC, BRIEF)
+        result = run(TOPIC, BRIEF, [], [])
     assert isinstance(result, tuple)
-    assert len(result) == 2
+    assert len(result) == 4
 
 
 def test_run_first_element_is_cartoon_concept():
@@ -153,7 +152,7 @@ def test_run_first_element_is_cartoon_concept():
     # `concept, log = agent_bc.run(...)` without index lookups.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
-        concept, _ = run(TOPIC, BRIEF)
+        concept, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(concept, CartoonConcept)
 
 
@@ -162,7 +161,7 @@ def test_run_second_element_is_conversation_log():
     # it to bc_log.txt without any transformation by the caller.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
-        _, log = run(TOPIC, BRIEF)
+        _, log, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(log, ConversationLog)
 
 
@@ -171,7 +170,7 @@ def test_run_log_has_loop_name_bc():
     # labels the log file header correctly without extra context from the caller.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
-        _, log = run(TOPIC, BRIEF)
+        _, log, *_ = run(TOPIC, BRIEF, [], [])
     assert log.loop_name == "Satirist/Co-Satirist"
 
 
@@ -180,7 +179,7 @@ def test_run_cartoon_concept_image_prompt_with_loop_output_mock():
     # the agent correctly unpacks LoopOutput.verdict before constructing CartoonConcept.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
-        concept, _ = run(TOPIC, BRIEF)
+        concept, *_ = run(TOPIC, BRIEF, [], [])
     assert concept.image_prompt == _VALID_IMAGE_PROMPT
 
 
@@ -319,7 +318,7 @@ def test_run_multi_panel_populates_concept_panels():
     # CartoonConcept.panels populated so the image generator can assemble the strip.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT_MULTI
-        concept, _ = run(TOPIC, BRIEF, layout_override=_LAYOUT_3H)
+        concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
     assert concept.panels is not None
     assert len(concept.panels) == 3
     assert concept.panels[0].beat == "setup"
@@ -331,7 +330,7 @@ def test_run_multi_panel_concept_has_empty_image_prompt():
     # generator builds the full prompt from the panels list, not this field.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT_MULTI
-        concept, _ = run(TOPIC, BRIEF, layout_override=_LAYOUT_3H)
+        concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
     assert concept.image_prompt == ""
 
 
@@ -345,7 +344,7 @@ def test_run_multi_panel_fallback_on_malformed_json(caplog):
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = bad_output
         with caplog.at_level(logging.WARNING, logger="agents.agent_satirist"):
-            concept, _ = run(TOPIC, BRIEF, layout_override=_LAYOUT_3H)
+            concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
     assert concept.panels is None
     assert concept.image_prompt == "not valid JSON at all"
     assert any("fall" in r.message.lower() for r in caplog.records)
@@ -368,7 +367,7 @@ def test_run_multi_panel_fallback_on_wrong_panel_count(caplog):
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = short_output
         with caplog.at_level(logging.WARNING, logger="agents.agent_satirist"):
-            concept, _ = run(TOPIC, BRIEF, layout_override=_LAYOUT_3H)
+            concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
     assert concept.panels is None
 
 
@@ -377,7 +376,7 @@ def test_run_single_panel_unchanged_with_default_layout():
     # returning a CartoonConcept with image_prompt populated and panels=None.
     with patch("agents.agent_satirist.DualPersonaLoop") as MockLoop:
         MockLoop.return_value.run.return_value = _LOOP_OUTPUT
-        concept, _ = run(TOPIC, BRIEF)
+        concept, *_ = run(TOPIC, BRIEF, [], [])
     assert concept.panels is None
     assert concept.image_prompt == _VALID_IMAGE_PROMPT
 

@@ -4,7 +4,7 @@ import re
 import yaml
 from unidecode import unidecode
 
-from agents.types import (
+from core.types import (
     Community,
     CriticHumor,
     FramerHumor,

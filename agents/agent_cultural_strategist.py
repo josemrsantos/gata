@@ -2,12 +2,10 @@ import json
 import logging
 import re
 
-from google import genai
 from google.genai import types as genai_types
 
-from agents.dual_loop import DualPersonaLoop
-from agents.humor_utils import inconvenience_directive
-from agents.types import (
+from core.humor_utils import inconvenience_directive
+from core.types import (
     AgentTelemetry,
     AudienceProfile,
     ConversationLog,
@@ -18,10 +16,11 @@ from agents.types import (
     PersonaConfig,
     StrategyBrief,
 )
+from llm import LLMProvider
+from llm.dual_loop import DualPersonaLoop
+from llm.gemini import get_gemini_client
 
 logger = logging.getLogger(__name__)
-
-_GEMINI_CLIENT: genai.Client | None = None
 
 _INFERENCE_MODELS = [
     "gemini-2.5-flash",
@@ -65,12 +64,10 @@ def infer_audiences(topic: str) -> list[AudienceProfile]:
     Returns a parsed list of AudienceProfile objects. Falls back to
     _AUDIENCE_FALLBACK only when all models are exhausted.
     """
-    global _GEMINI_CLIENT
-    if _GEMINI_CLIENT is None:
-        _GEMINI_CLIENT = genai.Client()
+    client = get_gemini_client()
     for model in _INFERENCE_MODELS:
         try:
-            response = _GEMINI_CLIENT.models.generate_content(
+            response = client.models.generate_content(
                 model=model,
                 contents=f"News topic: {topic}",
                 config=genai_types.GenerateContentConfig(
@@ -130,12 +127,10 @@ def infer_mood(topic: str, audience: str, language: str) -> MoodBrief | None:
     Tries each model in turn; returns None only when all are exhausted so
     callers can proceed without mood context.
     """
-    global _GEMINI_CLIENT
-    if _GEMINI_CLIENT is None:
-        _GEMINI_CLIENT = genai.Client()
+    client = get_gemini_client()
     for model in _INFERENCE_MODELS:
         try:
-            response = _GEMINI_CLIENT.models.generate_content(
+            response = client.models.generate_content(
                 model=model,
                 contents=(
                     f"Topic: {topic}\n"
@@ -173,17 +168,6 @@ def infer_mood(topic: str, audience: str, language: str) -> MoodBrief | None:
     logger.warning("infer_mood: all models failed — proceeding without mood context")
     return None
 
-
-_FRAMER_MODELS = [
-    "claude-sonnet-4-6",
-    "claude-opus-4-7",
-    "claude-haiku-4-5-20251001",
-]
-_RESONATOR_MODELS = [
-    "gemini-2.5-pro",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-]
 
 def _build_framer_system_prompt(humor: HumorConfig | None = None) -> str:
     lines = [
@@ -275,17 +259,19 @@ def _parse_verdict(verdict_content: str) -> tuple[str, list[str], str]:
 def run(
     topic: str,
     seed_brief: StrategyBrief,
+    framer_providers: list[LLMProvider],
+    resonator_providers: list[LLMProvider],
     news_brief: Headline | None = None,
     humor: HumorConfig | None = None,
 ) -> tuple[EnrichedBrief, ConversationLog, AgentTelemetry]:
     framer = PersonaConfig(
         name="Framer",
-        models=_FRAMER_MODELS,
+        providers=framer_providers,
         system_prompt=_build_framer_system_prompt(humor),
     )
     resonator = PersonaConfig(
         name="Resonator",
-        models=_RESONATOR_MODELS,
+        providers=resonator_providers,
         system_prompt=_RESONATOR_SYSTEM,
     )
     loop = DualPersonaLoop(

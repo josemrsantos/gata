@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from agents.types import ConversationLog, EnrichedBrief, LoopOutput
+from core.types import ConversationLog, EnrichedBrief, LoopOutput
 
 
 def _make_brief(language: str = "Portuguese") -> EnrichedBrief:
@@ -49,6 +49,8 @@ def test_generate_html_returns_tuple():
             _make_log("Cultural Strategist"),
             _make_log("Satirist/Critic"),
             "prompt",
+            [],
+            [],
         )
     assert isinstance(result, tuple)
     assert len(result) == 2
@@ -70,6 +72,8 @@ def test_generate_html_first_element_is_in_language_html():
             _make_log("Cultural Strategist"),
             _make_log("Satirist/Critic"),
             "prompt",
+            [],
+            [],
         )
     assert in_lang == _IN_LANG_HTML
 
@@ -90,6 +94,8 @@ def test_generate_html_second_element_is_english_html():
             _make_log("Cultural Strategist"),
             _make_log("Satirist/Critic"),
             "prompt",
+            [],
+            [],
         )
     assert english == _EN_HTML
 
@@ -110,6 +116,8 @@ def test_generate_html_calls_dual_loop_twice():
             _make_log("Cultural Strategist"),
             _make_log("Satirist/Critic"),
             "prompt",
+            [],
+            [],
         )
     assert mock_instance.run.call_count == 2
 
@@ -130,6 +138,8 @@ def test_generate_html_in_lang_contains_doctype():
             _make_log("Cultural Strategist"),
             _make_log("Satirist/Critic"),
             "prompt",
+            [],
+            [],
         )
     assert "<!DOCTYPE html>" in in_lang
 
@@ -150,6 +160,8 @@ def test_generate_html_in_lang_contains_utf8_charset():
             _make_log("Cultural Strategist"),
             _make_log("Satirist/Critic"),
             "prompt",
+            [],
+            [],
         )
     assert 'charset="UTF-8"' in in_lang or "charset='UTF-8'" in in_lang.lower()
 
@@ -168,6 +180,8 @@ def test_generate_html_raises_when_all_models_exhausted():
                 _make_log("Cultural Strategist"),
                 _make_log("Satirist/Critic"),
                 "prompt",
+            [],
+            [],
             )
 
 
@@ -190,6 +204,8 @@ def test_generate_html_english_contains_doctype():
             _make_log("Cultural Strategist"),
             _make_log("Satirist/Critic"),
             "prompt",
+            [],
+            [],
         )
     assert "<!DOCTYPE html>" in english
 
@@ -210,6 +226,8 @@ def test_generate_html_english_contains_utf8_charset():
             _make_log("Cultural Strategist"),
             _make_log("Satirist/Critic"),
             "prompt",
+            [],
+            [],
         )
     assert 'charset="UTF-8"' in english or "charset='utf-8'" in english.lower()
 
@@ -230,6 +248,8 @@ def test_generate_html_english_lang_attribute_is_en():
             _make_log("Cultural Strategist"),
             _make_log("Satirist/Critic"),
             "prompt",
+            [],
+            [],
         )
     assert 'lang="en"' in english
 
@@ -259,6 +279,8 @@ def test_generate_html_uses_distinct_prompts_for_each_call():
             _make_log("Cultural Strategist"),
             _make_log("Satirist/Critic"),
             "prompt",
+            [],
+            [],
         )
 
     assert len(captured_inputs) == 2
@@ -289,5 +311,7 @@ def test_generate_html_utf8_present_for_non_latin_language():
             _make_log("Cultural Strategist"),
             _make_log("Satirist/Critic"),
             "prompt",
+            [],
+            [],
         )
     assert 'charset="UTF-8"' in in_lang or "charset='utf-8'" in in_lang.lower()

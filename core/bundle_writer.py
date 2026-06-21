@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 from agents import agent_explainer
-from agents.types import ConversationLog, EnrichedBrief, RunTelemetry
+from core.types import ConversationLog, EnrichedBrief, RunTelemetry
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,6 @@ _VERDICT_LABELS = {
 def format_log(log: ConversationLog) -> str:
     """Format a ConversationLog as human-readable plain text."""
     sections: list[str] = []
-    # Group turns by iteration
     iterations: dict[int, list] = {}
     for turn in log.turns:
         iterations.setdefault(turn.iteration, []).append(turn)
@@ -67,26 +66,35 @@ def write_bundle(
     bundle_dir = Path(output_path).parent / Path(output_path).stem
     bundle_dir.mkdir(parents=True, exist_ok=True)
     logger.info("bundle_writer: writing bundle to %s", bundle_dir)
-    # Write conversation logs
     if agent0_log is not None:
         _write_text(bundle_dir / "agent0_log.txt", format_log(agent0_log))
     if bc_log is not None:
         _write_text(bundle_dir / "bc_log.txt", format_log(bc_log))
-    # Write prompt card
     if image_prompt is not None:
         _write_text(bundle_dir / "prompt_card.txt", image_prompt)
-    # Write telemetry when available
     if telemetry is not None:
         _write_text(bundle_dir / "telemetry.json", _serialise_telemetry(telemetry))
         _write_text(bundle_dir / "summary.txt", format_summary(telemetry))
-    # Generate and write HTML files only when requested — opt-in, off by default
     if include_html and enriched_brief is not None and image_prompt is not None:
+        from llm import ClaudeProvider, GeminiProvider
+        _writer_providers = [
+            ClaudeProvider("claude-sonnet-4-6"),
+            ClaudeProvider("claude-opus-4-7"),
+            ClaudeProvider("claude-haiku-4-5-20251001"),
+        ]
+        _editor_providers = [
+            GeminiProvider("gemini-2.5-flash"),
+            GeminiProvider("gemini-2.5-pro"),
+            GeminiProvider("gemini-2.0-flash"),
+        ]
         try:
             in_lang_html, english_html = agent_explainer.generate_html(
                 enriched_brief,
                 agent0_log,
                 bc_log,
                 image_prompt,
+                writer_providers=_writer_providers,
+                editor_providers=_editor_providers,
             )
             _write_text(bundle_dir / "explanation.html", in_lang_html)
             _write_text(bundle_dir / "deep_dive_en.html", english_html)

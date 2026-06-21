@@ -7,7 +7,7 @@ import pytest
 import agents.trend_scout as _ts_module
 from agents.sources.base import SourceAdapter
 from agents.trend_scout import get_topics
-from agents.types import Community, Headline, NewsSource, StrategyBrief
+from core.types import Community, Headline, NewsSource, StrategyBrief
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
@@ -81,7 +81,7 @@ def test_get_topics_returns_ranked_list_from_gemini():
         ]
     )
 
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         result, source = get_topics(_COMMUNITY_WITH_SOURCES, n=3, adapter=stub_adapter)
 
     assert [h.title for h in result] == [
@@ -107,7 +107,7 @@ def test_get_topics_respects_n_parameter():
         ]
     )
 
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         result, source = get_topics(_COMMUNITY_WITH_SOURCES, n=1, adapter=stub_adapter)
 
     assert len(result) == 1
@@ -125,8 +125,8 @@ def test_get_topics_calls_gemini_with_community_profile():
         ["AI replaces junior devs"]
     )
 
-    with patch("agents.trend_scout._gemini_client", mock_client):
-        get_topics(_COMMUNITY_WITH_SOURCES, n=1, adapter=stub_adapter)  # source ignored
+    with patch("llm.gemini._get_client", return_value=mock_client):
+        get_topics(_COMMUNITY_WITH_SOURCES, n=1, adapter=stub_adapter)
 
     contents = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "British software engineers" in contents
@@ -157,7 +157,7 @@ def test_get_topics_falls_back_to_seed_on_gemini_failure():
     mock_client = MagicMock()
     mock_client.models.generate_content.side_effect = RuntimeError("Gemini unavailable")
 
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         result, source = get_topics(_COMMUNITY_WITH_SOURCES, n=3, adapter=stub_adapter)
 
     assert [h.title for h in result] == ["Fallback topic A", "Fallback topic B"]
@@ -191,10 +191,6 @@ def test_get_topics_returns_empty_when_no_sources_and_no_seeds():
 
 # ---------------------------------------------------------------------------
 # T001 — Ranking helper regression tests
-# These tests exercise behaviour that must survive the _rank_with_gemini →
-# _rank_headlines refactor in T002.  They are intentionally narrow: they
-# verify the Gemini call arguments and the JSON-parsing edge cases that the
-# refactored helper must continue to handle correctly.
 # ---------------------------------------------------------------------------
 
 
@@ -207,9 +203,8 @@ def test_ranking_passes_language_to_gemini_prompt():
     mock_client.models.generate_content.return_value = _mock_gemini(
         ["AI replaces junior devs"]
     )
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         get_topics(_COMMUNITY_WITH_SOURCES, n=1, adapter=stub_adapter)
-    # Language must appear in the contents string sent to Gemini
     contents = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "English" in contents
 
@@ -223,7 +218,7 @@ def test_ranking_strips_markdown_fences_from_gemini_response():
     fenced_response.text = "```json\n[\"AI replaces junior devs\"]\n```"
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = fenced_response
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         result, source = get_topics(_COMMUNITY_WITH_SOURCES, n=1, adapter=stub_adapter)
     assert result[0].title == "AI replaces junior devs"
     assert source == "trend_scout"
@@ -238,7 +233,7 @@ def test_ranking_falls_back_to_seed_when_gemini_returns_non_list():
     bad_response.text = '{"error": "malformed"}'
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = bad_response
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         result, source = get_topics(_COMMUNITY_WITH_SOURCES, n=3, adapter=stub_adapter)
     assert [h.title for h in result] == ["Fallback topic A", "Fallback topic B"]
     assert source == "seed"
@@ -260,7 +255,7 @@ def test_infer_brief_returns_correct_fields_from_valid_json():
     })
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         brief = _ts_module.infer_brief_from_description(
             "US community that dislikes Trump"
         )
@@ -277,7 +272,7 @@ def test_infer_brief_applies_all_defaults_on_malformed_json():
     mock_response.text = "not json at all"
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         brief = _ts_module.infer_brief_from_description("some community")
     assert brief.target_audience == "general public"
     assert brief.output_language == "English"
@@ -294,7 +289,7 @@ def test_infer_brief_applies_default_only_for_missing_key():
     })
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         brief = _ts_module.infer_brief_from_description("Communauté française")
     assert brief.target_audience == "French-speaking satire fans"
     assert brief.output_language == "French"
@@ -312,7 +307,7 @@ def test_infer_brief_treats_blank_value_as_absent():
     })
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         brief = _ts_module.infer_brief_from_description("some community")
     assert brief.target_audience == "general public"
     assert brief.output_language == "English"
@@ -329,7 +324,7 @@ def test_infer_brief_passes_description_in_gemini_prompt():
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
     description = "US community that dislikes Trump"
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         _ts_module.infer_brief_from_description(description)
     contents = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert description in contents
@@ -359,7 +354,7 @@ def test_infer_brief_infers_language_from_description(description, expected_lang
     })
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
-    with patch.object(_ts_module, "_gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         brief = _ts_module.infer_brief_from_description(description)
     assert brief.output_language == expected_language
 
@@ -376,7 +371,7 @@ def test_infer_brief_defaults_language_to_english_on_blank_output_language(caplo
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
     with (
-        patch.object(_ts_module, "_gemini_client", mock_client),
+        patch("llm.gemini._get_client", return_value=mock_client),
         caplog.at_level(logging.WARNING, logger="agents.trend_scout"),
     ):
         brief = _ts_module.infer_brief_from_description("vague community")
@@ -468,7 +463,6 @@ def test_get_topics_for_description_passes_description_as_hint_to_ranker():
             _ts_module.get_topics_for_description(
                 description, n=1, adapter=stub_adapter
             )
-    # description_hint is the 5th positional arg (index 4)
     call_args = mock_rank.call_args.args
     assert call_args[4] == description
 
@@ -512,11 +506,10 @@ def test_get_topics_unchanged_output_after_rank_headlines_refactor():
     expected_titles = ["Rust rewrite season begins", "AI replaces junior devs"]
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = _mock_gemini(expected_titles)
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         result, source = get_topics(_COMMUNITY_WITH_SOURCES, n=2, adapter=stub_adapter)
     assert [h.title for h in result] == expected_titles
     assert source == "trend_scout"
-    # Full Headline objects are returned, not bare title strings
     assert all(isinstance(h, Headline) for h in result)
 
 
@@ -542,7 +535,7 @@ def test_get_topics_uses_injected_stub_adapter():
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = _mock_gemini(["Stub headline"])
 
-    with patch("agents.trend_scout._gemini_client", mock_client):
+    with patch("llm.gemini._get_client", return_value=mock_client):
         result, source = get_topics(_COMMUNITY_WITH_SOURCES, n=1, adapter=StubAdapter())
 
     assert result[0].title == "Stub headline"
@@ -566,8 +559,9 @@ def test_infer_community_profile_returns_brief_and_sources():
     })
     mock_response = MagicMock()
     mock_response.text = payload
-    with patch("agents.trend_scout._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = mock_response
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = mock_response
+    with patch("llm.gemini._get_client", return_value=mock_client):
         brief, sources = _ts_module.infer_community_profile("Portuguese football fans")
     assert brief.output_language == "Portuguese"
     assert brief.target_audience == "Portuguese football fans"
@@ -587,8 +581,9 @@ def test_infer_community_profile_defaults_missing_source_fields():
     })
     mock_response = MagicMock()
     mock_response.text = payload
-    with patch("agents.trend_scout._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = mock_response
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = mock_response
+    with patch("llm.gemini._get_client", return_value=mock_client):
         brief, sources = _ts_module.infer_community_profile("UK adults")
     assert sources[0].country == "us"
     assert sources[0].category == "general"
@@ -600,8 +595,9 @@ def test_infer_community_profile_applies_all_defaults_on_bad_json():
     # fall back to their defaults so the caller can always proceed.
     mock_response = MagicMock()
     mock_response.text = "not json at all"
-    with patch("agents.trend_scout._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = mock_response
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = mock_response
+    with patch("llm.gemini._get_client", return_value=mock_client):
         brief, sources = _ts_module.infer_community_profile("some community")
     assert brief.target_audience == "general public"
     assert brief.output_language == "English"
@@ -632,6 +628,5 @@ def test_get_topics_for_description_uses_inferred_sources_not_defaults():
             _ts_module.get_topics_for_description(
                 "Portuguese football fans", n=1, adapter=stub_adapter
             )
-    # The community passed to the adapter must carry the inferred sources, not defaults
     call_community = stub_adapter.fetch.call_args.args[0]
     assert call_community.news_sources == inferred_sources

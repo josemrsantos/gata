@@ -1,34 +1,10 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-# Cost per million tokens (USD). Approximate — verify against provider pricing pages.
-_COST_PER_M: dict[str, tuple[float, float]] = {
-    "claude-sonnet-4-6":              (3.00,  15.00),
-    "claude-opus-4-7":                (15.00, 75.00),
-    "claude-sonnet-4-5":              (3.00,  15.00),
-    "claude-haiku-4-5-20251001":      (0.80,   4.00),
-    "gemini-2.5-pro":                 (1.25,  10.00),
-    "gemini-2.5-flash":               (0.30,   2.50),
-    "gemini-2.0-flash":               (0.10,   0.40),
-    "gemini-3.1-flash-lite":          (0.10,   0.40),
-    "gemini-3.1-pro-preview":         (1.25,  10.00),
-    # Image-model output rate is the per-million-token price for image tokens, per
-    # https://ai.google.dev/gemini-api/docs/pricing. The -preview aliases aren't
-    # listed there; priced identically to their GA counterparts (see
-    # specs/014-image-cost-pricing). gemini-2.5-flash-image is legacy and billed
-    # flat at $0.039/image (1290 tokens/image); its rate below is a derived
-    # equivalent, not a published per-token price.
-    "gemini-3.1-flash-image-preview": (0.50,  60.00),
-    "gemini-3.1-flash-image":         (0.50,  60.00),
-    "gemini-3-pro-image-preview":     (2.00, 120.00),
-    "gemini-3-pro-image":             (2.00, 120.00),
-    "gemini-2.5-flash-image":         (0.30,  30.23),
-}
-
-
-def compute_cost(model: str, input_tokens: int, output_tokens: int) -> float:
-    """Return estimated USD cost for one LLM call; unknown models cost 0.0."""
-    rates = _COST_PER_M.get(model, (0.0, 0.0))
-    return (input_tokens * rates[0] + output_tokens * rates[1]) / 1_000_000
+if TYPE_CHECKING:
+    from llm.base import LLMProvider
 
 
 @dataclass
@@ -166,7 +142,7 @@ class HumorConfig:
 @dataclass
 class PersonaConfig:
     name: str
-    models: list[str]
+    providers: list[LLMProvider]
     system_prompt: str
     max_tokens: int = 2048
 

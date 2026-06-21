@@ -1,11 +1,11 @@
 import pytest
 
-from agents.config_loader import (
+from core.config_loader import (
     load_communities,
     load_humor_config,
     sanitize_path_segment,
 )
-from agents.types import Community, HumorConfig
+from core.types import Community, HumorConfig
 
 # ---------------------------------------------------------------------------
 # sanitize_path_segment

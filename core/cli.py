@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 from google.genai.errors import APIError as GeminiAPIError
 
 from agents.agent_cultural_strategist import infer_audiences
-from agents.config_loader import load_humor_config, sanitize_path_segment
-from agents.runner import run_pipeline
-from agents.types import AudienceProfile, RunTelemetry, StrategyBrief
+from core.config_loader import load_humor_config, sanitize_path_segment
+from core.runner import run_pipeline
+from core.types import AudienceProfile, RunTelemetry, StrategyBrief
 
 logger = logging.getLogger(__name__)
 
@@ -62,26 +62,21 @@ def main() -> None:
         help="also generate explanation.html and deep_dive_en.html (default off)",
     )
     args = parser.parse_args()
-    # Reject blank topics immediately before any setup
     if not args.topic.strip():
         print("error: topic must not be empty", file=sys.stderr)
         sys.exit(1)
-    # Load .env from the caller's cwd if present, then configure logging
     found_dotenv = load_dotenv()
-    # WARNING level suppresses agent INFO chatter; print() handles user-visible output
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
     if found_dotenv:
         print("credentials loaded from .env file")
     else:
         print("no .env file found — reading credentials from environment variables")
-    # Verify API keys before any network call
     if not os.getenv("ANTHROPIC_API_KEY"):
         logger.error("ANTHROPIC_API_KEY is not set")
         sys.exit(1)
     if not os.getenv("GEMINI_API_KEY"):
         logger.error("GEMINI_API_KEY is not set")
         sys.exit(1)
-    # humor.yaml is optional — look in the caller's cwd
     humor = None
     if os.path.exists("humor.yaml"):
         try:
@@ -91,13 +86,10 @@ def main() -> None:
         except ValueError as exc:
             logger.error("humor config error: %s", exc)
             sys.exit(1)
-    # Infer audiences from the topic, then guarantee UK is always present
     audiences = _ensure_uk(infer_audiences(args.topic))
-    # Output folder: subdirectory of cwd named after the sanitized topic
     topic_slug = sanitize_path_segment(args.topic)
     output_dir = os.path.join(os.getcwd(), topic_slug)
     os.makedirs(output_dir, exist_ok=True)
-    # Run the pipeline once per audience; log each failure and continue
     failures = 0
     audience_telemetry: list[tuple[str, RunTelemetry]] = []
     for i, audience in enumerate(audiences, 1):
@@ -117,7 +109,6 @@ def main() -> None:
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("failed for audience %r: %s", audience.name, exc)
             failures += 1
-    # Grand total across audiences — only shown when multiple audiences ran
     if audience_telemetry:
         summary = _format_grand_total(audience_telemetry)
         if len(audience_telemetry) > 1:
@@ -126,7 +117,6 @@ def main() -> None:
             Path(output_dir, "summary.txt").write_text(summary, encoding="utf-8")
         except OSError as exc:
             logger.error("could not write summary.txt: %s", exc)
-    # Report overall result; partial success still produces useful output
     if failures == 0:
         print(f"\nAll {len(audiences)} image(s) saved to {output_dir}")
     elif failures < len(audiences):

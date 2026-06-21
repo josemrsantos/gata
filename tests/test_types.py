@@ -1,4 +1,4 @@
-from agents.types import (
+from core.types import (
     CartoonConcept,
     CartoonLayout,
     CriticHumor,

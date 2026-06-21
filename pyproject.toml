@@ -3,7 +3,7 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["agents*"]
+include = ["agents*", "core*", "llm*"]
 
 
 [tool.ruff]
@@ -21,7 +21,7 @@ select = ["E", "F", "I"]
 [tool.semantic_release]
 # Keep pyproject.toml and __version__.py in sync on every release.
 version_toml = ["pyproject.toml:project.version"]
-version_variables = ["agents/__version__.py:__version__"]
+version_variables = ["core/__version__.py:__version__"]
 tag_format = "v{version}"
 # Stay on 0.x until a deliberate major-version decision is made.
 major_on_zero = false
@@ -75,7 +75,7 @@ dependencies = [
 ]
 
 [project.scripts]
-gata = "agents.cli:main"
+gata = "core.cli:main"
 
 [project.optional-dependencies]
 dev = [

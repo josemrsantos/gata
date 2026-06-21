@@ -6,13 +6,13 @@ import pytest
 from google.genai.errors import ServerError
 
 from agents import agent_image_generator
-from agents.types import (
+from core.types import (
     CartoonConcept,
     CartoonLayout,
     PanelConcept,
     StrategyBrief,
-    compute_cost,
 )
+from llm.gemini import compute_cost
 
 BRIEF = StrategyBrief(
     target_audience="general public",
@@ -62,12 +62,12 @@ def test_generate_first_model_succeeds(tmp_path):
 
     with patch("agents.agent_image_generator._gemini_client") as mock_client:
         mock_client.models.generate_content.return_value = response
-        result = agent_image_generator.generate(
+        path, _tel = agent_image_generator.generate(
             CONCEPT, BRIEF, output_path=str(out_file)
         )
 
-    assert Path(result).exists()
-    assert Path(result).read_bytes() == FAKE_PNG
+    assert Path(path).exists()
+    assert Path(path).read_bytes() == FAKE_PNG
     assert mock_client.models.generate_content.call_count == 1
 
 
@@ -84,11 +84,11 @@ def test_generate_falls_back_when_no_data(tmp_path):
 
     with patch("agents.agent_image_generator._gemini_client") as mock_client:
         mock_client.models.generate_content.side_effect = [no_data, with_data]
-        result = agent_image_generator.generate(
+        path, _tel = agent_image_generator.generate(
             CONCEPT, BRIEF, output_path=str(out_file)
         )
 
-    assert Path(result).exists()
+    assert Path(path).exists()
     assert mock_client.models.generate_content.call_count == 2
 
 
@@ -107,11 +107,11 @@ def test_generate_falls_back_on_api_exception(tmp_path):
             ServerError(503, {"error": {"message": "Model temporarily unavailable"}}),
             with_data,
         ]
-        result = agent_image_generator.generate(
+        path, _tel = agent_image_generator.generate(
             CONCEPT, BRIEF, output_path=str(out_file)
         )
 
-    assert Path(result).exists()
+    assert Path(path).exists()
     assert mock_client.models.generate_content.call_count == 2
 
 

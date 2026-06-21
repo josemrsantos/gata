@@ -5,7 +5,7 @@ from datetime import date
 import httpx
 
 from agents.sources.base import SourceAdapter
-from agents.types import Community, Headline
+from core.types import Community, Headline
 
 logger = logging.getLogger(__name__)
 

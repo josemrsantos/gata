@@ -8,13 +8,13 @@ from dotenv import load_dotenv
 from google.genai.errors import APIError as GeminiAPIError
 
 from agents import trend_scout
-from agents.config_loader import (
+from core.config_loader import (
     load_communities,
     load_humor_config,
     sanitize_path_segment,
 )
-from agents.runner import run_pipeline
-from agents.types import CartoonLayout, StrategyBrief
+from core.runner import run_pipeline
+from core.types import CartoonLayout, StrategyBrief
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +27,11 @@ def _panel_filename_prefix(layout: CartoonLayout | None) -> str:
     return f"{layout.panels}{direction_char}_"
 
 
-def _resolve_layout(args) -> CartoonLayout | None:
+def _resolve_layout(args, community=None) -> CartoonLayout | None:
+    # CLI flag takes precedence; fall back to community config if present
     if args.panels <= 1:
+        if community is not None and community.panels > 1:
+            return CartoonLayout(panels=community.panels, direction=community.layout)
         return None
     return CartoonLayout(panels=args.panels, direction=args.layout)
 
@@ -227,7 +230,7 @@ def main() -> None:
                 topic,
             )
             seed_brief = community.to_brief()
-            layout = _resolve_layout(args)
+            layout = _resolve_layout(args, community=community)
             prefix = _panel_filename_prefix(layout)
             output_path = (
                 f"output/{sanitize_path_segment(community.name)}"
@@ -297,7 +300,7 @@ def main() -> None:
             "community=%r topic source=%s topic=%r", community.name, topic_source, topic
         )
         seed_brief = community.to_brief()
-        layout = _resolve_layout(args)
+        layout = _resolve_layout(args, community=community)
         prefix = _panel_filename_prefix(layout)
         output_path = (
             f"output/{sanitize_path_segment(community.name)}"

@@ -3,9 +3,8 @@ import logging
 import re
 from datetime import date
 
-from agents.dual_loop import DualPersonaLoop
-from agents.humor_utils import inconvenience_directive
-from agents.types import (
+from core.humor_utils import inconvenience_directive
+from core.types import (
     AgentTelemetry,
     CartoonConcept,
     CartoonLayout,
@@ -15,19 +14,11 @@ from agents.types import (
     PanelConcept,
     PersonaConfig,
 )
+from llm import LLMProvider
+from llm.dual_loop import DualPersonaLoop
 
 logger = logging.getLogger(__name__)
 
-_GEMINI_SATIRIST_MODELS = [
-    "gemini-2.5-pro",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-]
-_GEMINI_CO_SATIRIST_MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-    "gemini-2.0-flash",
-]
 
 # Verbatim from constitution.md Section 4
 _GATA_CHARACTER = (
@@ -264,17 +255,19 @@ def _parse_verdict(
 def run(
     topic: str,
     brief: EnrichedBrief,
+    satirist_providers: list[LLMProvider],
+    co_satirist_providers: list[LLMProvider],
     humor: HumorConfig | None = None,
     layout_override: CartoonLayout | None = None,
 ) -> tuple[CartoonConcept, ConversationLog, AgentTelemetry, CartoonLayout]:
     satirist = PersonaConfig(
         name="Satirist",
-        models=_GEMINI_SATIRIST_MODELS,
+        providers=satirist_providers,
         system_prompt=_build_satirist_system_prompt(brief, humor, layout_override),
     )
     co_satirist = PersonaConfig(
         name="Co-Satirist",
-        models=_GEMINI_CO_SATIRIST_MODELS,
+        providers=co_satirist_providers,
         system_prompt=_build_co_satirist_prompt(brief, humor),
     )
     loop = DualPersonaLoop(
