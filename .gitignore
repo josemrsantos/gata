@@ -1,0 +1,10 @@
+.claude/
+.env
+.env.*
+set_gata.sh
+output/
+__pycache__/
+*.pyc
+*.key
+.idea/
+.venv/

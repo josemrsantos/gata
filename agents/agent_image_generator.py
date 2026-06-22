@@ -5,6 +5,7 @@ import time
 
 from google import genai
 from google.genai.errors import APIError
+from PIL import Image, ImageDraw, ImageFont
 
 from core.types import (
     AgentTelemetry,
@@ -107,11 +108,40 @@ def _build_multi_panel_prompt(
     return header + "".join(panel_blocks) + character_section + style_section
 
 
+def _overlay_title(image_path: str, title: str) -> None:
+    with Image.open(image_path) as img:
+        # normalize to RGB so any source mode (RGBA, P, etc.) is handled uniformly
+        rgb = img.convert("RGB")
+    width, height = rgb.size
+    # banner height proportional to image; minimum 50 px so text stays legible
+    banner_h = max(50, int(height * 0.08))
+    font_size = max(18, int(banner_h * 0.52))
+    try:
+        font = ImageFont.load_default(size=font_size)
+    except TypeError:
+        # Pillow < 10 does not accept a size argument to load_default
+        font = ImageFont.load_default()
+    # new canvas: dark banner (#1a1a1a) at top, original image shifted below
+    canvas = Image.new("RGB", (width, height + banner_h), (26, 26, 26))
+    canvas.paste(rgb, (0, banner_h))
+    draw = ImageDraw.Draw(canvas)
+    # center title text horizontally and vertically within the banner
+    bbox = draw.textbbox((0, 0), title, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    x = max(0, (width - text_w) // 2)
+    y = max(0, (banner_h - text_h) // 2)
+    draw.text((x, y), title, fill=(255, 255, 255), font=font)
+    canvas.save(image_path)
+    logger.debug("image_generator: title overlay added — %r", title)
+
+
 def generate(
     concept: CartoonConcept,
     brief: StrategyBrief,
     output_path: str,
     layout: CartoonLayout | None = None,
+    show_title: bool = True,
 ) -> tuple[str, AgentTelemetry]:
     start = time.monotonic()
     token_calls: list[TokenUsage] = []
@@ -188,6 +218,9 @@ def generate(
             cost_usd=cost_usd,
         ))
         logger.debug("Image Generator: saved — model=%s cost=$%.4f", model, cost_usd)
+        # overlay title banner only when requested and a title was generated
+        if show_title and concept.title:
+            _overlay_title(output_path, concept.title)
         telemetry = AgentTelemetry(
             agent_name="Image Generator",
             duration_seconds=time.monotonic() - start,

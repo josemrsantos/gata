@@ -53,6 +53,7 @@ _OUTPUT_FORMAT_RULES = (
     "{\n"
     '  "panels": <integer 1–4>,\n'
     '  "layout": "horizontal" or "vertical",\n'
+    '  "title": "<punchy 3-8 word headline in the output language>",\n'
     '  "content": [\n'
     '    {"scene": "...", "caption": "...", "beat": "..."},\n'
     "    ...\n"
@@ -65,6 +66,8 @@ _OUTPUT_FORMAT_RULES = (
     '- panels ≥ 2: "scene" describes only the panel\'s action; character and style'
     " are added automatically. Each panel MUST have a non-empty \"beat\".\n"
     '- "caption" must always be in the specified output language.\n'
+    '- "title" must always be in the specified output language — 3 to 8 words,'
+    " editorial headline style, not a description of the image.\n"
     "- No preamble, no explanation, no markdown fences."
 )
 
@@ -184,6 +187,7 @@ def _parse_verdict(
         panels_chosen = int(parsed.get("panels", 1))
         direction_chosen = str(parsed.get("layout", "horizontal"))
         content = parsed.get("content", [])
+        title = str(parsed.get("title", ""))
         # Caller-specified override wins over Satirist's choice
         if layout_override is not None:
             panels_chosen = layout_override.panels
@@ -196,6 +200,7 @@ def _parse_verdict(
                 full_text=verdict_content,
                 image_prompt=scene,
                 iteration=0,
+                title=title,
             ), layout
         # Multi-panel: validate content length matches chosen panel count
         if len(content) != panels_chosen:
@@ -215,6 +220,7 @@ def _parse_verdict(
             image_prompt="",
             iteration=0,
             panels=panel_concepts,
+            title=title,
         ), layout
     except (json.JSONDecodeError, KeyError, ValueError, TypeError, IndexError) as exc:
         logger.warning(
@@ -252,6 +258,9 @@ def run(
     )
     loop_output = panel.run(topic)
     concept, layout = _parse_verdict(loop_output.verdict, layout_override)
+    if not concept.title:
+        # Fallback: Satirist omitted the title or JSON parse failed — use the topic
+        concept.title = topic
     logger.info(
         "satirist: concept produced — panels=%d layout=%s cultural_angle=%r",
         layout.panels,

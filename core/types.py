@@ -86,6 +86,7 @@ class CartoonConcept:
     image_prompt: str
     iteration: int
     panels: list[PanelConcept] | None = None
+    title: str = ""
 
 
 @dataclass

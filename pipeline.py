@@ -56,6 +56,11 @@ def main() -> None:
         action="store_true",
         help="also generate explanation.html and deep_dive_en.html (default off)",
     )
+    parser.add_argument(
+        "--no-title",
+        action="store_true",
+        help="suppress title banner on generated images (default: title shown)",
+    )
     args = parser.parse_args()
     # Reject an empty --community immediately — blank string is not a valid description
     if args.community is not None and not args.community.strip():
@@ -151,7 +156,7 @@ def main() -> None:
         try:
             run_pipeline(
                 topic, seed_brief, output_path, humor=humor, layout=layout,
-                include_html=args.html,
+                include_html=args.html, show_title=not args.no_title,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -192,7 +197,7 @@ def main() -> None:
         try:
             run_pipeline(
                 topic, seed_brief, output_path, humor=humor, layout=layout,
-                include_html=args.html,
+                include_html=args.html, show_title=not args.no_title,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -274,7 +279,7 @@ def main() -> None:
         try:
             run_pipeline(
                 topic, seed_brief, output_path, news_headline=headline, humor=humor,
-                layout=layout, include_html=args.html,
+                layout=layout, include_html=args.html, show_title=not args.no_title,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -317,7 +322,7 @@ def main() -> None:
         try:
             run_pipeline(
                 topic, seed_brief, output_path, news_headline=headline, humor=humor,
-                layout=layout, include_html=args.html,
+                layout=layout, include_html=args.html, show_title=not args.no_title,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)

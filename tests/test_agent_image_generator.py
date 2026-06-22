@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from google.genai.errors import ServerError
+from PIL import Image
 
 from agents import agent_image_generator
 from core.types import (
@@ -375,3 +376,83 @@ def test_generate_defaults_tokens_to_zero_when_usage_metadata_absent(tmp_path):
     assert call.input_tokens == 0
     assert call.output_tokens == 0
     assert call.cost_usd == 0.0
+
+
+# ---------------------------------------------------------------------------
+# Title overlay — Spec 027
+# ---------------------------------------------------------------------------
+
+_CONCEPT_WITH_TITLE = CartoonConcept(
+    full_text="<image_prompt>A cat at the G7 table.</image_prompt>",
+    image_prompt="A cat at the G7 table.",
+    iteration=1,
+    title="AI Circus Comes to Town",
+)
+
+
+def _make_real_png(path: str, width: int = 512, height: int = 384) -> None:
+    # PIL Image.new is the only reliable way to produce a file _overlay_title can load.
+    img = Image.new("RGB", (width, height), (180, 180, 180))
+    img.save(path)
+
+
+def test_overlay_title_expands_image_height(tmp_path):
+    # _overlay_title must add a banner above the image, expanding canvas height —
+    # if height is unchanged, the overlay did nothing and the title is invisible.
+    img_path = str(tmp_path / "test.png")
+    _make_real_png(img_path, width=512, height=384)
+    agent_image_generator._overlay_title(img_path, "G7 Lets AI Self-Regulate")
+    with Image.open(img_path) as result:
+        assert result.height > 384
+
+
+def test_overlay_title_preserves_image_width(tmp_path):
+    # _overlay_title must not alter image width — the banner spans the same horizontal
+    # extent as the original so the overall composition does not shift or crop.
+    img_path = str(tmp_path / "test.png")
+    _make_real_png(img_path, width=512, height=384)
+    agent_image_generator._overlay_title(img_path, "G7 Lets AI Self-Regulate")
+    with Image.open(img_path) as result:
+        assert result.width == 512
+
+
+def test_generate_calls_overlay_when_show_title_true_and_title_set(tmp_path):
+    # generate() must invoke _overlay_title when show_title=True and concept.title is
+    # non-empty — the title banner must physically reach the saved image file.
+    out_file = tmp_path / "cartoon_output.png"
+    response = _make_gemini_response(FAKE_PNG)
+    with patch("agents.agent_image_generator._gemini_client") as mock_client, \
+            patch("agents.agent_image_generator._overlay_title") as mock_overlay:
+        mock_client.models.generate_content.return_value = response
+        agent_image_generator.generate(
+            _CONCEPT_WITH_TITLE, BRIEF, output_path=str(out_file), show_title=True,
+        )
+    mock_overlay.assert_called_once_with(str(out_file), "AI Circus Comes to Town")
+
+
+def test_generate_skips_overlay_when_show_title_false(tmp_path):
+    # generate() must NOT call _overlay_title when show_title=False — the --no-title
+    # flag must suppress the banner so the raw image is delivered without modification.
+    out_file = tmp_path / "cartoon_output.png"
+    response = _make_gemini_response(FAKE_PNG)
+    with patch("agents.agent_image_generator._gemini_client") as mock_client, \
+            patch("agents.agent_image_generator._overlay_title") as mock_overlay:
+        mock_client.models.generate_content.return_value = response
+        agent_image_generator.generate(
+            _CONCEPT_WITH_TITLE, BRIEF, output_path=str(out_file), show_title=False,
+        )
+    mock_overlay.assert_not_called()
+
+
+def test_generate_skips_overlay_when_title_empty(tmp_path):
+    # generate() must NOT call _overlay_title when concept.title is "" — an empty
+    # title must not produce a blank banner; the guard prevents a visual blank strip.
+    out_file = tmp_path / "cartoon_output.png"
+    response = _make_gemini_response(FAKE_PNG)
+    with patch("agents.agent_image_generator._gemini_client") as mock_client, \
+            patch("agents.agent_image_generator._overlay_title") as mock_overlay:
+        mock_client.models.generate_content.return_value = response
+        agent_image_generator.generate(
+            CONCEPT, BRIEF, output_path=str(out_file), show_title=True,
+        )
+    mock_overlay.assert_not_called()

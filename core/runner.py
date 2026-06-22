@@ -48,6 +48,7 @@ def run_pipeline(
     humor: HumorConfig | None = None,
     layout: CartoonLayout | None = None,
     include_html: bool = False,
+    show_title: bool = True,
 ) -> RunTelemetry:
     """Run the full pipeline for a single topic and write the output image."""
     agent0_log: ConversationLog | None = None
@@ -80,7 +81,8 @@ def run_pipeline(
         _MAX_IMAGE_RETRIES = 2
         for _attempt in range(_MAX_IMAGE_RETRIES + 1):
             _image_path, image_tel = agent_image_generator.generate(
-                concept, enriched_brief, output_path, layout=chosen_layout
+                concept, enriched_brief, output_path,
+                layout=chosen_layout, show_title=show_title,
             )
             telemetry.agents.append(image_tel)
             print("  Image Evaluator...", flush=True)
