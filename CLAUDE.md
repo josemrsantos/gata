@@ -1,23 +1,49 @@
 <!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
-at specs/007-multi-panel-cartoon/plan.md
+## Speckit Governance
 
-## Project Status (as of 2026-06-12)
+**Constitution**: `.specify/memory/constitution.md`
+All implementation plans include a Constitution Check table that gates work.
+Read the constitution before starting any new stage.
 
-Stages 1–9 are complete and merged into main.
+**Templates**: `.specify/templates/`
+- `spec-template.md` — blank spec
+- `plan-template.md` — blank plan (includes 13-row Constitution Check table)
+- `tasks-template.md` — blank phase-based task breakdown
 
-| Stage | Name | Status |
-|-------|------|--------|
-| 1 | Core pipeline (B/C creative loop + image generation) | ✅ Complete |
-| 2 | Community config + model fallback chains | ✅ Complete |
-| 3 | Agent 0 — Cultural Strategist (Framer + Resonator) | ✅ Complete |
-| 4 | Text Output Bundle (logs, HTML explanations, prompt card) | ✅ Complete |
-| 5 | Housekeeping + rules redefinition | ✅ Complete |
-| 6 | Trend Scout — automated topic discovery via NewsAPI.org + Gemini | ✅ Complete |
-| 7 | Comedy style configuration via humor.yaml | ✅ Complete |
-| 8 | Free-text community mode — --community accepts any description | ✅ Complete |
-| 9 | Multi-panel cartoon format — --panels and --layout flags | ✅ Complete |
+**Spec artifacts**: `specs/NNN-feature-name/` (spec.md, plan.md, research.md,
+data-model.md, contracts/, tasks.md, quickstart.md)
+
+**Active stage**: None — between stages. See TODO.md for next items.
+
+## Completed Stages (as of 2026-06-22)
+
+| Spec | Name                                                    | Status |
+|------|---------------------------------------------------------|--------|
+| 001 | Core pipeline — B/C creative loop + image generation | ✅ |
+| 002 | Community config + model fallback chains | ✅ |
+| 003 | Cultural Strategist (Framer + Resonator) | ✅ |
+| 004 | Text Output Bundle (logs, HTML, prompt card) | ✅ |
+| 005 | Trend Scout — NewsAPI.org + Gemini topic discovery | ✅ |
+| 006 | Free-text community mode | ✅ |
+| 007 | Multi-panel cartoon format — --panels and --layout | ✅ |
+| 008 | Multi-audience CLI | ✅ |
+| 009 | Run telemetry — per-agent timing, token counts, cost | ✅ |
+| 010 | Dynamic audiences | ✅ |
+| 011 | Mood layer | ✅ |
+| 012 | Run summary | ✅ |
+| 013 | Optional HTML output | ✅ |
+| 014 | Image cost pricing | ✅ |
+| 015 | Single main audience | ✅ |
+| 016 | Clean logging | ✅ |
+| 019 | Inference model fallback | ✅ |
+| 020 | Auto layout | ✅ |
+| 021 | Gemini Satirist | ✅ |
+| 022 | Image Evaluator | ✅ |
+| 023 | Evaluator fidelity | ✅ |
+| 024 | LLM provider abstraction | ✅ |
+| 025 | Grok integration | ✅ |
+| 026 | Protocol framework + Parallel Panel | ✅ |
+| 027 | Cartoon title banner + --no-title flag | ✅ |
 <!-- SPECKIT END -->
 
 LLM REVIEW PROTOCOL — this is a hard stop, not a suggestion. Violating it is not acceptable under any circumstances,
