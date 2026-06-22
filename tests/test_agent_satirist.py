@@ -428,3 +428,65 @@ def test_satirist_prompt_high_inconvenience_mentions_squirm():
     # so the LLM receives the maximum discomfort instruction.
     prompt = _build_satirist_system_prompt(BRIEF, _HUMOR_HIGH_INCONVENIENCE)
     assert "squirm" in prompt.lower()
+
+
+# ---------------------------------------------------------------------------
+# Cartoon title (Stage 27)
+# ---------------------------------------------------------------------------
+
+_VERDICT_WITH_TITLE = json.dumps(
+    {
+        "panels": 1,
+        "layout": "horizontal",
+        "title": "G7 Nods, AI Thanks Them",
+        "content": [{"scene": _VALID_IMAGE_PROMPT, "caption": "Noted.", "beat": ""}],
+    }
+)
+_VERDICT_WITHOUT_TITLE = json.dumps(
+    {
+        "panels": 1,
+        "layout": "horizontal",
+        "content": [{"scene": _VALID_IMAGE_PROMPT, "caption": "Noted.", "beat": ""}],
+    }
+)
+
+
+def test_parse_verdict_extracts_title_field():
+    # When the Satirist JSON includes "title", CartoonConcept.title must be populated
+    # so the image generator can overlay it without extra string manipulation.
+    loop_out = LoopOutput(
+        verdict=_VERDICT_WITH_TITLE,
+        log=ConversationLog(loop_name="Satirist/Co-Satirist"),
+    )
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = loop_out
+        concept, *_ = run(TOPIC, BRIEF, [], [])
+    assert concept.title == "G7 Nods, AI Thanks Them"
+
+
+def test_parse_verdict_title_empty_when_missing_from_json():
+    # When the Satirist JSON omits "title", CartoonConcept.title must be "" before the
+    # fallback in run() applies — confirming _parse_verdict does not invent a title.
+    import agents.agent_satirist as sat
+    concept, _ = sat._parse_verdict(_VERDICT_WITHOUT_TITLE, None)
+    assert concept.title == ""
+
+
+def test_run_falls_back_to_topic_when_title_missing():
+    # run() must set concept.title = topic when the Satirist omits the title field
+    # so the image always has a title even if JSON parsing is partial.
+    loop_out = LoopOutput(
+        verdict=_VERDICT_WITHOUT_TITLE,
+        log=ConversationLog(loop_name="Satirist/Co-Satirist"),
+    )
+    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = loop_out
+        concept, *_ = run(TOPIC, BRIEF, [], [])
+    assert concept.title == TOPIC
+
+
+def test_satirist_prompt_includes_title_instruction():
+    # The output format rules must mention "title" so the Satirist knows to include it
+    # in the JSON — without this the field would never be generated.
+    prompt = _build_satirist_system_prompt(BRIEF)
+    assert '"title"' in prompt

@@ -61,6 +61,11 @@ def main() -> None:
         action="store_true",
         help="also generate explanation.html and deep_dive_en.html (default off)",
     )
+    parser.add_argument(
+        "--no-title",
+        action="store_true",
+        help="suppress title banner on generated images (default: title shown)",
+    )
     args = parser.parse_args()
     if not args.topic.strip():
         print("error: topic must not be empty", file=sys.stderr)
@@ -103,7 +108,7 @@ def main() -> None:
         try:
             telemetry = run_pipeline(
                 args.topic, seed_brief, output_path, humor=humor,
-                include_html=args.html,
+                include_html=args.html, show_title=not args.no_title,
             )
             audience_telemetry.append((audience.name, telemetry))
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
