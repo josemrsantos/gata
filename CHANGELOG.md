@@ -1,6 +1,20 @@
 # CHANGELOG
 
 
+## v1.14.0 (2026-06-22)
+
+### Features
+
+* feat: Stage 029 — Grok-3 as primary decider across all ParallelPanel agents
+
+Cultural Strategist and Explainer converted from DualPersonaLoop to
+ParallelPanel. Grok-3 is now the aggregator/decider in all three panel
+agents (Satirist, Cultural Strategist, Explainer); Grok-3-mini participates
+as panelist alongside Claude and Gemini, keeping judge and proposer distinct.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`d7d7bb7`](https://github.com/josemrsantos/gata/commit/d7d7bb783c58447f4e8d1d73a7e3fee19a30ddcf))
+
+
 ## v1.13.0 (2026-06-22)
 
 ### Documentation
