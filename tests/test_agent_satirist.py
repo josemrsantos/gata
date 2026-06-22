@@ -490,3 +490,32 @@ def test_satirist_prompt_includes_title_instruction():
     # in the JSON — without this the field would never be generated.
     prompt = _build_satirist_system_prompt(BRIEF)
     assert '"title"' in prompt
+
+
+# ---------------------------------------------------------------------------
+# Stage 029 — Grok as primary decider (T003)
+# ---------------------------------------------------------------------------
+
+
+def test_runner_parallel_panelists_uses_grok_mini():
+    # _PARALLEL_PANELISTS must use grok-3-mini so Grok participates as a panelist
+    # without also being the sole proposer evaluated by the grok-3 aggregator.
+    from core.runner import _PARALLEL_PANELISTS
+    model_ids = [p.model_id for p in _PARALLEL_PANELISTS]
+    assert "grok-3-mini" in model_ids
+
+
+def test_runner_parallel_panelists_excludes_grok3():
+    # grok-3 must not appear in _PARALLEL_PANELISTS — it is reserved for the
+    # aggregator role; including it as a panelist would conflate judge and proposer.
+    from core.runner import _PARALLEL_PANELISTS
+    model_ids = [p.model_id for p in _PARALLEL_PANELISTS]
+    assert "grok-3" not in model_ids
+
+
+def test_runner_grok_aggregator_constant_uses_grok3():
+    # _GROK_AGGREGATOR must exist and contain grok-3 so all ParallelPanel agents
+    # can reference a single authoritative aggregator constant from the runner.
+    from core.runner import _GROK_AGGREGATOR
+    model_ids = [p.model_id for p in _GROK_AGGREGATOR]
+    assert "grok-3" in model_ids

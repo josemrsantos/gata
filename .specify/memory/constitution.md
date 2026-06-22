@@ -110,12 +110,14 @@ The Satirist's `<verdict>` block contains valid JSON with this schema:
 Iteration rules:
 
 - Maximum 5 iterations per Satirist/Co-Satirist exchange
-- Claude (as panelist or aggregator) has final say via the three-part Final Say
-  Protocol: (1) acknowledge the objection, (2) state override rationale, (3)
-  produce a synthesis incorporating all feedback
+- Grok (`grok-3`) is the aggregator/decider across all `ParallelPanel` agents.
+  Grok-3-mini participates as panelist alongside Claude and Gemini. The Final Say
+  Protocol (acknowledge → override rationale → synthesis) is expressed in Grok's
+  aggregator prompt rather than in the DualPersonaLoop.
 - Gemini (as Co-Satirist or critic) cannot force rejection past iteration 5
-- The ParallelPanel topology (Claude + Grok + Gemini as independent panelists;
-  Claude as aggregator) is the current Satirist implementation
+- The ParallelPanel topology (Claude + Grok-mini + Gemini as independent panelists;
+  Grok-3 as aggregator) is the current implementation for Satirist, Cultural
+  Strategist, and Explainer agents
 
 ### §7 — Language Rule
 
@@ -204,3 +206,4 @@ Rules:
 | Version | Date | Principle | Change | Approved by |
 |---------|------|-----------|--------|-------------|
 | 1.0 | 2026-06-22 | All | Initial ratification | Jose Santos |
+| 1.1 | 2026-06-22 | §6 | Grok-3 replaces Claude as aggregator across all ParallelPanel agents; Grok-3-mini becomes the Grok panelist | Jose Santos |

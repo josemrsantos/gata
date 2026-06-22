@@ -34,10 +34,11 @@ _GEMINI_PRO_CHAIN = [
 ]
 _PARALLEL_PANELISTS = [
     ClaudeProvider("claude-sonnet-4-6"),
-    GrokProvider("grok-3"),
+    GrokProvider("grok-3-mini"),
     GeminiProvider("gemini-2.5-flash"),
 ]
-_GEMINI_EVAL_CHAIN = _GEMINI_PRO_CHAIN  # same model priority as resonator chain
+_GROK_AGGREGATOR = [GrokProvider("grok-3")]
+_GEMINI_EVAL_CHAIN = _GEMINI_PRO_CHAIN  # same model priority as evaluator chain
 
 
 def run_pipeline(
@@ -61,8 +62,8 @@ def run_pipeline(
         enriched_brief, agent0_log, agent0_tel = agent_cultural_strategist.run(
             topic,
             seed_brief,
-            framer_providers=_CLAUDE_CHAIN,
-            resonator_providers=_GEMINI_PRO_CHAIN,
+            panelist_providers=_PARALLEL_PANELISTS,
+            aggregator_providers=_GROK_AGGREGATOR,
             news_brief=news_headline,
             humor=humor,
         )
@@ -72,7 +73,7 @@ def run_pipeline(
             topic,
             enriched_brief,
             panelist_providers=_PARALLEL_PANELISTS,
-            aggregator_providers=_CLAUDE_CHAIN,
+            aggregator_providers=_GROK_AGGREGATOR,
             humor=humor,
             layout_override=layout,
         )
