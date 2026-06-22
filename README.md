@@ -24,28 +24,29 @@ An automated multi-agent pipeline that transforms daily topics into a recurring 
 | 14 | Image generation cost tracking — accurate $/image in telemetry and summary | ✅ Complete |
 | 15 | Single main audience default — one inferred audience + UK per run | ✅ Complete |
 | 27 | Cartoon title — Satirist-authored headline overlaid as dark banner at top of image | ✅ Complete |
+| 29 | Grok as primary decider — Grok-3 becomes the aggregator across all ParallelPanel agents; Cultural Strategist and Explainer converted from DualPersonaLoop | ✅ Complete |
 
 ## How it works
 
 1. **Trend Scout** fetches today's top headlines for the community and ranks them by satirical potential. For free-text communities, it infers the appropriate country and news category in a single Gemini call (`infer_community_profile`). In `--community + --topic` mode, Trend Scout is bypassed entirely.
-2. **Cultural Strategist** (Framer + Resonator loop) negotiates a cultural angle and audience-specific references for the chosen topic
-3. **Parallel Panel** — Claude, Grok, and Gemini each independently generate a cartoon concept; an Aggregator (Claude) picks the strongest one
+2. **Cultural Strategist** — Claude, Grok-mini, and Gemini each independently propose a cultural angle (Framer role); Grok-3 evaluates all proposals and picks the sharpest one (Resonator role)
+3. **Parallel Panel** — Claude, Grok-mini, and Gemini each independently generate a cartoon concept; Grok-3 (Aggregator) picks the strongest one
 4. **Image Generator** renders the approved concept into a PNG via a fallback chain of Gemini image models; overlays the Satirist-authored title as a dark banner at the top (suppressed with `--no-title`)
-5. **Explainer** (opt-in via `--html`) produces two HTML explanation pages: one in the target language, one in English for operators
+5. **Explainer** (opt-in via `--html`) — Claude, Grok-mini, and Gemini each independently write two HTML explanation pages; Grok-3 (Editor) picks the best for each
 6. **Bundle writer** saves the full output package: image, conversation logs, prompt card, telemetry, and summary — plus the HTML files when `--html` is set
 
-All agents use prioritised model fallback chains. The Framer/Resonator loop includes a 3-pass self-review injected into both personas. The Parallel Panel runs three independent satirists (Claude, Grok, Gemini) and an Aggregator (Claude) picks the strongest concept.
+All agents use prioritised model fallback chains. Grok-3 is the aggregator/decider across all ParallelPanel agents (Cultural Strategist, Satirist, Explainer). Grok-3-mini participates as a panelist alongside Claude and Gemini.
 
 ## Agents
 
 | Agent | Sub-agents | LLMs | What it does |
 |---|---|---|---|
 | **Trend Scout** | — | Gemini | Fetches today's headlines from NewsAPI.org and picks the top 3 ranked by satirical potential for the community |
-| **Cultural Strategist** | Framer, Resonator | Claude (Framer) · Gemini (Resonator) | Framer proposes a cultural angle and audience references; Resonator approves or challenges until the angle is specific and sharp |
-| **Creative Loop** | Panelist (Claude), Panelist (Grok), Panelist (Gemini), Aggregator | Claude · Grok · Gemini (parallel) · Claude (Aggregator) | Claude, Grok, and Gemini each independently generate a cartoon concept; Aggregator (Claude) picks the strongest one |
+| **Cultural Strategist** | Framer (×3), Resonator | Claude · Grok-mini · Gemini (Framers) · Grok-3 (Resonator/Aggregator) | Three Framers independently propose a cultural angle and references; Grok-3 evaluates all proposals and picks/synthesises the sharpest one |
+| **Creative Loop** | Panelist (Claude), Panelist (Grok-mini), Panelist (Gemini), Aggregator | Claude · Grok-mini · Gemini (parallel) · Grok-3 (Aggregator) | Claude, Grok-mini, and Gemini each independently generate a cartoon concept; Grok-3 picks the strongest one |
 | **Image Generator** | — | Gemini image models | Renders the approved image prompt into a PNG; tries up to 5 models in order before failing |
 | **Image Evaluator** | — | Gemini vision models | After image generation, checks for LLM rendering artifacts (duplicate text, garbled text, character failures) and rates whether the cartoon is genuinely funny for the target audience; triggers regeneration up to 2 times on rejection |
-| **Explainer** | Writer, Editor | Claude (Writer) · Gemini (Editor) | Writer drafts two HTML pages (in-language for end users, English for operators); Editor approves or requests revision |
+| **Explainer** | Writer (×3), Editor | Claude · Grok-mini · Gemini (Writers) · Grok-3 (Editor/Aggregator) | Three Writers independently draft two HTML pages each (in-language and English); Grok-3 picks the best page per run |
 
 ## Quick start
 

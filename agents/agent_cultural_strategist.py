@@ -17,8 +17,8 @@ from core.types import (
     StrategyBrief,
 )
 from llm import LLMProvider
-from llm.dual_loop import DualPersonaLoop
 from llm.gemini import get_gemini_client
+from llm.parallel_panel import ParallelPanel
 
 logger = logging.getLogger(__name__)
 
@@ -220,20 +220,27 @@ def _build_framer_system_prompt(humor: HumorConfig | None = None) -> str:
             lines += ["", directive]
     return "\n".join(lines)
 
-_RESONATOR_SYSTEM = (
-    "You are The Resonator — a cultural critic for Gata Newsroom.\n"
-    "You receive a proposed cultural angle and references from The Framer and evaluate "
-    "whether they will genuinely resonate with the stated target audience.\n\n"
-    "If the angle and references are culturally sharp, specific, and genuinely"
-    " cannot be improved for this audience:\n"
-    "<verdict>APPROVED</verdict>\n\n"
-    "If they are too generic, inaccurate, or a material improvement exists:\n"
-    "<verdict>NEEDS REVISION</verdict>\n"
-    "followed by specific, actionable feedback. You must propose an alternative "
-    "angle or flag which references are weak and why. Generic critique is not "
-    "acceptable.\n\n"
-    "Each iteration of feedback must be different from the previous one — circular "
-    "arguments are a protocol violation."
+_CS_AGGREGATOR_SYSTEM = (
+    "You are The Resonator — a cultural critic and chief editor for Gata Newsroom.\n"
+    "Three Framers have independently proposed a cultural angle and reference list for"
+    " the topic below. Your job is to:\n"
+    "1. Evaluate each proposal for genuine cultural resonance with the stated target"
+    " audience — specificity, accuracy, and satirical sharpness matter most.\n"
+    "2. Pick the single strongest proposal, or synthesise the best elements from"
+    " multiple proposals into one superior angle.\n"
+    "3. Output a PICK: N line (N = the proposal number you selected as primary), then"
+    " your final cultural angle in the exact format below, wrapped in"
+    " <verdict>...</verdict>:\n\n"
+    "<verdict>\n"
+    "CULTURAL ANGLE: [one paragraph]\n"
+    "REFERENCES:\n"
+    "- [reference 1]\n"
+    "- [reference 2]\n"
+    "JOKE TYPE: [type]\n"
+    "</verdict>\n\n"
+    "If a JOKE TYPE field was present in the proposals, carry the best one forward.\n"
+    "If none was present, omit the field.\n"
+    "Do not add preamble. Output only PICK: N and the <verdict> block."
 )
 
 
@@ -259,23 +266,26 @@ def _parse_verdict(verdict_content: str) -> tuple[str, list[str], str]:
 def run(
     topic: str,
     seed_brief: StrategyBrief,
-    framer_providers: list[LLMProvider],
-    resonator_providers: list[LLMProvider],
+    panelist_providers: list[LLMProvider],
+    aggregator_providers: list[LLMProvider],
     news_brief: Headline | None = None,
     humor: HumorConfig | None = None,
 ) -> tuple[EnrichedBrief, ConversationLog, AgentTelemetry]:
-    framer = PersonaConfig(
-        name="Framer",
-        providers=framer_providers,
-        system_prompt=_build_framer_system_prompt(humor),
-    )
-    resonator = PersonaConfig(
+    framer_prompt = _build_framer_system_prompt(humor)
+    # one PersonaConfig per panelist provider, all using the Framer system prompt
+    panelists = [
+        PersonaConfig(name="Framer", providers=[p], system_prompt=framer_prompt)
+        for p in panelist_providers
+    ]
+    aggregator = PersonaConfig(
         name="Resonator",
-        providers=resonator_providers,
-        system_prompt=_RESONATOR_SYSTEM,
+        providers=aggregator_providers,
+        system_prompt=_CS_AGGREGATOR_SYSTEM,
     )
-    loop = DualPersonaLoop(
-        framer, resonator, loop_name="Cultural Strategist", self_review_passes=3
+    panel = ParallelPanel(
+        panelists=panelists,
+        aggregator=aggregator,
+        panel_name="Cultural Strategist",
     )
     news_context = ""
     if news_brief and (news_brief.abstract or news_brief.source):
@@ -285,7 +295,7 @@ def run(
         if news_brief.abstract:
             parts.append(f"Summary: {news_brief.abstract}")
         news_context = "\n" + "\n".join(parts)
-    # Infer current mood before building the initial input — failure is non-fatal
+    # infer current mood before building the initial input — failure is non-fatal
     mood = infer_mood(topic, seed_brief.target_audience, seed_brief.output_language)
     mood_context = ""
     if mood:
@@ -302,7 +312,7 @@ def run(
         f"Output language: {seed_brief.output_language}\n"
         f"Tone: {seed_brief.tone}"
     )
-    loop_output = loop.run(initial_input)
+    loop_output = panel.run(initial_input)
     cultural_angle, references, joke_type = _parse_verdict(loop_output.verdict)
     if not cultural_angle:
         raise ValueError(
@@ -327,7 +337,7 @@ def run(
         cultural_angle[:80],
         len(references),
     )
-    # telemetry is always populated by DualPersonaLoop; guard for safety
+    # telemetry is always populated by ParallelPanel; guard for safety
     telemetry = loop_output.telemetry or AgentTelemetry(
         agent_name="Cultural Strategist", duration_seconds=0.0, iterations=0
     )

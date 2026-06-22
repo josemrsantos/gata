@@ -2,7 +2,7 @@ import logging
 
 from core.types import ConversationLog, EnrichedBrief, PersonaConfig
 from llm import LLMProvider
-from llm.dual_loop import DualPersonaLoop
+from llm.parallel_panel import ParallelPanel
 
 logger = logging.getLogger(__name__)
 
@@ -21,20 +21,23 @@ _WRITER_SYSTEM = (
     "Wrap your complete HTML output in <verdict>...</verdict> tags."
 )
 
-_EDITOR_SYSTEM = (
-    "You are an HTML content editor for Gata Newsroom.\n"
-    "You receive a proposed HTML explanation page and must verify it meets quality"
-    " standards.\n\n"
-    "Approve if ALL of the following are satisfied:\n"
-    "1. Contains <!DOCTYPE html>\n"
-    '2. Contains <meta charset="UTF-8"> in the <head>\n'
-    "3. The lang attribute on <html> matches the target language\n"
-    "4. All body text is in the correct language (no leakage)\n"
-    "5. Content clearly explains the satirical angle and cultural references\n"
-    "6. No external resource links\n\n"
-    "If satisfied: <verdict>APPROVED</verdict>\n"
-    "If not: <verdict>NEEDS REVISION</verdict> followed by specific, actionable"
-    " feedback."
+_EXPLAINER_AGGREGATOR_SYSTEM = (
+    "You are The Editor — an HTML quality judge for Gata Newsroom.\n"
+    "Three writers have independently produced an HTML explanation page.\n"
+    "Your job is to:\n"
+    "1. Evaluate each page against ALL of these criteria:\n"
+    "   a. Contains <!DOCTYPE html>\n"
+    '   b. Contains <meta charset="UTF-8"> in the <head>\n'
+    "   c. The lang attribute on <html> matches the target language\n"
+    "   d. All body text is in the correct language (no leakage)\n"
+    "   e. Content clearly explains the satirical angle and cultural references\n"
+    "   f. No external resource links\n"
+    "2. Pick the page that best satisfies all criteria. If multiple pages pass,"
+    " prefer the most thorough explanation.\n"
+    "3. Output a PICK: N line (N = the chosen page number), then the complete chosen"
+    " HTML page wrapped in <verdict>...</verdict> tags.\n\n"
+    "Do not add preamble. Do not modify the chosen HTML. Output only PICK: N and the"
+    " <verdict> block containing the verbatim HTML."
 )
 
 
@@ -65,24 +68,26 @@ def generate_html(
     agent0_log: ConversationLog | None,
     bc_log: ConversationLog | None,
     image_prompt: str,
-    writer_providers: list[LLMProvider],
-    editor_providers: list[LLMProvider],
+    panelist_providers: list[LLMProvider],
+    aggregator_providers: list[LLMProvider],
 ) -> tuple[str, str]:
-    """Generate in-language and English HTML explanation files via a dual-LLM loop."""
-    writer = PersonaConfig(
-        name="Writer",
-        providers=writer_providers,
-        system_prompt=_WRITER_SYSTEM,
-        max_tokens=8192,
-    )
-    editor = PersonaConfig(
+    """Generate in-language and English HTML explanation files via ParallelPanel."""
+    # one PersonaConfig per panelist provider, all using the Writer system prompt
+    panelists = [
+        PersonaConfig(
+            name="Writer", providers=[p], system_prompt=_WRITER_SYSTEM, max_tokens=8192
+        )
+        for p in panelist_providers
+    ]
+    # aggregator PersonaConfig constructed once and shared across both panel runs
+    aggregator = PersonaConfig(
         name="Editor",
-        providers=editor_providers,
-        system_prompt=_EDITOR_SYSTEM,
+        providers=aggregator_providers,
+        system_prompt=_EXPLAINER_AGGREGATOR_SYSTEM,
     )
     context = _build_context(enriched_brief, agent0_log, bc_log, image_prompt)
 
-    # Generate in-language explanation
+    # generate in-language explanation
     in_lang_prompt = (
         f"{context}\n\n"
         f"TASK: Write a complete HTML5 explanation page in"
@@ -92,17 +97,15 @@ def generate_html(
         f"The lang attribute must be set to the appropriate ISO language code for "
         f"{enriched_brief.output_language}."
     )
-    in_lang_loop = DualPersonaLoop(
-        writer,
-        editor,
-        max_iterations=3,
-        timeout_seconds=300,
-        loop_name="explainer-lang",
+    in_lang_panel = ParallelPanel(
+        panelists=panelists,
+        aggregator=aggregator,
+        panel_name="explainer-lang",
     )
-    in_lang_output = in_lang_loop.run(in_lang_prompt)
+    in_lang_output = in_lang_panel.run(in_lang_prompt)
     logger.info("agent_explainer: in-language HTML generated")
 
-    # Generate English deep-dive for operator
+    # generate English deep-dive for operator
     english_prompt = (
         f"{context}\n\n"
         "TASK: Write a complete HTML5 explanation page in English. "
@@ -113,14 +116,12 @@ def generate_html(
         "with the target audience, and what makes the satirical angle effective. "
         "The lang attribute must be 'en'."
     )
-    english_loop = DualPersonaLoop(
-        writer,
-        editor,
-        max_iterations=3,
-        timeout_seconds=300,
-        loop_name="explainer-en",
+    english_panel = ParallelPanel(
+        panelists=panelists,
+        aggregator=aggregator,
+        panel_name="explainer-en",
     )
-    english_output = english_loop.run(english_prompt)
+    english_output = english_panel.run(english_prompt)
     logger.info("agent_explainer: English deep-dive HTML generated")
 
     return in_lang_output.verdict, english_output.verdict

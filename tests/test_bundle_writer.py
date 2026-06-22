@@ -540,6 +540,40 @@ def test_write_bundle_generates_html_when_requested(tmp_path):
     assert (tmp_path / "cartoon" / "deep_dive_en.html").read_text() == "english"
 
 
+def test_write_bundle_generate_html_uses_panelist_and_aggregator_kwargs(tmp_path):
+    # write_bundle() must call agent_explainer.generate_html with panelist_providers
+    # and aggregator_providers kwargs (not writer_providers/editor_providers) so the
+    # Stage 029 Grok-primary provider configuration flows through correctly.
+    from core.bundle_writer import write_bundle
+    from core.types import EnrichedBrief
+
+    brief = EnrichedBrief(
+        target_audience="test",
+        output_language="English",
+        tone="dry",
+        cultural_angle="angle",
+        culturally_loaded_references=["ref"],
+    )
+    output_path = str(tmp_path / "cartoon.png")
+    with patch(
+        "core.bundle_writer.agent_explainer.generate_html",
+        return_value=("in-lang", "english"),
+    ) as mock_generate:
+        write_bundle(
+            output_path,
+            _make_log("Cultural Strategist"),
+            _make_log("Satirist/Critic"),
+            brief,
+            "prompt",
+            include_html=True,
+        )
+    call_kwargs = mock_generate.call_args.kwargs
+    assert "panelist_providers" in call_kwargs
+    assert "aggregator_providers" in call_kwargs
+    assert "writer_providers" not in call_kwargs
+    assert "editor_providers" not in call_kwargs
+
+
 def test_write_bundle_summary_txt_matches_format_summary(tmp_path):
     # summary.txt content must be exactly what format_summary produces — no separate,
     # potentially diverging formatting logic for the file vs. the log line.

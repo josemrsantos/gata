@@ -76,25 +76,21 @@ def write_bundle(
         _write_text(bundle_dir / "telemetry.json", _serialise_telemetry(telemetry))
         _write_text(bundle_dir / "summary.txt", format_summary(telemetry))
     if include_html and enriched_brief is not None and image_prompt is not None:
-        from llm import ClaudeProvider, GeminiProvider
-        _writer_providers = [
+        from llm import ClaudeProvider, GeminiProvider, GrokProvider
+        _panelist_providers = [
             ClaudeProvider("claude-sonnet-4-6"),
-            ClaudeProvider("claude-opus-4-7"),
-            ClaudeProvider("claude-haiku-4-5-20251001"),
-        ]
-        _editor_providers = [
+            GrokProvider("grok-3-mini"),
             GeminiProvider("gemini-2.5-flash"),
-            GeminiProvider("gemini-2.5-pro"),
-            GeminiProvider("gemini-2.0-flash"),
         ]
+        _aggregator_providers = [GrokProvider("grok-3")]
         try:
             in_lang_html, english_html = agent_explainer.generate_html(
                 enriched_brief,
                 agent0_log,
                 bc_log,
                 image_prompt,
-                writer_providers=_writer_providers,
-                editor_providers=_editor_providers,
+                panelist_providers=_panelist_providers,
+                aggregator_providers=_aggregator_providers,
             )
             _write_text(bundle_dir / "explanation.html", in_lang_html)
             _write_text(bundle_dir / "deep_dive_en.html", english_html)
