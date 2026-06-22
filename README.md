@@ -23,13 +23,14 @@ An automated multi-agent pipeline that transforms daily topics into a recurring 
 | 13 | Optional HTML output — --html flag, off by default | ✅ Complete |
 | 14 | Image generation cost tracking — accurate $/image in telemetry and summary | ✅ Complete |
 | 15 | Single main audience default — one inferred audience + UK per run | ✅ Complete |
+| 27 | Cartoon title — Satirist-authored headline overlaid as dark banner at top of image | ✅ Complete |
 
 ## How it works
 
 1. **Trend Scout** fetches today's top headlines for the community and ranks them by satirical potential. For free-text communities, it infers the appropriate country and news category in a single Gemini call (`infer_community_profile`). In `--community + --topic` mode, Trend Scout is bypassed entirely.
 2. **Cultural Strategist** (Framer + Resonator loop) negotiates a cultural angle and audience-specific references for the chosen topic
 3. **Parallel Panel** — Claude, Grok, and Gemini each independently generate a cartoon concept; an Aggregator (Claude) picks the strongest one
-4. **Image Generator** renders the approved concept into a PNG via a fallback chain of Gemini image models
+4. **Image Generator** renders the approved concept into a PNG via a fallback chain of Gemini image models; overlays the Satirist-authored title as a dark banner at the top (suppressed with `--no-title`)
 5. **Explainer** (opt-in via `--html`) produces two HTML explanation pages: one in the target language, one in English for operators
 6. **Bundle writer** saves the full output package: image, conversation logs, prompt card, telemetry, and summary — plus the HTML files when `--html` is set
 
@@ -176,6 +177,9 @@ python pipeline.py --topic "World Cup result" --audience "football fans" --langu
 
 # Also generate the HTML explanation pages (off by default; add --html to any mode above)
 python pipeline.py --community uk-politics --html
+
+# Suppress title banner (shown by default; add --no-title to any mode above)
+python pipeline.py --community uk-politics --no-title
 ```
 
 ### Multi-panel flags
@@ -184,6 +188,7 @@ python pipeline.py --community uk-politics --html
 |---|---|---|---|
 | `--panels` | 1–4 | 1 | Number of panels in the cartoon strip |
 | `--layout` | `horizontal`, `vertical` | `horizontal` | Panel arrangement direction |
+| `--no-title` | — | off | Suppress the title banner overlaid at the top of the image |
 
 CLI flags take precedence over `communities.yaml` panel config, which takes precedence over the defaults.
 Output filename prefix: `{N}{d}_` for multi-panel (e.g. `3h_english_topic.png`); no prefix for single-panel.
