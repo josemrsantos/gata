@@ -1,6 +1,27 @@
 # CHANGELOG
 
 
+## v1.13.0 (2026-06-22)
+
+### Documentation
+
+* docs: update README for Stage 027 — cartoon title banner + --no-title flag
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`a133c29`](https://github.com/josemrsantos/gata/commit/a133c29b735e8fb2b3a90418e0d488399a6b7b31))
+
+### Features
+
+* feat: Stage 027 — Satirist-authored title overlaid as dark banner on generated images
+
+Adds a punchy 3-8 word title to every cartoon: the Satirist includes a
+"title" field in its JSON output; agent_image_generator overlays it as a
+dark banner at the top of the saved image using Pillow. Falls back to the
+raw topic string if the Satirist omits the title. --no-title flag in both
+pipeline.py and core/cli.py suppresses the banner. 351 tests passing.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`b570b38`](https://github.com/josemrsantos/gata/commit/b570b38bd8e5ecc334e96acbde779d32a63fd3dc))
+
+
 ## v1.12.0 (2026-06-21)
 
 ### Features
