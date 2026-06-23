@@ -10,6 +10,7 @@ in `core/runner.py`.
 
 ```mermaid
 flowchart LR
+    GT[Gata]
     TS[Trend Scout]
     CS[Cultural Strategist]
     SAT[Satirist]
@@ -18,6 +19,7 @@ flowchart LR
     EX[Explainer]
     BW[Bundle Writer]
 
+    GT -->|top topic| CS
     TS -->|top topic| CS
     CS -->|enriched brief| SAT
     SAT -->|cartoon concept| IG
@@ -30,7 +32,44 @@ flowchart LR
 ```
 
 Solid arrows are the default path. Dashed arrows run only when `--html` is set.
-Trend Scout is bypassed when `--topic` is supplied directly.
+The HLD has two entry points into the pipeline (both feeding Cultural Strategist):
+**Gata** (direct topic) and **Trend Scout** (auto-topic). Only one fires per run.
+
+---
+
+## Entry points
+
+### Gata (CLI)
+
+The `gata` command and `pipeline.py` are the two ways to start the pipeline. Both accept
+a topic directly and forward it straight to the Cultural Strategist — Trend Scout does
+not run.
+
+```mermaid
+flowchart TD
+    CMD["gata 'topic'\nor pipeline.py --topic '...'"]
+    DEC{{"--topic\nsupplied?"}}
+    TS["Trend Scout\n(picks today's top topic)"]
+    AUD["audience inference\n(Gemini — single call)"]
+    CS["Cultural Strategist\n(and rest of pipeline)"]
+    UK["+ UK audience\n(always added)"]
+
+    CMD --> DEC
+    DEC -->|"Yes"| AUD
+    DEC -->|"No"| TS
+    TS --> AUD
+    AUD -->|"inferred audience"| CS
+    UK --> CS
+```
+
+When `--topic` is given, audience inference runs first (one Gemini call) and the result
+feeds directly into the Cultural Strategist. When no topic is given, Trend Scout runs
+first to pick the top satirical headline, then the same audience inference and pipeline
+follow.
+
+`pipeline.py` additionally supports `--community`, `--audience`, `--language`,
+`--tone`, `--panels`, `--layout`, `--html`, and `--no-title` flags. The `gata` command
+is a thin wrapper that supplies sensible defaults and exposes the most common flags.
 
 ---
 
