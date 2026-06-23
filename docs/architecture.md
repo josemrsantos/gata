@@ -88,13 +88,21 @@ _Output_
 
 Saved:
   uk_prime_minister_resigns_over_housing/
-    uk-politics.png
+    uk-politics.png          ← cartoon PNG (written by Image Generator)
+    uk-politics/             ← bundle folder (written by Bundle Writer)
+        agent0_log.txt
+        bc_log.txt
+        prompt_card.txt
+        telemetry.json
+        summary.txt
     uk.png
-    uk-politics/cartoon.png, agent0_log.txt, bc_log.txt, prompt_card.txt,
-              telemetry.json, summary.txt
-    uk/      cartoon.png, agent0_log.txt, bc_log.txt, prompt_card.txt,
-              telemetry.json, summary.txt
-    summary.txt   ← aggregated cost + time across both audiences
+    uk/
+        agent0_log.txt
+        bc_log.txt
+        prompt_card.txt
+        telemetry.json
+        summary.txt
+    summary.txt              ← aggregated cost + time across both audiences
 ```
 
 ---
@@ -178,17 +186,16 @@ tone:            "dry British wit"
 _Output_
 
 ```
-cultural_angle:
-  The PM's tenure is treated as a revolving-door tenancy — Britain has cycled
-  through more prime ministers than hot summers, and the public has stopped
-  learning their names.
+CULTURAL ANGLE: The PM's tenure is treated as a revolving-door tenancy — Britain
+has cycled through more prime ministers than hot summers, and the public has
+stopped learning their names.
 
-culturally_loaded_references:
-  - The 2022 "lettuce outlasted Liz Truss" meme (Daily Star live feed)
-  - The Thick of It — the PM's comms team spinning an empty room
-  - Number 10 Downing Street as a short-stay B&B
+REFERENCES:
+- The 2022 "lettuce outlasted Liz Truss" meme (Daily Star live feed)
+- The Thick of It — the PM's comms team spinning an empty room
+- Number 10 Downing Street as a short-stay B&B
 
-joke_type: absurdist comparison
+JOKE TYPE: absurdist comparison
 ```
 
 ---
@@ -278,27 +285,26 @@ The title overlay is suppressed when `--no-title` is set.
 
 **Example**
 
-_Input_ (abbreviated — actual prompt is ~400 words)
+_Input_ (single-panel — the `scene` field from the Satirist JSON; abbreviated)
 
 ```
-Single-panel satirical cartoon.
-
-Gata is a domestic shorthair calico-tabby mix: white chest, muzzle, and paws;
-dark grey/black tabby stripes; orange/ginger patches on back. [...]
-
-Scene: Gata at her newsroom desk studying a FOR RENT sign taped over a photo of
-Number 10. Her chalkboard reads "ON THE SPOT" with a tally chart labelled
-"THIS MONTH'S PMs". Caption at bottom: "At press time, Gata was still waiting
-for the lettuce to comment."
-
-Style: greyscale background, Gata in full colour. 1970s newspaper newsroom.
-Minimalist charcoal-on-chalkboard style. High contrast. Dry one-line caption.
+Gata sits at her newsroom desk, studying a FOR RENT sign taped over a photo of
+Number 10 Downing Street. Her chalkboard — headed ON THE SPOT — shows a tally
+chart labelled THIS MONTH'S PMs. Gata is a domestic shorthair calico-tabby mix:
+white chest, muzzle, and paws; dark grey/black tabby stripes; orange/ginger
+patches on back; small dark spot on bridge of pink nose; dark leather collar
+with gold/brass nameplate engraved "GATA". Serious, investigative demeanour,
+slightly tired. No human clothes or accessories. Caption at bottom: "At press
+time, Gata was still waiting for the lettuce to comment." Greyscale background,
+Gata in full colour (Selective Color). 1970s newspaper newsroom. Fluorescent
+lights, heavy metal desks, background figures. Minimalist charcoal-on-chalkboard
+style. High contrast. Single-panel satirical cartoon.
 ```
 
 _Output_
 
 ```
-output/uk-politics/uk_pm_resigns/cartoon.png  (1.4 MB PNG, 1024×1024)
+uk_prime_minister_resigns_over_housing/uk-politics.png  (1.4 MB PNG, 1024×1024)
 title banner "VACANCY: MUST OWN OWN FURNITURE" overlaid as dark strip at top
 ```
 
@@ -402,10 +408,11 @@ _Output — in-language HTML (explanation.html, excerpt)_
 ```html
 <h1>VACANCY: Must Own Own Furniture</h1>
 <p>This cartoon lampoons the extraordinary pace at which British prime ministers
-have come and gone since 2022. The "For Rent" sign on Number 10 is a reference
-to the revolving-door nature of recent UK leadership...</p>
-<p><em>Referência cultural:</em> In 2022, a Daily Star live-stream of a lettuce
-outlasted Liz Truss's 45-day premiership — the joke writes itself.</p>
+have come and gone since 2022. The "For Rent" sign on Number 10 captures the
+revolving-door reality of recent UK leadership in one image.</p>
+<p><strong>Cultural reference:</strong> In 2022, a Daily Star live-stream of a
+lettuce outlasted Liz Truss's 45-day premiership — the joke became a global
+news story before her resignation was announced.</p>
 ```
 
 _Output — English deep-dive (deep_dive_en.html, excerpt)_
@@ -432,9 +439,8 @@ Saves all outputs to disk. Not an LLM agent — pure I/O.
 
 ```mermaid
 flowchart LR
-    IN["PNG + logs + telemetry"]
+    IN["output_path + logs + telemetry"]
     BW["Bundle Writer"]
-    F1["cartoon.png"]
     F2["agent0_log.txt"]
     F3["bc_log.txt"]
     F4["prompt_card.txt"]
@@ -443,45 +449,54 @@ flowchart LR
     FH["explanation.html\ndeep_dive_en.html"]
 
     IN --> BW
-    BW --> F1 & F2 & F3 & F4 & F5 & F6
+    BW --> F2 & F3 & F4 & F5 & F6
     BW -.->|"--html only"| FH
 ```
+
+The cartoon PNG is written by **Image Generator** to `output_path` before Bundle Writer
+runs. Bundle Writer receives `output_path` only to derive where its bundle folder should
+be (`{parent}/{stem}/`).
 
 **Example**
 
 _Input_
 
 ```
-cartoon.png, agent0_log (ConversationLog), bc_log (ConversationLog),
-telemetry (AgentTelemetry per agent), image_prompt (str)
+output_path: "uk_prime_minister_resigns_over_housing/uk-politics.png"
+             (path to the already-written PNG — used to derive bundle folder location)
+agent0_log:  ConversationLog from Cultural Strategist
+bc_log:      ConversationLog from Satirist/Co-Satirist
+telemetry:   AgentTelemetry per agent
+image_prompt: str (scene text for single-panel; full JSON for multi-panel)
 ```
 
 _Output_
 
-The PNG is saved to `output_path` (e.g., `uk_prime_minister_resigns/uk-politics.png`).
-The bundle folder is `{output_path_stem}/` — same directory, no extension:
+Bundle folder at `{parent(output_path)}/{stem(output_path)}/`:
 
 ```
-uk_prime_minister_resigns/
-    uk-politics.png                         ← the cartoon (written by Image Generator)
-    uk-politics/                            ← bundle folder (written by Bundle Writer)
-        agent0_log.txt                      Cultural Strategist panel exchange (3 turns)
-        bc_log.txt                          Satirist panel exchange (4 turns)
-        prompt_card.txt                     verbatim image prompt sent to Gemini
-        telemetry.json                      {"trend_scout": {...}, "cultural_strategist": {...}}
+uk_prime_minister_resigns_over_housing/
+    uk-politics.png                         ← already exists (written by Image Generator)
+    uk-politics/                            ← bundle folder created here
+        agent0_log.txt
+        bc_log.txt
+        prompt_card.txt
+        telemetry.json
         summary.txt
-            Trend Scout: 0.8s — 1 iteration(s) — $0.0003
             Cultural Strategist: 4.2s — 1 iteration(s) — $0.0089
-            Satirist: 6.1s — 1 iteration(s) — $0.0134
+            Satirist/Co-Satirist: 6.1s — 1 iteration(s) — $0.0134
             Image Generator: 9.3s — 1 iteration(s) — $0.0400
             Image Evaluator: 2.1s — 1 iteration(s) — $0.0021
 
-            TOTAL: 22.5s — $0.0647
-    uk.png                                  ← UK audience cartoon
-    uk/                                     ← UK audience bundle folder
+            TOTAL: 22.5s — $0.0644
+    uk.png                                  ← UK audience PNG (separate pipeline run)
+    uk/
         ...
-    summary.txt                             ← aggregated across all audiences
+    summary.txt                             ← aggregated across all audiences (written by CLI)
 ```
+
+> Trend Scout does not appear in the summary when `--topic` is supplied directly — it was
+> bypassed. It appears only in community-mode runs.
 
 ---
 
