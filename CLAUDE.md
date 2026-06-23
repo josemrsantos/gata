@@ -13,9 +13,9 @@ Read the constitution before starting any new stage.
 **Spec artifacts**: `specs/NNN-feature-name/` (spec.md, plan.md, research.md,
 data-model.md, contracts/, tasks.md, quickstart.md)
 
-**Active stage**: None — between stages. See TODO.md for next items.
+**Active stage**: 030 — documentation overhaul. See TODO.md for next items.
 
-## Completed Stages (as of 2026-06-22)
+## Completed Stages (as of 2026-06-23)
 
 | Spec | Name                                                    | Status |
 |------|---------------------------------------------------------|--------|
@@ -45,6 +45,7 @@ data-model.md, contracts/, tasks.md, quickstart.md)
 | 026 | Protocol framework + Parallel Panel | ✅ |
 | 027 | Cartoon title banner + --no-title flag | ✅ |
 | 029 | Grok as primary decider — Grok-3 aggregator across all ParallelPanel agents | ✅ |
+| 030 | Documentation overhaul — README + architecture doc | ✅ |
 <!-- SPECKIT END -->
 
 LLM REVIEW PROTOCOL — this is a hard stop, not a suggestion. Violating it is not acceptable under any circumstances,
