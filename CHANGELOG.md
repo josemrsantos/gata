@@ -1,6 +1,21 @@
 # CHANGELOG
 
 
+## v1.16.0 (2026-06-27)
+
+### Features
+
+* feat: spec 033 — per-model cost breakdown in telemetry summary
+
+- format_summary() now shows an indented sub-line per LLM model under each agent
+- Multiple calls to the same model within one agent are aggregated (tokens + cost summed)
+- Disclaimer added as last line: cost figures are estimates based on listed token pricing
+- 7 new tests covering aggregation, ordering, no-calls graceful degradation, disclaimer
+- Version bumped to 1.16.0
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`b21accf`](https://github.com/josemrsantos/gata/commit/b21accf0b3d1f73e0407b46b2961735adda9efbc))
+
+
 ## v1.15.0 (2026-06-27)
 
 ### Documentation
