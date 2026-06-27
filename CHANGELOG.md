@@ -1,6 +1,79 @@
 # CHANGELOG
 
 
+## v1.15.0 (2026-06-27)
+
+### Documentation
+
+* docs: fix gata CLI — topic is mandatory, Trend Scout only used by pipeline.py
+
+gata always requires a positional topic argument; running it without one is an
+error. Auto-topic mode (Trend Scout) is a pipeline.py-only feature. The
+architecture entry-points diagram and README incorrectly implied gata could
+run without a topic and would delegate to Trend Scout.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`ed066ed`](https://github.com/josemrsantos/gata/commit/ed066ed68c69eb9c9bb2213bc1db368b155057f5))
+
+* docs: correct all input/output examples against real pipeline output
+
+- Gata CLI: remove cartoon.png from audience subfolders (PNG is at topic level)
+- Cultural Strategist: output format corrected to CULTURAL ANGLE:/REFERENCES:/JOKE TYPE:
+- Image Generator: input is a single continuous scene string, not separate labelled sections
+- Image Generator: output path corrected to gata CLI format
+- Explainer HTML: remove accidental Portuguese phrase from English explanation
+- Bundle Writer: diagram removes cartoon.png (written by Image Generator, not BW);
+  input clarified as output_path pointer; summary uses Satirist/Co-Satirist agent name;
+  Trend Scout absent from summary note added (bypassed in --topic mode)
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`8ec065b`](https://github.com/josemrsantos/gata/commit/8ec065b66765bdc4a5dfe5845e5773b42bbc68b3))
+
+* docs: add input/output examples to all agents and Gata CLI
+
+Each section in docs/architecture.md now has a concrete Example block using
+the same scenario (UK PM resignation) end-to-end so the data flow across
+agents is coherent. Bundle Writer example corrected to show PNG at output_path
+and bundle folder as its sibling directory.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`d134269`](https://github.com/josemrsantos/gata/commit/d1342692972f9549a5cb2688429c6d51f687cedb))
+
+* docs: add Gata CLI entry-point section to architecture doc
+
+Adds an 'Entry points' section between the HLD and Agents, with a decision
+diagram showing the --topic (direct) vs auto-topic (Trend Scout) paths and
+audience inference. Matches the GT node the user added to the HLD.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`876e091`](https://github.com/josemrsantos/gata/commit/876e091e1f775405d15251158db56577c954eee5))
+
+* docs: Stage 030 — documentation overhaul (README + architecture)
+
+README restructured: install-first, three required API keys with links
+immediately after, then usage and reference. docs/architecture.md rewritten
+with HLD agent graph, per-agent detailed diagrams, ParallelPanel and
+DualPersonaLoop protocol explanations, and a guide for adding new protocols.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`063cd1f`](https://github.com/josemrsantos/gata/commit/063cd1f6cd0f500a127d6baf431c45ba7d2a5cba))
+
+### Features
+
+* feat: spec 032 — LLM provider configurability + cross-provider fallback
+
+- New providers.yaml config declares panelist/aggregator LLM chains per role
+- Each panelist slot is an ordered fallback list; if the primary provider fails,
+  the next provider in the slot is tried automatically (cross-provider fallback)
+- Auto-discovery: ./providers.yaml loaded first, then ~/.gata/providers.yaml,
+  then hardcoded defaults — no flag needed for the common case
+- --providers PATH flag for explicit override
+- Agent signatures updated: panelist_providers is now list[list[LLMProvider]]
+- New ModelSpec / ProvidersConfig dataclasses in core/types.py
+- load_providers_config() added to core/config_loader.py
+- _build_provider() factory added to core/runner.py
+- bundle_writer.write_bundle() forwards provider config to agent_explainer
+- 19 new tests in tests/test_providers_config.py
+- Version bumped to 1.15.0
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`855dce9`](https://github.com/josemrsantos/gata/commit/855dce9d0dd18dd121a91d5ccf36abc4507f01fe))
+
+
 ## v1.14.0 (2026-06-22)
 
 ### Features
