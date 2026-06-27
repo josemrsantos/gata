@@ -591,3 +591,177 @@ def test_write_bundle_summary_txt_matches_format_summary(tmp_path):
     )
     content = (tmp_path / "cartoon" / "summary.txt").read_text()
     assert content == format_summary(telemetry)
+
+
+# -- format_summary: per-model breakdown (Spec 033) --
+
+
+def _make_single_agent_telemetry(calls: list[TokenUsage]) -> RunTelemetry:
+    agent = AgentTelemetry(
+        agent_name="Cultural Strategist",
+        duration_seconds=10.0,
+        iterations=1,
+        calls=calls,
+    )
+    return RunTelemetry(agents=[agent])
+
+
+def test_format_summary_shows_model_name_as_indented_sub_line():
+    # The model name must appear indented under its agent line so the operator can
+    # identify which LLM drove the cost without opening telemetry.json.
+    from core.bundle_writer import format_summary
+
+    tel = _make_single_agent_telemetry(
+        [
+            TokenUsage(
+                model="claude-sonnet-4-6",
+                input_tokens=100,
+                output_tokens=50,
+                cost_usd=0.001,
+            )
+        ]
+    )
+    text = format_summary(tel)
+    assert "  claude-sonnet-4-6:" in text
+
+
+def test_format_summary_shows_token_counts_for_model():
+    # Token counts (in/out) must appear on the model sub-line so the operator can
+    # spot unexpectedly large prompts or responses at a glance.
+    from core.bundle_writer import format_summary
+
+    tel = _make_single_agent_telemetry(
+        [
+            TokenUsage(
+                model="grok-3-mini", input_tokens=800, output_tokens=320, cost_usd=0.005
+            )
+        ]
+    )
+    text = format_summary(tel)
+    assert "800" in text
+    assert "320" in text
+
+
+def test_format_summary_aggregates_repeated_model_calls():
+    # When the same model is called more than once within one agent (e.g., retry),
+    # tokens and cost must be summed into a single sub-line so the totals are clear.
+    from core.bundle_writer import format_summary
+
+    tel = _make_single_agent_telemetry(
+        [
+            TokenUsage(
+                model="gemini-2.5-flash",
+                input_tokens=400,
+                output_tokens=100,
+                cost_usd=0.002,
+            ),
+            TokenUsage(
+                model="gemini-2.5-flash",
+                input_tokens=600,
+                output_tokens=200,
+                cost_usd=0.003,
+            ),
+        ]
+    )
+    text = format_summary(tel)
+    model_lines = [row for row in text.splitlines() if "gemini-2.5-flash" in row]
+    assert len(model_lines) == 1, "repeated model must be collapsed to one sub-line"
+    assert "1,000" in model_lines[0] or "1000" in model_lines[0]
+
+
+def test_format_summary_two_models_both_appear_in_order():
+    # When two different models are used in one agent, both must appear as sub-lines
+    # in first-call order so the operator can trace the fallback sequence.
+    from core.bundle_writer import format_summary
+
+    tel = _make_single_agent_telemetry(
+        [
+            TokenUsage(
+                model="claude-sonnet-4-6",
+                input_tokens=500,
+                output_tokens=200,
+                cost_usd=0.004,
+            ),
+            TokenUsage(
+                model="grok-3-mini", input_tokens=300, output_tokens=150, cost_usd=0.001
+            ),
+        ]
+    )
+    text = format_summary(tel)
+    idx_claude = text.index("claude-sonnet-4-6")
+    idx_grok = text.index("grok-3-mini")
+    assert idx_claude < idx_grok, "models must appear in first-call order"
+
+
+def test_format_summary_agent_with_no_calls_emits_no_model_lines():
+    # An agent with an empty calls list (e.g. image generator writing bytes) must
+    # not crash and must not emit any model sub-lines.
+    from core.bundle_writer import format_summary
+
+    agent = AgentTelemetry(
+        agent_name="Image Generator", duration_seconds=5.0, iterations=1, calls=[]
+    )
+    tel = RunTelemetry(agents=[agent])
+    text = format_summary(tel)
+    non_agent_lines = [
+        row
+        for row in text.splitlines()
+        if "Image Generator" not in row
+        and row
+        and not row.startswith("TOTAL")
+        and not row.startswith("*")
+    ]
+    assert all(not row.startswith("  ") for row in non_agent_lines)
+
+
+def test_format_summary_disclaimer_is_last_line():
+    # The cost disclaimer must always be the last line of the summary so it is never
+    # missed when the output is truncated from the top.
+    from core.bundle_writer import format_summary
+
+    text = format_summary(_make_telemetry())
+    last_non_empty = [row for row in text.splitlines() if row.strip()][-1]
+    assert last_non_empty.startswith("*")
+    assert "estimate" in last_non_empty.lower()
+
+
+def test_format_summary_multiple_agents_each_have_own_model_lines():
+    # Each agent must have its own model sub-lines — model lines must not bleed
+    # across agent boundaries, which would corrupt the breakdown.
+    from core.bundle_writer import format_summary
+
+    agent_a = AgentTelemetry(
+        agent_name="Cultural Strategist",
+        duration_seconds=10.0,
+        iterations=1,
+        calls=[
+            TokenUsage(
+                model="claude-sonnet-4-6",
+                input_tokens=200,
+                output_tokens=80,
+                cost_usd=0.002,
+            )
+        ],
+    )
+    agent_b = AgentTelemetry(
+        agent_name="Satirist",
+        duration_seconds=8.0,
+        iterations=1,
+        calls=[
+            TokenUsage(
+                model="grok-3-mini", input_tokens=300, output_tokens=100, cost_usd=0.001
+            )
+        ],
+    )
+    tel = RunTelemetry(agents=[agent_a, agent_b])
+    text = format_summary(tel)
+    rows = text.splitlines()
+    cs_idx = next(i for i, row in enumerate(rows) if "Cultural Strategist" in row)
+    sat_idx = next(
+        i for i, row in enumerate(rows) if "Satirist" in row and "Cultural" not in row
+    )
+    model_lines_between = [
+        row for row in rows[cs_idx + 1 : sat_idx] if row.startswith("  ")
+    ]
+    assert len(model_lines_between) == 1
+    assert "claude-sonnet-4-6" in model_lines_between[0]
