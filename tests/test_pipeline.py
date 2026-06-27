@@ -511,8 +511,13 @@ def test_community_with_context_flag_exits_1():
         patch("pipeline.load_dotenv"),
         patch(
             "sys.argv",
-            ["pipeline.py", "--community", "uk-tech-engineers",
-             "--audience", "developers"],
+            [
+                "pipeline.py",
+                "--community",
+                "uk-tech-engineers",
+                "--audience",
+                "developers",
+            ],
         ),
         patch("core.runner.agent_cultural_strategist.run") as mock_a0,
         patch("core.runner.agent_satirist.run") as mock_run,
@@ -1215,8 +1220,15 @@ def test_panels_cli_flag_passed_as_cartoon_layout_to_satirist():
         patch("pipeline.load_dotenv"),
         patch(
             "sys.argv",
-            ["pipeline.py", "--community", "uk-tech-engineers",
-             "--panels", "3", "--layout", "horizontal"],
+            [
+                "pipeline.py",
+                "--community",
+                "uk-tech-engineers",
+                "--panels",
+                "3",
+                "--layout",
+                "horizontal",
+            ],
         ),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
@@ -1341,8 +1353,15 @@ def test_multi_panel_filename_has_nh_prefix():
         patch("pipeline.load_dotenv"),
         patch(
             "sys.argv",
-            ["pipeline.py", "--community", "uk-tech-engineers",
-             "--panels", "3", "--layout", "horizontal"],
+            [
+                "pipeline.py",
+                "--community",
+                "uk-tech-engineers",
+                "--panels",
+                "3",
+                "--layout",
+                "horizontal",
+            ],
         ),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
         patch(
@@ -1429,8 +1448,13 @@ def test_community_topic_mode_skips_trend_scout():
         patch("pipeline.load_dotenv"),
         patch(
             "sys.argv",
-            ["pipeline.py", "--community", "Some free-text community",
-             "--topic", "House burns down"],
+            [
+                "pipeline.py",
+                "--community",
+                "Some free-text community",
+                "--topic",
+                "House burns down",
+            ],
         ),
         patch("os.path.exists", return_value=False),
         patch(
@@ -1472,8 +1496,13 @@ def test_community_topic_mode_passes_topic_to_agent():
         patch("pipeline.load_dotenv"),
         patch(
             "sys.argv",
-            ["pipeline.py", "--community", "uk-tech-engineers",
-             "--topic", provided_topic],
+            [
+                "pipeline.py",
+                "--community",
+                "uk-tech-engineers",
+                "--topic",
+                provided_topic,
+            ],
         ),
         patch("os.path.exists", return_value=True),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
@@ -1509,8 +1538,13 @@ def test_community_topic_mode_named_community_uses_configured_brief():
         patch("pipeline.load_dotenv"),
         patch(
             "sys.argv",
-            ["pipeline.py", "--community", "uk-tech-engineers",
-             "--topic", "AI overload"],
+            [
+                "pipeline.py",
+                "--community",
+                "uk-tech-engineers",
+                "--topic",
+                "AI overload",
+            ],
         ),
         patch("os.path.exists", return_value=True),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
@@ -1549,8 +1583,13 @@ def test_community_topic_mode_output_path_uses_community_folder():
         patch("pipeline.load_dotenv"),
         patch(
             "sys.argv",
-            ["pipeline.py", "--community", "uk-tech-engineers",
-             "--topic", "AI overload"],
+            [
+                "pipeline.py",
+                "--community",
+                "uk-tech-engineers",
+                "--topic",
+                "AI overload",
+            ],
         ),
         patch("os.path.exists", return_value=True),
         patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),

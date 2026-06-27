@@ -1,9 +1,13 @@
 import json
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from agents import agent_explainer
 from core.types import ConversationLog, EnrichedBrief, RunTelemetry
+
+if TYPE_CHECKING:
+    from llm.base import LLMProvider
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +65,8 @@ def write_bundle(
     image_prompt: str | None,
     telemetry: RunTelemetry | None = None,
     include_html: bool = False,
+    panelist_providers: "list[list[LLMProvider]] | None" = None,
+    aggregator_providers: "list[LLMProvider] | None" = None,
 ) -> str:
     """Create the bundle folder and write all output files. Never raises."""
     bundle_dir = Path(output_path).parent / Path(output_path).stem
@@ -76,21 +82,24 @@ def write_bundle(
         _write_text(bundle_dir / "telemetry.json", _serialise_telemetry(telemetry))
         _write_text(bundle_dir / "summary.txt", format_summary(telemetry))
     if include_html and enriched_brief is not None and image_prompt is not None:
-        from llm import ClaudeProvider, GeminiProvider, GrokProvider
-        _panelist_providers = [
-            ClaudeProvider("claude-sonnet-4-6"),
-            GrokProvider("grok-3-mini"),
-            GeminiProvider("gemini-2.5-flash"),
-        ]
-        _aggregator_providers = [GrokProvider("grok-3")]
+        # Use providers supplied by caller; fall back to hardcoded defaults if absent.
+        if panelist_providers is None or aggregator_providers is None:
+            from llm import ClaudeProvider, GeminiProvider, GrokProvider
+
+            panelist_providers = [
+                [ClaudeProvider("claude-sonnet-4-6")],
+                [GrokProvider("grok-3-mini")],
+                [GeminiProvider("gemini-2.5-flash")],
+            ]
+            aggregator_providers = [GrokProvider("grok-3")]
         try:
             in_lang_html, english_html = agent_explainer.generate_html(
                 enriched_brief,
                 agent0_log,
                 bc_log,
                 image_prompt,
-                panelist_providers=_panelist_providers,
-                aggregator_providers=_aggregator_providers,
+                panelist_providers=panelist_providers,
+                aggregator_providers=aggregator_providers,
             )
             _write_text(bundle_dir / "explanation.html", in_lang_html)
             _write_text(bundle_dir / "deep_dive_en.html", english_html)
@@ -114,15 +123,17 @@ def _serialise_telemetry(telemetry: RunTelemetry) -> str:
             }
             for c in a.calls
         ]
-        agents.append({
-            "agent": a.agent_name,
-            "duration_seconds": round(a.duration_seconds, 2),
-            "iterations": a.iterations,
-            "total_input_tokens": a.total_input_tokens,
-            "total_output_tokens": a.total_output_tokens,
-            "total_cost_usd": round(a.total_cost_usd, 6),
-            "calls": calls,
-        })
+        agents.append(
+            {
+                "agent": a.agent_name,
+                "duration_seconds": round(a.duration_seconds, 2),
+                "iterations": a.iterations,
+                "total_input_tokens": a.total_input_tokens,
+                "total_output_tokens": a.total_output_tokens,
+                "total_cost_usd": round(a.total_cost_usd, 6),
+                "calls": calls,
+            }
+        )
     doc = {
         "total_duration_seconds": round(telemetry.total_duration_seconds, 2),
         "total_input_tokens": telemetry.total_input_tokens,

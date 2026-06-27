@@ -6,11 +6,11 @@ from core.types import TokenUsage
 from llm.base import LLMProvider
 
 _COST_PER_M: dict[str, tuple[float, float]] = {
-    "claude-sonnet-4-6":         (3.00,  15.00),
-    "claude-opus-4-8":           (15.00, 75.00),
-    "claude-opus-4-7":           (15.00, 75.00),
-    "claude-sonnet-4-5":         (3.00,  15.00),
-    "claude-haiku-4-5-20251001": (0.80,   4.00),
+    "claude-sonnet-4-6": (3.00, 15.00),
+    "claude-opus-4-8": (15.00, 75.00),
+    "claude-opus-4-7": (15.00, 75.00),
+    "claude-sonnet-4-5": (3.00, 15.00),
+    "claude-haiku-4-5-20251001": (0.80, 4.00),
 }
 
 _client: anthropic.Anthropic | None = None

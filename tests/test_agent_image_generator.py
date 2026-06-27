@@ -421,11 +421,16 @@ def test_generate_calls_overlay_when_show_title_true_and_title_set(tmp_path):
     # non-empty — the title banner must physically reach the saved image file.
     out_file = tmp_path / "cartoon_output.png"
     response = _make_gemini_response(FAKE_PNG)
-    with patch("agents.agent_image_generator._gemini_client") as mock_client, \
-            patch("agents.agent_image_generator._overlay_title") as mock_overlay:
+    with (
+        patch("agents.agent_image_generator._gemini_client") as mock_client,
+        patch("agents.agent_image_generator._overlay_title") as mock_overlay,
+    ):
         mock_client.models.generate_content.return_value = response
         agent_image_generator.generate(
-            _CONCEPT_WITH_TITLE, BRIEF, output_path=str(out_file), show_title=True,
+            _CONCEPT_WITH_TITLE,
+            BRIEF,
+            output_path=str(out_file),
+            show_title=True,
         )
     mock_overlay.assert_called_once_with(str(out_file), "AI Circus Comes to Town")
 
@@ -435,11 +440,16 @@ def test_generate_skips_overlay_when_show_title_false(tmp_path):
     # flag must suppress the banner so the raw image is delivered without modification.
     out_file = tmp_path / "cartoon_output.png"
     response = _make_gemini_response(FAKE_PNG)
-    with patch("agents.agent_image_generator._gemini_client") as mock_client, \
-            patch("agents.agent_image_generator._overlay_title") as mock_overlay:
+    with (
+        patch("agents.agent_image_generator._gemini_client") as mock_client,
+        patch("agents.agent_image_generator._overlay_title") as mock_overlay,
+    ):
         mock_client.models.generate_content.return_value = response
         agent_image_generator.generate(
-            _CONCEPT_WITH_TITLE, BRIEF, output_path=str(out_file), show_title=False,
+            _CONCEPT_WITH_TITLE,
+            BRIEF,
+            output_path=str(out_file),
+            show_title=False,
         )
     mock_overlay.assert_not_called()
 
@@ -449,10 +459,15 @@ def test_generate_skips_overlay_when_title_empty(tmp_path):
     # title must not produce a blank banner; the guard prevents a visual blank strip.
     out_file = tmp_path / "cartoon_output.png"
     response = _make_gemini_response(FAKE_PNG)
-    with patch("agents.agent_image_generator._gemini_client") as mock_client, \
-            patch("agents.agent_image_generator._overlay_title") as mock_overlay:
+    with (
+        patch("agents.agent_image_generator._gemini_client") as mock_client,
+        patch("agents.agent_image_generator._overlay_title") as mock_overlay,
+    ):
         mock_client.models.generate_content.return_value = response
         agent_image_generator.generate(
-            CONCEPT, BRIEF, output_path=str(out_file), show_title=True,
+            CONCEPT,
+            BRIEF,
+            output_path=str(out_file),
+            show_title=True,
         )
     mock_overlay.assert_not_called()

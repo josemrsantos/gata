@@ -13,6 +13,7 @@ def _mock_infer_mood():
     with patch("agents.agent_cultural_strategist.infer_mood", return_value=None):
         yield
 
+
 _SEED = StrategyBrief(
     target_audience="Portuguese adults",
     output_language="Portuguese",
@@ -349,7 +350,8 @@ def test_run_passes_three_panelists_to_parallel_panel():
     with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         run(
-            _TOPIC, _SEED,
+            _TOPIC,
+            _SEED,
             panelist_providers=panelist_providers,
             aggregator_providers=_MP,
         )
@@ -362,11 +364,13 @@ def test_run_panelists_all_use_framer_system_prompt():
     # Each panelist PersonaConfig must carry the Framer system prompt so all three
     # LLMs receive identical instructions and proposals are evaluated fairly.
     from agents.agent_cultural_strategist import _build_framer_system_prompt
+
     panelist_providers = [MagicMock(), MagicMock(), MagicMock()]
     with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         run(
-            _TOPIC, _SEED,
+            _TOPIC,
+            _SEED,
             panelist_providers=panelist_providers,
             aggregator_providers=_MP,
         )
@@ -381,6 +385,7 @@ def test_run_aggregator_uses_cs_aggregator_system_prompt():
     # The aggregator PersonaConfig must use _CS_AGGREGATOR_SYSTEM so Grok-3 receives
     # the Resonator quality-gate criteria encoded in the aggregator prompt.
     from agents.agent_cultural_strategist import _CS_AGGREGATOR_SYSTEM
+
     with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         run(_TOPIC, _SEED, _MP, aggregator_providers=_MP)

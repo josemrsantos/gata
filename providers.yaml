@@ -1,0 +1,36 @@
+# providers.yaml — LLM provider and model assignments for each agent role.
+#
+# Each panelist slot is an ordered fallback chain: the first model is tried first;
+# if it fails, the next is tried, and so on across provider boundaries.
+# The aggregator entry works the same way.
+#
+# Valid provider names: claude, gemini, grok
+# This file is optional — omitting it uses the built-in defaults shown below.
+
+panelists:
+  - - provider: claude
+      model: claude-sonnet-4-6
+    - provider: gemini
+      model: gemini-2.5-flash
+    - provider: grok
+      model: grok-3-mini
+  - - provider: grok
+      model: grok-3-mini
+    - provider: gemini
+      model: gemini-2.5-flash
+    - provider: claude
+      model: claude-haiku-4-5-20251001
+  - - provider: gemini
+      model: gemini-2.5-flash
+    - provider: grok
+      model: grok-3-mini
+    - provider: claude
+      model: claude-haiku-4-5-20251001
+
+aggregator:
+  - provider: grok
+    model: grok-3
+  - provider: claude
+    model: claude-sonnet-4-6
+  - provider: gemini
+    model: gemini-2.5-pro

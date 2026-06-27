@@ -107,8 +107,12 @@ def main() -> None:
         print(f"\n[{i}/{len(audiences)}] {audience.name} — {audience.language}")
         try:
             telemetry = run_pipeline(
-                args.topic, seed_brief, output_path, humor=humor,
-                include_html=args.html, show_title=not args.no_title,
+                args.topic,
+                seed_brief,
+                output_path,
+                humor=humor,
+                include_html=args.html,
+                show_title=not args.no_title,
             )
             audience_telemetry.append((audience.name, telemetry))
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:

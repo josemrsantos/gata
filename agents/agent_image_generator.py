@@ -211,12 +211,14 @@ def generate(
         in_tok = getattr(meta, "prompt_token_count", 0) or 0
         out_tok = getattr(meta, "candidates_token_count", 0) or 0
         cost_usd = compute_cost(model, in_tok, out_tok)
-        token_calls.append(TokenUsage(
-            model=model,
-            input_tokens=in_tok,
-            output_tokens=out_tok,
-            cost_usd=cost_usd,
-        ))
+        token_calls.append(
+            TokenUsage(
+                model=model,
+                input_tokens=in_tok,
+                output_tokens=out_tok,
+                cost_usd=cost_usd,
+            )
+        )
         logger.debug("Image Generator: saved — model=%s cost=$%.4f", model, cost_usd)
         # overlay title banner only when requested and a title was generated
         if show_title and concept.title:

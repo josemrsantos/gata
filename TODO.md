@@ -1,5 +1,40 @@
 # TODO
 
+## Spec 032 — LLM provider configurability + cross-provider fallback
+
+Config-driven aggregator/panelist LLM selection, plus automatic failover to a different
+LLM provider when all known models of the current one are exhausted — applies to every
+agent role (aggregator and panelists).
+
+---
+
+## Spec 033 — Enhanced cost reporting
+
+Per-agent breakdown of which LLM/model was used and its estimated cost, plus a disclaimer
+that all figures are estimates based on last-known token pricing.
+
+---
+
+## Spec 034 — FairParallelPanel protocol
+
+New coordination protocol where the aggregator (Python layer) runs configurable iterations:
+collects panelist responses within a configurable timeout (default 30s), shares all on-time
+responses back to all participating panelists, repeats for N iterations (default 2), then
+sends final proposals to the aggregator LLM to decide. Coordination logic lives inside the
+Aggregator class.
+
+**Dependency:** Requires Spec 032.
+
+---
+
+## Spec 035 — Direct Satirist mode
+
+Flag (e.g. `--direct-prompt`) that bypasses the Cultural Strategist and feeds the user's
+intent straight to the Satirist, for cases where the extra agent introduces drift rather
+than value.
+
+---
+
 ## Voting system — funny / not funny
 
 Allow people to rate each cartoon. Votes feed back into the pipeline to improve future

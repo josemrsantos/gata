@@ -49,7 +49,7 @@ _VISUAL_STYLE = (
 )
 
 _OUTPUT_FORMAT_RULES = (
-    'OUTPUT FORMAT — wrap in <verdict>...</verdict> tags, return ONLY valid JSON:\n'
+    "OUTPUT FORMAT — wrap in <verdict>...</verdict> tags, return ONLY valid JSON:\n"
     "{\n"
     '  "panels": <integer 1–4>,\n'
     '  "layout": "horizontal" or "vertical",\n'
@@ -64,7 +64,7 @@ _OUTPUT_FORMAT_RULES = (
     '- panels = 1: "scene" MUST include Gata\'s full character description verbatim'
     " and all visual style rules — it feeds directly into the image generator.\n"
     '- panels ≥ 2: "scene" describes only the panel\'s action; character and style'
-    " are added automatically. Each panel MUST have a non-empty \"beat\".\n"
+    ' are added automatically. Each panel MUST have a non-empty "beat".\n'
     '- "caption" must always be in the specified output language.\n'
     '- "title" must always be in the specified output language — 3 to 8 words,'
     " editorial headline style, not a description of the image.\n"
@@ -237,16 +237,18 @@ def _parse_verdict(
 def run(
     topic: str,
     brief: EnrichedBrief,
-    panelist_providers: list[LLMProvider],
+    panelist_providers: list[list[LLMProvider]],
     aggregator_providers: list[LLMProvider],
     humor: HumorConfig | None = None,
     layout_override: CartoonLayout | None = None,
 ) -> tuple[CartoonConcept, ConversationLog, AgentTelemetry, CartoonLayout]:
     satirist_system = _build_satirist_system_prompt(brief, humor, layout_override)
-    # each panelist gets the same system prompt but uses its own provider independently
+    # Each slot is an ordered fallback chain; primary provider name labels the persona.
     panelists = [
-        PersonaConfig(name=p.model_id, providers=[p], system_prompt=satirist_system)
-        for p in panelist_providers
+        PersonaConfig(
+            name=slot[0].model_id, providers=slot, system_prompt=satirist_system
+        )
+        for slot in panelist_providers
     ]
     aggregator = PersonaConfig(
         name="Aggregator",

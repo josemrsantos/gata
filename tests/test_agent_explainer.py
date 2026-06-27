@@ -181,8 +181,8 @@ def test_generate_html_raises_when_all_models_exhausted():
                 _make_log("Cultural Strategist"),
                 _make_log("Satirist/Critic"),
                 "prompt",
-            [],
-            [],
+                [],
+                [],
             )
 
 
@@ -335,8 +335,12 @@ def test_generate_html_accepts_panelist_and_aggregator_provider_kwargs():
             LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en")),
         ]
         result = generate_html(
-            _make_brief(), None, None, "prompt",
-            panelist_providers=[], aggregator_providers=[],
+            _make_brief(),
+            None,
+            None,
+            "prompt",
+            panelist_providers=[],
+            aggregator_providers=[],
         )
     assert isinstance(result, tuple)
 
@@ -373,8 +377,12 @@ def test_generate_html_passes_three_panelists_per_panel_run():
             LoopOutput(verdict=_EN_HTML, log=ConversationLog(loop_name="en")),
         ]
         generate_html(
-            _make_brief(), None, None, "prompt",
-            panelist_providers=panelist_providers, aggregator_providers=[],
+            _make_brief(),
+            None,
+            None,
+            "prompt",
+            panelist_providers=panelist_providers,
+            aggregator_providers=[],
         )
     for call in MockPanel.call_args_list:
         panelists = call.kwargs.get("panelists") or call.args[0]

@@ -215,7 +215,7 @@ def test_ranking_strips_markdown_fences_from_gemini_response():
     stub_adapter = MagicMock(spec=SourceAdapter)
     stub_adapter.fetch.return_value = _SAMPLE_HEADLINES
     fenced_response = MagicMock()
-    fenced_response.text = "```json\n[\"AI replaces junior devs\"]\n```"
+    fenced_response.text = '```json\n["AI replaces junior devs"]\n```'
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = fenced_response
     with patch("llm.gemini._get_client", return_value=mock_client):
@@ -248,11 +248,13 @@ def test_infer_brief_returns_correct_fields_from_valid_json():
     # infer_brief_from_description must parse all three fields from a well-formed
     # Gemini response — verifies the happy-path contract before any edge cases.
     mock_response = MagicMock()
-    mock_response.text = json.dumps({
-        "target_audience": "US adults critical of Trump",
-        "output_language": "English",
-        "tone": "sharp political satire",
-    })
+    mock_response.text = json.dumps(
+        {
+            "target_audience": "US adults critical of Trump",
+            "output_language": "English",
+            "tone": "sharp political satire",
+        }
+    )
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
     with patch("llm.gemini._get_client", return_value=mock_client):
@@ -283,10 +285,12 @@ def test_infer_brief_applies_default_only_for_missing_key():
     # A partial response with two of three keys must default only the absent
     # field — not replace values the model did return.
     mock_response = MagicMock()
-    mock_response.text = json.dumps({
-        "target_audience": "French-speaking satire fans",
-        "output_language": "French",
-    })
+    mock_response.text = json.dumps(
+        {
+            "target_audience": "French-speaking satire fans",
+            "output_language": "French",
+        }
+    )
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
     with patch("llm.gemini._get_client", return_value=mock_client):
@@ -300,11 +304,13 @@ def test_infer_brief_treats_blank_value_as_absent():
     # A blank string in the JSON is semantically absent — passing an empty
     # audience to downstream agents would produce a broken brief.
     mock_response = MagicMock()
-    mock_response.text = json.dumps({
-        "target_audience": "",
-        "output_language": "English",
-        "tone": "sarcastic",
-    })
+    mock_response.text = json.dumps(
+        {
+            "target_audience": "",
+            "output_language": "English",
+            "tone": "sarcastic",
+        }
+    )
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
     with patch("llm.gemini._get_client", return_value=mock_client):
@@ -318,9 +324,13 @@ def test_infer_brief_passes_description_in_gemini_prompt():
     # The community description must appear in the prompt contents so the model
     # infers from actual text rather than receiving a generic blank request.
     mock_response = MagicMock()
-    mock_response.text = json.dumps({
-        "target_audience": "x", "output_language": "English", "tone": "x",
-    })
+    mock_response.text = json.dumps(
+        {
+            "target_audience": "x",
+            "output_language": "English",
+            "tone": "x",
+        }
+    )
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
     description = "US community that dislikes Trump"
@@ -347,11 +357,13 @@ def test_infer_brief_infers_language_from_description(description, expected_lang
     # Language returned by Gemini must propagate unchanged to StrategyBrief so
     # downstream agents generate content in the correct language.
     mock_response = MagicMock()
-    mock_response.text = json.dumps({
-        "target_audience": "adults",
-        "output_language": expected_language,
-        "tone": "dry wit",
-    })
+    mock_response.text = json.dumps(
+        {
+            "target_audience": "adults",
+            "output_language": expected_language,
+            "tone": "dry wit",
+        }
+    )
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
     with patch("llm.gemini._get_client", return_value=mock_client):
@@ -363,11 +375,13 @@ def test_infer_brief_defaults_language_to_english_on_blank_output_language(caplo
     # A blank output_language from Gemini must default to "English" and emit a
     # WARNING so operators can identify when inference was incomplete.
     mock_response = MagicMock()
-    mock_response.text = json.dumps({
-        "target_audience": "adults",
-        "output_language": "",
-        "tone": "dry wit",
-    })
+    mock_response.text = json.dumps(
+        {
+            "target_audience": "adults",
+            "output_language": "",
+            "tone": "dry wit",
+        }
+    )
     mock_client = MagicMock()
     mock_client.models.generate_content.return_value = mock_response
     with (
@@ -550,13 +564,15 @@ def test_get_topics_uses_injected_stub_adapter():
 def test_infer_community_profile_returns_brief_and_sources():
     # Happy path: Gemini returns all five fields, both a StrategyBrief and one
     # NewsSource are returned with the inferred values — not the defaults.
-    payload = json.dumps({
-        "target_audience": "Portuguese football fans",
-        "output_language": "Portuguese",
-        "tone": "passionate",
-        "news_country": "pt",
-        "news_category": "sports",
-    })
+    payload = json.dumps(
+        {
+            "target_audience": "Portuguese football fans",
+            "output_language": "Portuguese",
+            "tone": "passionate",
+            "news_country": "pt",
+            "news_category": "sports",
+        }
+    )
     mock_response = MagicMock()
     mock_response.text = payload
     mock_client = MagicMock()
@@ -574,11 +590,13 @@ def test_infer_community_profile_returns_brief_and_sources():
 def test_infer_community_profile_defaults_missing_source_fields():
     # When news_country and news_category are absent, the _SOURCE_DEFAULTS
     # ("us"/"general") are applied so the fetch never silently sends no-op params.
-    payload = json.dumps({
-        "target_audience": "UK adults",
-        "output_language": "English",
-        "tone": "dry",
-    })
+    payload = json.dumps(
+        {
+            "target_audience": "UK adults",
+            "output_language": "English",
+            "tone": "dry",
+        }
+    )
     mock_response = MagicMock()
     mock_response.text = payload
     mock_client = MagicMock()

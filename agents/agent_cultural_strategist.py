@@ -133,9 +133,7 @@ def infer_mood(topic: str, audience: str, language: str) -> MoodBrief | None:
             response = client.models.generate_content(
                 model=model,
                 contents=(
-                    f"Topic: {topic}\n"
-                    f"Audience: {audience}\n"
-                    f"Language: {language}"
+                    f"Topic: {topic}\nAudience: {audience}\nLanguage: {language}"
                 ),
                 config=genai_types.GenerateContentConfig(
                     system_instruction=_MOOD_INFERENCE_SYSTEM,
@@ -220,6 +218,7 @@ def _build_framer_system_prompt(humor: HumorConfig | None = None) -> str:
             lines += ["", directive]
     return "\n".join(lines)
 
+
 _CS_AGGREGATOR_SYSTEM = (
     "You are The Resonator — a cultural critic and chief editor for Gata Newsroom.\n"
     "Three Framers have independently proposed a cultural angle and reference list for"
@@ -266,16 +265,18 @@ def _parse_verdict(verdict_content: str) -> tuple[str, list[str], str]:
 def run(
     topic: str,
     seed_brief: StrategyBrief,
-    panelist_providers: list[LLMProvider],
+    panelist_providers: list[list[LLMProvider]],
     aggregator_providers: list[LLMProvider],
     news_brief: Headline | None = None,
     humor: HumorConfig | None = None,
 ) -> tuple[EnrichedBrief, ConversationLog, AgentTelemetry]:
     framer_prompt = _build_framer_system_prompt(humor)
-    # one PersonaConfig per panelist provider, all using the Framer system prompt
+    # Each slot is an ordered fallback chain; primary provider name labels the panelist.
     panelists = [
-        PersonaConfig(name="Framer", providers=[p], system_prompt=framer_prompt)
-        for p in panelist_providers
+        PersonaConfig(
+            name=slot[0].model_id, providers=slot, system_prompt=framer_prompt
+        )
+        for slot in panelist_providers
     ]
     aggregator = PersonaConfig(
         name="Resonator",
@@ -332,8 +333,7 @@ def run(
         joke_type=joke_type,
     )
     logger.info(
-        "cultural_strategist: enriched brief"
-        " — cultural_angle=%r references=%d",
+        "cultural_strategist: enriched brief — cultural_angle=%r references=%d",
         cultural_angle[:80],
         len(references),
     )

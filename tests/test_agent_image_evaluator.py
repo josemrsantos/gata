@@ -40,9 +40,7 @@ _MULTI_CONCEPT = CartoonConcept(
         PanelConcept(
             scene="Gata reads headline", caption="Mais uma vez.", beat="setup"
         ),
-        PanelConcept(
-            scene="Gata flips the board", caption="Feito.", beat="punchline"
-        ),
+        PanelConcept(scene="Gata flips the board", caption="Feito.", beat="punchline"),
     ],
 )
 
@@ -168,24 +166,28 @@ def test_evaluate_rejected_when_not_funny(tmp_path):
 def test_parse_evaluation_derives_verdict_not_trusting_model():
     # _parse_evaluation must derive the verdict from data, not from the model's verdict
     # field — prevents APPROVED slipping through when artifacts are also listed.
-    raw = json.dumps({
-        "artifacts": ["Gata is wearing a hat"],
-        "is_funny": True,
-        "funny_notes": "Still funny despite the hat.",
-        "verdict": "APPROVED",  # model claims APPROVED but there are artifacts
-    })
+    raw = json.dumps(
+        {
+            "artifacts": ["Gata is wearing a hat"],
+            "is_funny": True,
+            "funny_notes": "Still funny despite the hat.",
+            "verdict": "APPROVED",  # model claims APPROVED but there are artifacts
+        }
+    )
     result = _parse_evaluation(raw, "gemini-2.5-pro")
     assert result.verdict == "REJECTED"
 
 
 def test_parse_evaluation_approved_only_when_both_conditions_pass():
     # _parse_evaluation sets APPROVED only when artifacts is empty AND is_funny is true.
-    raw = json.dumps({
-        "artifacts": [],
-        "is_funny": True,
-        "funny_notes": "Lands well.",
-        "verdict": "APPROVED",
-    })
+    raw = json.dumps(
+        {
+            "artifacts": [],
+            "is_funny": True,
+            "funny_notes": "Lands well.",
+            "verdict": "APPROVED",
+        }
+    )
     result = _parse_evaluation(raw, "gemini-2.5-flash")
     assert result.verdict == "APPROVED"
 
