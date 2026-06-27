@@ -22,8 +22,9 @@ Three LLM provider accounts are required before you can run Gata:
 | **Google AI Studio** | [aistudio.google.com](https://aistudio.google.com) | `GEMINI_API_KEY` |
 | **xAI** | [console.x.ai](https://console.x.ai) | `XAI_API_KEY` |
 
-> **Auto-topic mode** (when you run `gata` without `--topic`) also requires a
+> **Auto-topic mode** (`pipeline.py` without `--topic`) also requires a
 > [NewsAPI.org](https://newsapi.org) key in `NEWSAPI_ORG_KEY`.
+> The `gata` command always requires a topic — Trend Scout is never used by it.
 
 Export the keys in your shell, or place them in a `.env` file in the project root (it is
 gitignored and never committed):
@@ -55,7 +56,8 @@ working directory — one for the inferred audience and one for the UK public.
 ## How it works
 
 1. **Trend Scout** fetches today's top headlines for the community and ranks them by
-   satirical potential (bypassed in `--topic` mode)
+   satirical potential; only used by `pipeline.py` when `--topic` is not supplied —
+   the `gata` command always requires a topic and never invokes Trend Scout
 2. **Cultural Strategist** — three Framers (Claude, Grok-mini, Gemini) independently
    propose a cultural angle; Grok-3 (Resonator) aggregates and picks the sharpest one
 3. **Satirist** — three Panelists (Claude, Grok-mini, Gemini) independently generate a
