@@ -8,3 +8,6 @@ __pycache__/
 *.key
 .idea/
 .venv/
+evaluate/
+gata.egg-info/
+gata/
