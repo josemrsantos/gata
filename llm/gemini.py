@@ -7,17 +7,17 @@ from core.types import TokenUsage
 from llm.base import LLMProvider
 
 _COST_PER_M: dict[str, tuple[float, float]] = {
-    "gemini-2.5-pro":       (1.25,  10.00),
-    "gemini-2.5-flash":     (0.30,   2.50),
-    "gemini-2.0-flash":     (0.10,   0.40),
-    "gemini-3.1-flash-lite":(0.10,   0.40),
-    "gemini-3.1-pro-preview":(1.25, 10.00),
+    "gemini-2.5-pro": (1.25, 10.00),
+    "gemini-2.5-flash": (0.30, 2.50),
+    "gemini-2.0-flash": (0.10, 0.40),
+    "gemini-3.1-flash-lite": (0.10, 0.40),
+    "gemini-3.1-pro-preview": (1.25, 10.00),
     # Image model rates (per-million token equivalent; see spec 014)
-    "gemini-3.1-flash-image-preview": (0.50,  60.00),
-    "gemini-3.1-flash-image":         (0.50,  60.00),
-    "gemini-3-pro-image-preview":     (2.00, 120.00),
-    "gemini-3-pro-image":             (2.00, 120.00),
-    "gemini-2.5-flash-image":         (0.30,  30.23),
+    "gemini-3.1-flash-image-preview": (0.50, 60.00),
+    "gemini-3.1-flash-image": (0.50, 60.00),
+    "gemini-3-pro-image-preview": (2.00, 120.00),
+    "gemini-3-pro-image": (2.00, 120.00),
+    "gemini-2.5-flash-image": (0.30, 30.23),
 }
 
 _client: genai.Client | None = None

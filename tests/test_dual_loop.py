@@ -55,7 +55,9 @@ def _make_loop_with_providers(
     return loop, p_provider, r_provider
 
 
-def _make_loop(proposer_responses, reviewer_responses, max_iterations=5, timeout_seconds=900):  # noqa: E501
+def _make_loop(
+    proposer_responses, reviewer_responses, max_iterations=5, timeout_seconds=900
+):  # noqa: E501
     """Build a DualPersonaLoop without exposing the provider mocks."""
     loop, _, _ = _make_loop_with_providers(
         proposer_responses, reviewer_responses, max_iterations, timeout_seconds

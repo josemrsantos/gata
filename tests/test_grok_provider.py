@@ -8,6 +8,7 @@ from llm.grok import _COST_PER_M, GrokProvider
 # helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_response(text: str, in_tok: int = 10, out_tok: int = 5) -> MagicMock:
     """Build a mock openai ChatCompletion response."""
     msg = MagicMock()
@@ -34,6 +35,7 @@ def _make_empty_response() -> MagicMock:
 def _reset_grok_singleton():
     # Reset the module-level client singleton between tests so patches don't leak.
     import llm.grok as grok_mod
+
     original = grok_mod._client
     yield
     grok_mod._client = original
@@ -42,6 +44,7 @@ def _reset_grok_singleton():
 # ---------------------------------------------------------------------------
 # model_id
 # ---------------------------------------------------------------------------
+
 
 def test_model_id_returns_constructor_argument():
     # GrokProvider.model_id must return exactly the model string passed at construction.
@@ -52,6 +55,7 @@ def test_model_id_returns_constructor_argument():
 # ---------------------------------------------------------------------------
 # generate() — happy path
 # ---------------------------------------------------------------------------
+
 
 def test_generate_returns_text_and_token_usage():
     # generate() must return the response text and a populated TokenUsage on success.
@@ -94,6 +98,7 @@ def test_generate_passes_max_tokens_to_api():
 # generate() — empty choices guard
 # ---------------------------------------------------------------------------
 
+
 def test_generate_raises_runtime_error_on_empty_choices():
     # generate() must raise RuntimeError when the API returns no choices so the
     # DualPersonaLoop fallback chain can try the next provider.
@@ -123,6 +128,7 @@ def test_generate_raises_runtime_error_on_none_content():
 # ---------------------------------------------------------------------------
 # cost calculation
 # ---------------------------------------------------------------------------
+
 
 def test_generate_computes_correct_cost_for_grok3():
     # generate() must compute cost_usd using grok-3 rates ($3.00/$15.00 per million).
@@ -158,6 +164,7 @@ def test_generate_cost_defaults_to_zero_for_unknown_model():
 # cost table coverage
 # ---------------------------------------------------------------------------
 
+
 def test_cost_table_covers_all_expected_models():
     # _COST_PER_M must include entries for all four grok-3 model variants.
     expected = {"grok-3", "grok-3-mini", "grok-3-fast", "grok-3-mini-fast"}
@@ -168,11 +175,13 @@ def test_cost_table_covers_all_expected_models():
 # provider fallback via DualPersonaLoop
 # ---------------------------------------------------------------------------
 
+
 def test_grok_provider_failure_falls_through_to_next_provider():
     # When GrokProvider.generate() raises, DualPersonaLoop must try the next provider
     # rather than propagating the exception — ensuring Gemini fallback works.
     from core.types import PersonaConfig, TokenUsage
     from llm.dual_loop import DualPersonaLoop
+
     # real GrokProvider wired to fail; mocks simulate fallback and reviewer
     grok = GrokProvider("grok-3")
     fallback = MagicMock()
@@ -181,7 +190,8 @@ def test_grok_provider_failure_falls_through_to_next_provider():
         model="gemini-2.5-flash", input_tokens=5, output_tokens=3, cost_usd=0.0
     )
     fallback.generate.return_value = (
-        "<verdict>approved concept</verdict>", _fallback_usage
+        "<verdict>approved concept</verdict>",
+        _fallback_usage,
     )
     reviewer = MagicMock()
     reviewer.model_id = "claude-sonnet-4-6"

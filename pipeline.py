@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
 from google.genai.errors import APIError as GeminiAPIError
@@ -11,12 +12,27 @@ from agents import trend_scout
 from core.config_loader import (
     load_communities,
     load_humor_config,
+    load_providers_config,
     sanitize_path_segment,
 )
 from core.runner import run_pipeline
 from core.types import CartoonLayout, StrategyBrief
 
 logger = logging.getLogger(__name__)
+
+
+def _find_providers_config() -> str | None:
+    """Return path to providers.yaml using standard lookup order, or None.
+
+    Order: ./providers.yaml (project/dev) → ~/.gata/providers.yaml (user install).
+    """
+    local = Path("providers.yaml")
+    if local.exists():
+        return str(local.resolve())
+    user = Path.home() / ".gata" / "providers.yaml"
+    if user.exists():
+        return str(user)
+    return None
 
 
 def _panel_filename_prefix(layout: CartoonLayout | None) -> str:
@@ -44,12 +60,17 @@ def main() -> None:
     parser.add_argument("--language", help="output language for manual mode")
     parser.add_argument("--tone", help="tone for manual mode")
     parser.add_argument(
-        "--panels", type=int, default=1, metavar="N",
-        help="number of panels 1-4 (default 1)"
+        "--panels",
+        type=int,
+        default=1,
+        metavar="N",
+        help="number of panels 1-4 (default 1)",
     )
     parser.add_argument(
-        "--layout", default='horizontal', metavar="DIR",
-        help="panel direction: horizontal or vertical (default horizontal)"
+        "--layout",
+        default="horizontal",
+        metavar="DIR",
+        help="panel direction: horizontal or vertical (default horizontal)",
     )
     parser.add_argument(
         "--html",
@@ -60,6 +81,11 @@ def main() -> None:
         "--no-title",
         action="store_true",
         help="suppress title banner on generated images (default: title shown)",
+    )
+    parser.add_argument(
+        "--providers",
+        metavar="PATH",
+        help="path to providers.yaml — overrides built-in LLM/model assignments",
     )
     args = parser.parse_args()
     # Reject an empty --community immediately — blank string is not a valid description
@@ -100,6 +126,21 @@ def main() -> None:
         sys.exit(1)
     if humor:
         logger.info("humor config loaded from humor.yaml")
+    providers_config = None
+    providers_path = args.providers or _find_providers_config()
+    if providers_path:
+        try:
+            providers_config = load_providers_config(providers_path)
+            if providers_config is None:
+                if args.providers:
+                    # Explicit --providers flag pointing to a missing file is an error.
+                    logger.error("providers config not found: %s", providers_path)
+                    sys.exit(1)
+            else:
+                logger.info("providers config loaded from %s", providers_path)
+        except ValueError as exc:
+            logger.error("providers config error: %s", exc)
+            sys.exit(1)
     # Determine which mode the caller intended before applying constraints
     has_topic = args.topic is not None
     ctx_flags = (args.audience, args.language, args.tone)
@@ -155,8 +196,14 @@ def main() -> None:
         logger.info("manual mode: topic=%r, output=%r", topic, output_path)
         try:
             run_pipeline(
-                topic, seed_brief, output_path, humor=humor, layout=layout,
-                include_html=args.html, show_title=not args.no_title,
+                topic,
+                seed_brief,
+                output_path,
+                humor=humor,
+                layout=layout,
+                include_html=args.html,
+                show_title=not args.no_title,
+                providers_config=providers_config,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -196,8 +243,14 @@ def main() -> None:
         )
         try:
             run_pipeline(
-                topic, seed_brief, output_path, humor=humor, layout=layout,
-                include_html=args.html, show_title=not args.no_title,
+                topic,
+                seed_brief,
+                output_path,
+                humor=humor,
+                layout=layout,
+                include_html=args.html,
+                show_title=not args.no_title,
+                providers_config=providers_config,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -252,9 +305,7 @@ def main() -> None:
             free_text = trend_scout.get_topics_for_description(args.community)
             headlines, seed_brief, topic_source = free_text
             if not headlines:
-                logger.error(
-                    "no topics available for community: %r", args.community
-                )
+                logger.error("no topics available for community: %r", args.community)
                 sys.exit(1)
             headline = headlines[0]
             topic = headline.title
@@ -278,8 +329,15 @@ def main() -> None:
         )
         try:
             run_pipeline(
-                topic, seed_brief, output_path, news_headline=headline, humor=humor,
-                layout=layout, include_html=args.html, show_title=not args.no_title,
+                topic,
+                seed_brief,
+                output_path,
+                news_headline=headline,
+                humor=humor,
+                layout=layout,
+                include_html=args.html,
+                show_title=not args.no_title,
+                providers_config=providers_config,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -321,8 +379,15 @@ def main() -> None:
         )
         try:
             run_pipeline(
-                topic, seed_brief, output_path, news_headline=headline, humor=humor,
-                layout=layout, include_html=args.html, show_title=not args.no_title,
+                topic,
+                seed_brief,
+                output_path,
+                news_headline=headline,
+                humor=humor,
+                layout=layout,
+                include_html=args.html,
+                show_title=not args.no_title,
+                providers_config=providers_config,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)

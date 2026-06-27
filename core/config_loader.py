@@ -5,11 +5,14 @@ import yaml
 from unidecode import unidecode
 
 from core.types import (
+    _VALID_PROVIDER_NAMES,
     Community,
     CriticHumor,
     FramerHumor,
     HumorConfig,
+    ModelSpec,
     NewsSource,
+    ProvidersConfig,
     SatiristHumor,
 )
 
@@ -140,6 +143,50 @@ def load_communities(path: str) -> list[Community]:
         )
 
     return communities
+
+
+def load_providers_config(path: str) -> ProvidersConfig | None:
+    """Load optional providers.yaml; returns None if absent, ValueError if invalid."""
+    try:
+        with open(path) as f:
+            raw = yaml.safe_load(f)
+    except FileNotFoundError:
+        return None
+    except yaml.YAMLError as exc:
+        raise ValueError(f"{path} is not valid YAML: {exc}") from exc
+
+    if not isinstance(raw, dict):
+        raise ValueError(f"{path}: must be a YAML mapping")
+
+    def _parse_spec(item: object, context: str) -> ModelSpec:
+        if not isinstance(item, dict):
+            raise ValueError(f"{path}: {context} entry must be a mapping")
+        provider = item.get("provider", "")
+        model = item.get("model", "")
+        if not isinstance(provider, str) or provider not in _VALID_PROVIDER_NAMES:
+            raise ValueError(
+                f"{path}: {context} provider {provider!r} must be one of"
+                f" {sorted(_VALID_PROVIDER_NAMES)}"
+            )
+        if not isinstance(model, str) or not model.strip():
+            raise ValueError(f"{path}: {context} model must be a non-blank string")
+        return ModelSpec(provider=provider, model=model)
+
+    raw_panelists = raw.get("panelists")
+    if not isinstance(raw_panelists, list) or not raw_panelists:
+        raise ValueError(f"{path}: 'panelists' must be a non-empty list")
+    panelists: list[list[ModelSpec]] = []
+    for i, slot in enumerate(raw_panelists):
+        if not isinstance(slot, list) or not slot:
+            raise ValueError(f"{path}: panelists[{i}] must be a non-empty list")
+        panelists.append([_parse_spec(m, f"panelists[{i}]") for m in slot])
+
+    raw_aggregator = raw.get("aggregator")
+    if not isinstance(raw_aggregator, list) or not raw_aggregator:
+        raise ValueError(f"{path}: 'aggregator' must be a non-empty list")
+    aggregator = [_parse_spec(m, "aggregator") for m in raw_aggregator]
+
+    return ProvidersConfig(panelists=panelists, aggregator=aggregator)
 
 
 def load_humor_config(path: str) -> HumorConfig | None:

@@ -68,16 +68,19 @@ def generate_html(
     agent0_log: ConversationLog | None,
     bc_log: ConversationLog | None,
     image_prompt: str,
-    panelist_providers: list[LLMProvider],
+    panelist_providers: list[list[LLMProvider]],
     aggregator_providers: list[LLMProvider],
 ) -> tuple[str, str]:
     """Generate in-language and English HTML explanation files via ParallelPanel."""
-    # one PersonaConfig per panelist provider, all using the Writer system prompt
+    # Each slot is an ordered fallback chain; primary model name is the persona name.
     panelists = [
         PersonaConfig(
-            name="Writer", providers=[p], system_prompt=_WRITER_SYSTEM, max_tokens=8192
+            name=slot[0].model_id,
+            providers=slot,
+            system_prompt=_WRITER_SYSTEM,
+            max_tokens=8192,
         )
-        for p in panelist_providers
+        for slot in panelist_providers
     ]
     # aggregator PersonaConfig constructed once and shared across both panel runs
     aggregator = PersonaConfig(

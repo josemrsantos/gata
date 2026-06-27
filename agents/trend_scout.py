@@ -56,13 +56,15 @@ _COMBINED_INFERENCE_SYSTEM = (
     'Set "news_category" to the NewsAPI category that best fits: '
     "business, entertainment, general, health, science, sports, or technology. "
     "Respond with ONLY a JSON object — no explanation, no markdown — "
-    'using exactly these keys: '
+    "using exactly these keys: "
     '"target_audience", "output_language", "tone", "news_country", "news_category".'
 )
 _SOURCE_DEFAULTS: dict[str, str] = {
     "news_country": "us",
     "news_category": "general",
 }
+
+
 def _rank_headlines(
     headlines: list[Headline],
     audience: str,
@@ -150,8 +152,12 @@ def get_topics(
 
     try:
         ranked_titles = _rank_headlines(
-            fetched, community.target_audience, community.output_language,
-            community.tone, "", n
+            fetched,
+            community.target_audience,
+            community.output_language,
+            community.tone,
+            "",
+            n,
         )
         if not ranked_titles:
             raise ValueError("empty ranked list")
@@ -340,8 +346,12 @@ def get_topics_for_description(
     # Rank by relevance to the community description, passing the raw text as a hint
     try:
         ranked_titles = _rank_headlines(
-            fetched, brief.target_audience, brief.output_language,
-            brief.tone, description, n,
+            fetched,
+            brief.target_audience,
+            brief.output_language,
+            brief.tone,
+            description,
+            n,
         )
         if not ranked_titles:
             raise ValueError("empty ranked list")

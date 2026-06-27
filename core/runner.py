@@ -14,12 +14,27 @@ from core.types import (
     ConversationLog,
     Headline,
     HumorConfig,
+    ModelSpec,
+    ProvidersConfig,
     RunTelemetry,
     StrategyBrief,
 )
 from llm import ClaudeProvider, GeminiProvider, GrokProvider
+from llm.base import LLMProvider
 
 logger = logging.getLogger(__name__)
+
+
+def _build_provider(spec: ModelSpec) -> LLMProvider:
+    """Instantiate the correct LLMProvider from a ModelSpec."""
+    if spec.provider == "claude":
+        return ClaudeProvider(spec.model)
+    if spec.provider == "gemini":
+        return GeminiProvider(spec.model)
+    if spec.provider == "grok":
+        return GrokProvider(spec.model)
+    raise ValueError(f"unknown provider: {spec.provider!r}")
+
 
 # Provider chains created once; each chain tries models in priority order on failure.
 _CLAUDE_CHAIN = [
@@ -50,8 +65,22 @@ def run_pipeline(
     layout: CartoonLayout | None = None,
     include_html: bool = False,
     show_title: bool = True,
+    providers_config: ProvidersConfig | None = None,
 ) -> RunTelemetry:
     """Run the full pipeline for a single topic and write the output image."""
+    # Build provider lists from config when supplied; otherwise wrap hardcoded defaults
+    # in single-element lists so each slot has the same list[list[LLMProvider]] shape.
+    if providers_config is not None:
+        panelist_providers: list[list[LLMProvider]] = [
+            [_build_provider(s) for s in slot] for slot in providers_config.panelists
+        ]
+        aggregator_providers: list[LLMProvider] = [
+            _build_provider(s) for s in providers_config.aggregator
+        ]
+    else:
+        panelist_providers = [[p] for p in _PARALLEL_PANELISTS]
+        aggregator_providers = _GROK_AGGREGATOR
+
     agent0_log: ConversationLog | None = None
     bc_log: ConversationLog | None = None
     enriched_brief = None
@@ -62,8 +91,8 @@ def run_pipeline(
         enriched_brief, agent0_log, agent0_tel = agent_cultural_strategist.run(
             topic,
             seed_brief,
-            panelist_providers=_PARALLEL_PANELISTS,
-            aggregator_providers=_GROK_AGGREGATOR,
+            panelist_providers=panelist_providers,
+            aggregator_providers=aggregator_providers,
             news_brief=news_headline,
             humor=humor,
         )
@@ -72,8 +101,8 @@ def run_pipeline(
         concept, bc_log, bc_tel, chosen_layout = agent_satirist.run(
             topic,
             enriched_brief,
-            panelist_providers=_PARALLEL_PANELISTS,
-            aggregator_providers=_GROK_AGGREGATOR,
+            panelist_providers=panelist_providers,
+            aggregator_providers=aggregator_providers,
             humor=humor,
             layout_override=layout,
         )
@@ -82,8 +111,11 @@ def run_pipeline(
         _MAX_IMAGE_RETRIES = 2
         for _attempt in range(_MAX_IMAGE_RETRIES + 1):
             _image_path, image_tel = agent_image_generator.generate(
-                concept, enriched_brief, output_path,
-                layout=chosen_layout, show_title=show_title,
+                concept,
+                enriched_brief,
+                output_path,
+                layout=chosen_layout,
+                show_title=show_title,
             )
             telemetry.agents.append(image_tel)
             print("  Image Evaluator...", flush=True)
@@ -108,8 +140,7 @@ def run_pipeline(
                 )
             else:
                 logger.warning(
-                    "image evaluator: REJECTED after %d attempt(s)"
-                    " — using last image",
+                    "image evaluator: REJECTED after %d attempt(s) — using last image",
                     _MAX_IMAGE_RETRIES + 1,
                 )
     except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
@@ -129,6 +160,8 @@ def run_pipeline(
             image_prompt,
             telemetry=telemetry,
             include_html=include_html,
+            panelist_providers=panelist_providers,
+            aggregator_providers=aggregator_providers,
         )
         print(bundle_writer.format_summary(telemetry))
     return telemetry

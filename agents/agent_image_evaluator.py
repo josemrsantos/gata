@@ -66,16 +66,14 @@ def _build_eval_prompt(
     # Describe what the cartoon was supposed to show so the model can check completeness
     if concept.panels is not None:
         concept_desc = "\n".join(
-            f"Panel {i + 1}: {p.scene} — \"{p.caption}\""
+            f'Panel {i + 1}: {p.scene} — "{p.caption}"'
             for i, p in enumerate(concept.panels)
         )
     else:
         concept_desc = concept.full_text[:600]
     panel_note = ""
     if layout is not None and layout.panels > 1:
-        panel_note = (
-            f"\nFORMAT: {layout.panels}-panel {layout.direction} comic strip."
-        )
+        panel_note = f"\nFORMAT: {layout.panels}-panel {layout.direction} comic strip."
     lines = [
         "GATA CHARACTER — verify she matches this exactly:",
         _GATA_CHARACTER,

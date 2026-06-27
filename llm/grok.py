@@ -8,10 +8,10 @@ from core.types import TokenUsage
 from llm.base import LLMProvider
 
 _COST_PER_M: dict[str, tuple[float, float]] = {
-    "grok-3":           (3.00,  15.00),
-    "grok-3-mini":      (0.30,   0.50),
-    "grok-3-fast":      (5.00,  25.00),
-    "grok-3-mini-fast": (0.60,   4.00),
+    "grok-3": (3.00, 15.00),
+    "grok-3-mini": (0.30, 0.50),
+    "grok-3-fast": (5.00, 25.00),
+    "grok-3-mini-fast": (0.60, 4.00),
 }
 
 _client: openai.OpenAI | None = None

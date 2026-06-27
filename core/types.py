@@ -140,6 +140,22 @@ class HumorConfig:
     critic: CriticHumor = field(default_factory=CriticHumor)
 
 
+_VALID_PROVIDER_NAMES: frozenset[str] = frozenset({"claude", "gemini", "grok"})
+
+
+@dataclass
+class ModelSpec:
+    provider: str  # "claude" | "gemini" | "grok"
+    model: str
+
+
+@dataclass
+class ProvidersConfig:
+    # Each inner list is one panelist slot's ordered fallback chain (primary first).
+    panelists: list[list[ModelSpec]]
+    aggregator: list[ModelSpec]  # ordered fallback chain for the aggregator role
+
+
 @dataclass
 class PersonaConfig:
     name: str
