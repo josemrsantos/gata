@@ -39,7 +39,7 @@ def test_generate_html_returns_tuple():
     # English HTML without index lookups.
     from agents.agent_explainer import generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
@@ -62,7 +62,7 @@ def test_generate_html_first_element_is_in_language_html():
     # to explanation.html without any transformation.
     from agents.agent_explainer import generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
@@ -84,7 +84,7 @@ def test_generate_html_second_element_is_english_html():
     # to deep_dive_en.html without any transformation.
     from agents.agent_explainer import generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
@@ -106,7 +106,7 @@ def test_generate_html_calls_panel_twice():
     # in-language HTML and one for English — so each gets its own panel round.
     from agents.agent_explainer import generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
@@ -128,7 +128,7 @@ def test_generate_html_in_lang_contains_doctype():
     # a proper HTML5 document rather than triggering quirks mode.
     from agents.agent_explainer import generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
@@ -150,7 +150,7 @@ def test_generate_html_in_lang_contains_utf8_charset():
     # render correctly in any browser without manual encoding configuration.
     from agents.agent_explainer import generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
@@ -172,7 +172,7 @@ def test_generate_html_raises_when_all_models_exhausted():
     # bundle_writer can catch it and log the failure per FR-011.
     from agents.agent_explainer import generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = RuntimeError("all models exhausted")
         with pytest.raises(RuntimeError):
@@ -194,7 +194,7 @@ def test_generate_html_english_contains_doctype():
     # in-language HTML — consistent document structure for operator tooling.
     from agents.agent_explainer import generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
@@ -216,7 +216,7 @@ def test_generate_html_english_contains_utf8_charset():
     # regardless of the operator's browser locale settings.
     from agents.agent_explainer import generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
@@ -238,7 +238,7 @@ def test_generate_html_english_lang_attribute_is_en():
     # other assistive tools apply English language rules.
     from agents.agent_explainer import generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
@@ -263,7 +263,7 @@ def test_generate_html_uses_distinct_prompts_for_each_call():
 
     captured_inputs: list[str] = []
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
 
         def capture_and_return(initial_input: str) -> LoopOutput:
@@ -301,7 +301,7 @@ def test_generate_html_utf8_present_for_non_latin_language():
         '<head><meta charset="UTF-8"></head>'
         "<body>설명</body></html>"
     )
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=korean_html, log=ConversationLog(loop_name="lang")),
@@ -328,7 +328,7 @@ def test_generate_html_accepts_panelist_and_aggregator_provider_kwargs():
     # kwargs — writer_providers/editor_providers must not be used after Stage 029.
     from agents.agent_explainer import generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
@@ -351,7 +351,7 @@ def test_generate_html_constructs_two_parallel_panels_not_dual_loops():
     from agents.agent_explainer import generate_html
 
     with (
-        patch("agents.agent_explainer.ParallelPanel") as MockPanel,
+        patch("agents.agent_explainer.FairParallelPanel") as MockPanel,
         patch("agents.agent_explainer.DualPersonaLoop", create=True) as MockLoop,
     ):
         mock_instance = MockPanel.return_value
@@ -370,7 +370,7 @@ def test_generate_html_passes_three_panelists_per_panel_run():
     from agents.agent_explainer import generate_html
 
     panelist_providers = [MagicMock(), MagicMock(), MagicMock()]
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),
@@ -394,7 +394,7 @@ def test_generate_html_aggregator_uses_explainer_aggregator_system_prompt():
     # receives the Editor quality-gate criteria encoded in the aggregator prompt.
     from agents.agent_explainer import _EXPLAINER_AGGREGATOR_SYSTEM, generate_html
 
-    with patch("agents.agent_explainer.ParallelPanel") as MockPanel:
+    with patch("agents.agent_explainer.FairParallelPanel") as MockPanel:
         mock_instance = MockPanel.return_value
         mock_instance.run.side_effect = [
             LoopOutput(verdict=_IN_LANG_HTML, log=ConversationLog(loop_name="lang")),

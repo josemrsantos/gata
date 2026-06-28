@@ -15,7 +15,7 @@ from core.types import (
     PersonaConfig,
 )
 from llm import LLMProvider
-from llm.parallel_panel import ParallelPanel
+from llm.fair_parallel_panel import FairParallelPanel
 
 logger = logging.getLogger(__name__)
 
@@ -255,7 +255,7 @@ def run(
         providers=aggregator_providers,
         system_prompt=_build_aggregator_prompt(brief),
     )
-    panel = ParallelPanel(
+    panel = FairParallelPanel(
         panelists=panelists, aggregator=aggregator, panel_name="Satirist/Co-Satirist"
     )
     loop_output = panel.run(topic)
@@ -269,7 +269,7 @@ def run(
         layout.direction,
         brief.cultural_angle[:60],
     )
-    # telemetry is always populated by ParallelPanel; guard for safety
+    # telemetry is always populated by FairParallelPanel; guard for safety
     telemetry = loop_output.telemetry or AgentTelemetry(
         agent_name="Satirist/Co-Satirist", duration_seconds=0.0, iterations=0
     )

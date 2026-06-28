@@ -18,10 +18,11 @@ that all figures are estimates based on last-known token pricing.
 ## Spec 034 — FairParallelPanel protocol
 
 New coordination protocol where the aggregator (Python layer) runs configurable iterations:
-collects panelist responses within a configurable timeout (default 30s), shares all on-time
-responses back to all participating panelists, repeats for N iterations (default 2), then
-sends final proposals to the aggregator LLM to decide. Coordination logic lives inside the
-Aggregator class.
+collects panelist responses within a configurable timeout (default 60s — sized to let a
+primary provider fail and a Spec 032 cross-provider fallback still complete), shares all
+on-time responses back to all participating panelists, repeats for N iterations (default 2),
+then sends final proposals to the aggregator LLM to decide. Coordination logic lives inside
+the Aggregator class.
 
 **Dependency:** Requires Spec 032.
 
@@ -32,6 +33,32 @@ Aggregator class.
 Flag (e.g. `--direct-prompt`) that bypasses the Cultural Strategist and feeds the user's
 intent straight to the Satirist, for cases where the extra agent introduces drift rather
 than value.
+
+---
+
+## Spec 036 — Per-provider call timeout
+
+**Goal:** Give each provider in a Spec 032 fallback chain its own individual timeout, so
+the total slot budget is divided precisely rather than shared opaquely.
+
+**Reason:** Telemetry from real runs shows wide latency spread across providers:
+- Claude Sonnet 4.6: ~15–20s per call (high output token count: 500–750 avg)
+- Grok-3 (aggregator): ~10–15s (300–530 output tokens)
+- Grok-3-mini: ~5–7s (150–340 output tokens)
+- Gemini 2.5 Flash: ~3–10s (output length varies widely: 79–430 tokens)
+- Gemini 2.5 Pro (evaluator): ~15–22s regardless of output length (thinking-heavy)
+- Gemini image generation: ~8–21s depending on complexity
+
+Today, `FairParallelPanel` has a single `panelist_timeout` for the whole slot (primary +
+all fallbacks). If Claude hangs at 55s on a 60s budget, the fallback gets only 5s — which
+is enough for Gemini Flash but not for Claude or Grok-3. A per-provider timeout (e.g. 25s)
+would let Claude time out cleanly and hand off to a fallback with a full budget of its own.
+
+**Implementation idea:** add `provider_timeout: float | None = None` to `_call_persona()`;
+wrap each `provider.generate()` call in a `ThreadPoolExecutor` future with that timeout.
+When `None`, call is unbounded (current behaviour, no regression).
+
+**Dependency:** Spec 032 (provider chains) + Spec 034 (FairParallelPanel).
 
 ---
 
