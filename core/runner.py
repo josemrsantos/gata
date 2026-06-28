@@ -12,6 +12,7 @@ from core import bundle_writer
 from core.types import (
     CartoonLayout,
     ConversationLog,
+    EnrichedBrief,
     Headline,
     HumorConfig,
     ModelSpec,
@@ -66,6 +67,7 @@ def run_pipeline(
     include_html: bool = False,
     show_title: bool = True,
     providers_config: ProvidersConfig | None = None,
+    skip_cultural_strategist: bool = False,
 ) -> RunTelemetry:
     """Run the full pipeline for a single topic and write the output image."""
     # Build provider lists from config when supplied; otherwise wrap hardcoded defaults
@@ -87,16 +89,29 @@ def run_pipeline(
     concept = None
     telemetry = RunTelemetry()
     try:
-        print("  Cultural Strategist...", flush=True)
-        enriched_brief, agent0_log, agent0_tel = agent_cultural_strategist.run(
-            topic,
-            seed_brief,
-            panelist_providers=panelist_providers,
-            aggregator_providers=aggregator_providers,
-            news_brief=news_headline,
-            humor=humor,
-        )
-        telemetry.agents.append(agent0_tel)
+        if skip_cultural_strategist:
+            # Direct mode: build a minimal brief from the seed so the Satirist has
+            # audience/language/tone context without paying Cultural Strategist cost.
+            print("  Direct mode — skipping Cultural Strategist", flush=True)
+            logger.info("run_pipeline: direct mode — Cultural Strategist skipped")
+            enriched_brief = EnrichedBrief(
+                target_audience=seed_brief.target_audience,
+                output_language=seed_brief.output_language,
+                tone=seed_brief.tone,
+                cultural_angle=topic,
+                culturally_loaded_references=[],
+            )
+        else:
+            print("  Cultural Strategist...", flush=True)
+            enriched_brief, agent0_log, agent0_tel = agent_cultural_strategist.run(
+                topic,
+                seed_brief,
+                panelist_providers=panelist_providers,
+                aggregator_providers=aggregator_providers,
+                news_brief=news_headline,
+                humor=humor,
+            )
+            telemetry.agents.append(agent0_tel)
         print("  Satirist/Co-Satirist...", flush=True)
         concept, bc_log, bc_tel, chosen_layout = agent_satirist.run(
             topic,
