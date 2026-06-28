@@ -83,6 +83,11 @@ def main() -> None:
         help="suppress title banner on generated images (default: title shown)",
     )
     parser.add_argument(
+        "--direct",
+        action="store_true",
+        help="skip the Cultural Strategist and feed the topic straight to the Satirist",
+    )
+    parser.add_argument(
         "--providers",
         metavar="PATH",
         help="path to providers.yaml — overrides built-in LLM/model assignments",
@@ -204,6 +209,7 @@ def main() -> None:
                 include_html=args.html,
                 show_title=not args.no_title,
                 providers_config=providers_config,
+                skip_cultural_strategist=args.direct,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -251,6 +257,7 @@ def main() -> None:
                 include_html=args.html,
                 show_title=not args.no_title,
                 providers_config=providers_config,
+                skip_cultural_strategist=args.direct,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -338,6 +345,7 @@ def main() -> None:
                 include_html=args.html,
                 show_title=not args.no_title,
                 providers_config=providers_config,
+                skip_cultural_strategist=args.direct,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -388,6 +396,7 @@ def main() -> None:
                 include_html=args.html,
                 show_title=not args.no_title,
                 providers_config=providers_config,
+                skip_cultural_strategist=args.direct,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)

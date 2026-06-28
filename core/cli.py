@@ -66,6 +66,11 @@ def main() -> None:
         action="store_true",
         help="suppress title banner on generated images (default: title shown)",
     )
+    parser.add_argument(
+        "--direct",
+        action="store_true",
+        help="skip the Cultural Strategist and feed the topic straight to the Satirist",
+    )
     args = parser.parse_args()
     if not args.topic.strip():
         print("error: topic must not be empty", file=sys.stderr)
@@ -113,6 +118,7 @@ def main() -> None:
                 humor=humor,
                 include_html=args.html,
                 show_title=not args.no_title,
+                skip_cultural_strategist=args.direct,
             )
             audience_telemetry.append((audience.name, telemetry))
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:

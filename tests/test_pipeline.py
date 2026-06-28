@@ -1691,3 +1691,158 @@ def test_pipeline_logs_when_no_dotenv_file(caplog):
     ):
         pipeline.main()
     assert any("environment" in r.message.lower() for r in caplog.records)
+
+
+# ---------------------------------------------------------------------------
+# Spec 035 — --direct flag (skip Cultural Strategist)
+# ---------------------------------------------------------------------------
+
+_DIRECT_SEED = StrategyBrief(
+    target_audience="UK workers",
+    output_language="English",
+    tone="dry wit",
+)
+
+
+def test_direct_flag_skips_cultural_strategist():
+    # run_pipeline(skip_cultural_strategist=True) must never call
+    # agent_cultural_strategist.run so the Cultural Strategist cost and latency
+    # are completely absent from the run.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run") as mock_a0,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline("AI hype", _DIRECT_SEED, "out.png", skip_cultural_strategist=True)
+    mock_a0.assert_not_called()
+
+
+def test_direct_flag_builds_minimal_enriched_brief():
+    # The minimal EnrichedBrief built in direct mode must carry the topic verbatim
+    # as cultural_angle, empty references, and audience/language/tone from the
+    # seed brief — the Satirist gets enough context without Cultural Strategist work.
+    from core.runner import run_pipeline
+
+    captured: list = []
+
+    def capture_satirist(topic, brief, **kwargs):
+        captured.append(brief)
+        return (FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None)
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run", side_effect=capture_satirist),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline("AI hype", _DIRECT_SEED, "out.png", skip_cultural_strategist=True)
+    assert len(captured) == 1
+    brief = captured[0]
+    assert brief.cultural_angle == "AI hype"
+    assert brief.culturally_loaded_references == []
+    assert brief.target_audience == _DIRECT_SEED.target_audience
+    assert brief.output_language == _DIRECT_SEED.output_language
+    assert brief.tone == _DIRECT_SEED.tone
+
+
+def test_direct_flag_passes_brief_to_satirist():
+    # The Satirist must receive the minimal EnrichedBrief (not None) so it has
+    # audience and language context even without Cultural Strategist enrichment.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ) as mock_satirist,
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline("AI hype", _DIRECT_SEED, "out.png", skip_cultural_strategist=True)
+    _, brief = mock_satirist.call_args.args
+    assert brief is not None
+    assert isinstance(brief.cultural_angle, str) and brief.cultural_angle
+
+
+def test_direct_flag_absent_cultural_strategist_in_telemetry():
+    # RunTelemetry must contain no entry named "Cultural Strategist" in direct mode
+    # so the cost summary is accurate and does not show a zero-cost phantom agent.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        telemetry = run_pipeline(
+            "AI hype", _DIRECT_SEED, "out.png", skip_cultural_strategist=True
+        )
+    agent_names = [a.agent_name for a in telemetry.agents]
+    assert "Cultural Strategist" not in agent_names
+
+
+def test_normal_mode_unchanged():
+    # Without skip_cultural_strategist, agent_cultural_strategist.run must be called
+    # exactly once — guard against regressions in the standard pipeline path.
+    from core.runner import run_pipeline
+
+    with (
+        patch(
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
+        ) as mock_a0,
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, None),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline("AI hype", _DIRECT_SEED, "out.png")
+    mock_a0.assert_called_once()
