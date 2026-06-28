@@ -1,6 +1,30 @@
 # CHANGELOG
 
 
+## v1.18.0 (2026-06-28)
+
+### Documentation
+
+* docs: mark spec 035 complete in CLAUDE.md
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`7266dce`](https://github.com/josemrsantos/gata/commit/7266dcea9452c05117d67f2ae107bc97ef2b7fd2))
+
+### Features
+
+* feat: spec 035 — --direct flag bypasses Cultural Strategist
+
+feat: spec 035 — --direct flag bypasses Cultural Strategist ([`6dd5c61`](https://github.com/josemrsantos/gata/commit/6dd5c6135a81f813f510f26e1bcce4706580d037))
+
+* feat: spec 035 — --direct flag bypasses Cultural Strategist
+
+Add --direct to both pipeline.py and the gata CLI (core/cli.py).
+When set, run_pipeline() builds a minimal EnrichedBrief from the topic
+and seed brief, skipping the Cultural Strategist entirely — no cost,
+no latency, no enrichment drift. All downstream agents unchanged.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`57e7b1d`](https://github.com/josemrsantos/gata/commit/57e7b1dca012be30eea76372b9568d26d53cec72))
+
+
 ## v1.17.0 (2026-06-28)
 
 ### Documentation
