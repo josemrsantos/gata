@@ -39,7 +39,7 @@ _MP = []
 
 def test_run_returns_enriched_brief_type():
     # run() must return an EnrichedBrief as the first tuple element, not the raw string.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         enriched_brief, _, _ = run(_TOPIC, _SEED, _MP, _MP)
     assert isinstance(enriched_brief, EnrichedBrief)
@@ -47,7 +47,7 @@ def test_run_returns_enriched_brief_type():
 
 def test_run_seed_fields_locked_in_enriched_brief():
     # The three seed fields must be carried unchanged — Agent 0 must not overwrite them.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         enriched_brief, _, _ = run(_TOPIC, _SEED, _MP, _MP)
     assert enriched_brief.target_audience == _SEED.target_audience
@@ -57,7 +57,7 @@ def test_run_seed_fields_locked_in_enriched_brief():
 
 def test_run_parses_cultural_angle():
     # cultural_angle must contain the text from the CULTURAL ANGLE: section.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         enriched_brief, _, _ = run(_TOPIC, _SEED, _MP, _MP)
     assert "cat territorial dispute" in enriched_brief.cultural_angle
@@ -65,7 +65,7 @@ def test_run_parses_cultural_angle():
 
 def test_run_parses_references_as_list():
     # culturally_loaded_references must be a list with one entry per bullet point.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         enriched_brief, _, _ = run(_TOPIC, _SEED, _MP, _MP)
     assert isinstance(enriched_brief.culturally_loaded_references, list)
@@ -78,7 +78,7 @@ def test_run_parses_references_as_list():
 def test_run_accepts_single_reference():
     # Minimum valid output is one reference; the pipeline must not require more.
     single_ref = "CULTURAL ANGLE: A valid angle.\nREFERENCES:\n- Only one reference"
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = LoopOutput(
             verdict=single_ref, log=ConversationLog(loop_name="Cultural Strategist")
         )
@@ -92,7 +92,7 @@ def test_run_accepts_single_reference():
 def test_run_raises_value_error_on_empty_cultural_angle():
     # An empty cultural_angle means enrichment failed; the pipeline must not continue.
     empty_angle = "CULTURAL ANGLE: \nREFERENCES:\n- Some reference"
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = LoopOutput(
             verdict=empty_angle, log=ConversationLog(loop_name="Cultural Strategist")
         )
@@ -103,7 +103,7 @@ def test_run_raises_value_error_on_empty_cultural_angle():
 def test_run_raises_value_error_on_empty_references_list():
     # An empty references list means enrichment failed; the pipeline must not continue.
     no_refs = "CULTURAL ANGLE: A valid angle.\nREFERENCES:\n"
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = LoopOutput(
             verdict=no_refs, log=ConversationLog(loop_name="Cultural Strategist")
         )
@@ -116,7 +116,7 @@ def test_run_raises_value_error_on_empty_references_list():
 
 def test_run_propagates_timeout_error():
     # TimeoutError from ParallelPanel must reach the caller so the pipeline exits.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.side_effect = TimeoutError("timeout after 900s")
         with pytest.raises(TimeoutError):
             run(_TOPIC, _SEED, _MP, _MP)
@@ -124,7 +124,7 @@ def test_run_propagates_timeout_error():
 
 def test_run_propagates_runtime_error():
     # RuntimeError (all models exhausted) must reach the caller so the pipeline exits.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.side_effect = RuntimeError("all models exhausted")
         with pytest.raises(RuntimeError):
             run(_TOPIC, _SEED, _MP, _MP)
@@ -136,7 +136,7 @@ def test_run_propagates_runtime_error():
 def test_run_logs_enriched_brief_at_info(caplog):
     # FR-011: the enriched brief must be logged at INFO so the operator can inspect
     # the cultural context without running the full pipeline to image output.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         with caplog.at_level(logging.INFO, logger="agents.agent_cultural_strategist"):
             _, _, _ = run(_TOPIC, _SEED, _MP, _MP)
@@ -149,7 +149,7 @@ def test_run_logs_enriched_brief_at_info(caplog):
 
 def test_run_returns_tuple_of_enriched_brief_log_and_telemetry():
     # run() must return a 3-tuple: (EnrichedBrief, ConversationLog, AgentTelemetry).
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         result = run(_TOPIC, _SEED, _MP, _MP)
     assert isinstance(result, tuple)
@@ -159,7 +159,7 @@ def test_run_returns_tuple_of_enriched_brief_log_and_telemetry():
 def test_run_first_element_is_enriched_brief():
     # The first tuple element must be the EnrichedBrief so callers can unpack with
     # `enriched_brief, log, telemetry = agent_0.run(...)` without index lookups.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         enriched_brief, _, _ = run(_TOPIC, _SEED, _MP, _MP)
     assert isinstance(enriched_brief, EnrichedBrief)
@@ -168,7 +168,7 @@ def test_run_first_element_is_enriched_brief():
 def test_run_second_element_is_conversation_log():
     # The second tuple element must be the ConversationLog from the ParallelPanel
     # so bundle_writer can write it to agent0_log.txt.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         _, log, _ = run(_TOPIC, _SEED, _MP, _MP)
     assert isinstance(log, ConversationLog)
@@ -177,7 +177,7 @@ def test_run_second_element_is_conversation_log():
 def test_run_log_has_loop_name_cultural_strategist():
     # The ConversationLog must carry loop_name="Cultural Strategist" so bundle_writer
     # labels the file header without needing extra context from the caller.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         _, log, _ = run(_TOPIC, _SEED, _MP, _MP)
     assert log.loop_name == "Cultural Strategist"
@@ -186,7 +186,7 @@ def test_run_log_has_loop_name_cultural_strategist():
 def test_run_enriched_brief_content_unchanged_with_loop_output_mock():
     # EnrichedBrief content must be correctly parsed even when the mock returns a
     # LoopOutput — confirming the agent unpacks verdict before parsing.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         enriched_brief, _, _ = run(_TOPIC, _SEED, _MP, _MP)
     assert "cat territorial dispute" in enriched_brief.cultural_angle
@@ -211,7 +211,7 @@ _LOOP_OUTPUT_WITH_JOKE_TYPE = LoopOutput(
 
 def test_run_extracts_joke_type_when_present():
     # When the Framer verdict includes a JOKE TYPE field, it must appear in joke_type.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT_WITH_JOKE_TYPE
         enriched_brief, _, _ = run(_TOPIC, _SEED, _MP, _MP)
     assert enriched_brief.joke_type == "situational"
@@ -219,7 +219,7 @@ def test_run_extracts_joke_type_when_present():
 
 def test_run_joke_type_defaults_to_empty_when_absent_from_verdict():
     # When the verdict has no JOKE TYPE, joke_type must be empty string — not an error.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         enriched_brief, _, _ = run(_TOPIC, _SEED, _MP, _MP)
     assert enriched_brief.joke_type == ""
@@ -227,7 +227,7 @@ def test_run_joke_type_defaults_to_empty_when_absent_from_verdict():
 
 def test_run_references_not_contaminated_by_joke_type_line():
     # JOKE TYPE must not be parsed as a reference bullet — references must stay clean.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT_WITH_JOKE_TYPE
         enriched_brief, _, _ = run(_TOPIC, _SEED, _MP, _MP)
     refs = enriched_brief.culturally_loaded_references
@@ -322,7 +322,7 @@ def test_infer_audiences_system_prompt_asks_for_single_audience():
 def test_run_accepts_panelist_and_aggregator_provider_kwargs():
     # run() must accept panelist_providers and aggregator_providers as named kwargs
     # — the old framer_providers/resonator_providers names must not be used after 029.
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         result = run(_TOPIC, _SEED, panelist_providers=_MP, aggregator_providers=_MP)
     assert isinstance(result[0], EnrichedBrief)
@@ -332,7 +332,7 @@ def test_run_constructs_parallel_panel_not_dual_persona_loop():
     # run() must construct ParallelPanel (not DualPersonaLoop) — DualPersonaLoop cannot
     # assign Grok as the aggregator/decider role required by Stage 029.
     with (
-        patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel,
+        patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel,
         patch(
             "agents.agent_cultural_strategist.DualPersonaLoop", create=True
         ) as MockLoop,
@@ -347,7 +347,7 @@ def test_run_passes_three_panelists_to_parallel_panel():
     # run() must build one PersonaConfig per panelist provider and pass all three to
     # ParallelPanel so each LLM proposes a cultural angle independently.
     panelist_providers = [MagicMock(), MagicMock(), MagicMock()]
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         run(
             _TOPIC,
@@ -366,7 +366,7 @@ def test_run_panelists_all_use_framer_system_prompt():
     from agents.agent_cultural_strategist import _build_framer_system_prompt
 
     panelist_providers = [MagicMock(), MagicMock(), MagicMock()]
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         run(
             _TOPIC,
@@ -386,7 +386,7 @@ def test_run_aggregator_uses_cs_aggregator_system_prompt():
     # the Resonator quality-gate criteria encoded in the aggregator prompt.
     from agents.agent_cultural_strategist import _CS_AGGREGATOR_SYSTEM
 
-    with patch("agents.agent_cultural_strategist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_cultural_strategist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         run(_TOPIC, _SEED, _MP, aggregator_providers=_MP)
     init_kwargs = MockPanel.call_args.kwargs

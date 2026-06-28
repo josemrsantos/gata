@@ -57,7 +57,7 @@ _LOOP_OUTPUT = LoopOutput(
 def test_run_returns_cartoon_concept():
     # run() first tuple element must be a CartoonConcept, confirming the output type
     # is stable.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(concept, CartoonConcept)
@@ -65,7 +65,7 @@ def test_run_returns_cartoon_concept():
 
 def test_run_image_prompt_field_populated():
     # CartoonConcept.image_prompt must be set from the ParallelPanel verdict content.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert concept.image_prompt == _VALID_IMAGE_PROMPT
@@ -76,7 +76,7 @@ def test_run_image_prompt_field_populated():
 
 def test_run_accepts_enriched_brief():
     # run() must accept EnrichedBrief (not StrategyBrief) after migration.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(concept, CartoonConcept)
@@ -109,7 +109,7 @@ def test_cartoon_concept_image_prompt_field_name_unchanged():
 
 def test_run_propagates_timeout_error():
     # TimeoutError from ParallelPanel must reach the caller so the pipeline exits.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.side_effect = TimeoutError("timeout")
         with pytest.raises(TimeoutError):
             run(TOPIC, BRIEF, [], [])
@@ -117,7 +117,7 @@ def test_run_propagates_timeout_error():
 
 def test_run_propagates_runtime_error():
     # RuntimeError (all models exhausted) must reach the caller so the pipeline exits.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.side_effect = RuntimeError("all models exhausted")
         with pytest.raises(RuntimeError):
             run(TOPIC, BRIEF, [], [])
@@ -128,7 +128,7 @@ def test_run_propagates_runtime_error():
 
 def test_run_logs_at_info(caplog):
     # run() must emit an INFO log so the operator can confirm agent_bc completed.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         with caplog.at_level(logging.INFO, logger="agents.agent_satirist"):
             _, *_ = run(TOPIC, BRIEF, [], [])
@@ -140,7 +140,7 @@ def test_run_logs_at_info(caplog):
 
 def test_run_returns_tuple_of_cartoon_concept_and_log():
     # run() must return a 4-tuple: concept, log, telemetry, and resolved CartoonLayout.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         result = run(TOPIC, BRIEF, [], [])
     assert isinstance(result, tuple)
@@ -150,7 +150,7 @@ def test_run_returns_tuple_of_cartoon_concept_and_log():
 def test_run_first_element_is_cartoon_concept():
     # The first tuple element must be CartoonConcept so callers can do
     # `concept, log = agent_bc.run(...)` without index lookups.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(concept, CartoonConcept)
@@ -159,7 +159,7 @@ def test_run_first_element_is_cartoon_concept():
 def test_run_second_element_is_conversation_log():
     # The second tuple element must be ConversationLog so bundle_writer can write
     # it to bc_log.txt without any transformation by the caller.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         _, log, *_ = run(TOPIC, BRIEF, [], [])
     assert isinstance(log, ConversationLog)
@@ -168,7 +168,7 @@ def test_run_second_element_is_conversation_log():
 def test_run_log_has_loop_name_bc():
     # The ConversationLog must carry loop_name="Satirist/Co-Satirist" so bundle_writer
     # labels the log file header correctly without extra context from the caller.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         _, log, *_ = run(TOPIC, BRIEF, [], [])
     assert log.loop_name == "Satirist/Co-Satirist"
@@ -177,7 +177,7 @@ def test_run_log_has_loop_name_bc():
 def test_run_cartoon_concept_image_prompt_with_loop_output_mock():
     # CartoonConcept.image_prompt must equal the verdict from LoopOutput — confirming
     # the agent correctly unpacks LoopOutput.verdict before constructing CartoonConcept.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert concept.image_prompt == _VALID_IMAGE_PROMPT
@@ -327,7 +327,7 @@ def test_satirist_prompt_single_panel_unchanged_without_layout():
 def test_run_multi_panel_populates_concept_panels():
     # When layout.panels > 1 and the verdict is valid JSON, run() must return a
     # CartoonConcept.panels populated so the image generator can assemble the strip.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT_MULTI
         concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
     assert concept.panels is not None
@@ -339,7 +339,7 @@ def test_run_multi_panel_populates_concept_panels():
 def test_run_multi_panel_concept_has_empty_image_prompt():
     # When panels are populated the image_prompt field must be empty — the image
     # generator builds the full prompt from the panels list, not this field.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT_MULTI
         concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
     assert concept.image_prompt == ""
@@ -352,7 +352,7 @@ def test_run_multi_panel_fallback_on_malformed_json(caplog):
         verdict="not valid JSON at all",
         log=ConversationLog(loop_name="Satirist/Co-Satirist"),
     )
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = bad_output
         with caplog.at_level(logging.WARNING, logger="agents.agent_satirist"):
             concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
@@ -375,7 +375,7 @@ def test_run_multi_panel_fallback_on_wrong_panel_count(caplog):
     short_output = LoopOutput(
         verdict=two_panels, log=ConversationLog(loop_name="Satirist/Co-Satirist")
     )
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = short_output
         with caplog.at_level(logging.WARNING, logger="agents.agent_satirist"):
             concept, *_ = run(TOPIC, BRIEF, [], [], layout_override=_LAYOUT_3H)
@@ -385,7 +385,7 @@ def test_run_multi_panel_fallback_on_wrong_panel_count(caplog):
 def test_run_single_panel_unchanged_with_default_layout():
     # run() called without a layout argument must behave exactly as before Stage 9 —
     # returning a CartoonConcept with image_prompt populated and panels=None.
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = _LOOP_OUTPUT
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert concept.panels is None
@@ -458,7 +458,7 @@ def test_parse_verdict_extracts_title_field():
         verdict=_VERDICT_WITH_TITLE,
         log=ConversationLog(loop_name="Satirist/Co-Satirist"),
     )
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = loop_out
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert concept.title == "G7 Nods, AI Thanks Them"
@@ -480,7 +480,7 @@ def test_run_falls_back_to_topic_when_title_missing():
         verdict=_VERDICT_WITHOUT_TITLE,
         log=ConversationLog(loop_name="Satirist/Co-Satirist"),
     )
-    with patch("agents.agent_satirist.ParallelPanel") as MockPanel:
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
         MockPanel.return_value.run.return_value = loop_out
         concept, *_ = run(TOPIC, BRIEF, [], [])
     assert concept.title == TOPIC

@@ -17,8 +17,8 @@ from core.types import (
     StrategyBrief,
 )
 from llm import LLMProvider
+from llm.fair_parallel_panel import FairParallelPanel
 from llm.gemini import get_gemini_client
-from llm.parallel_panel import ParallelPanel
 
 logger = logging.getLogger(__name__)
 
@@ -283,7 +283,7 @@ def run(
         providers=aggregator_providers,
         system_prompt=_CS_AGGREGATOR_SYSTEM,
     )
-    panel = ParallelPanel(
+    panel = FairParallelPanel(
         panelists=panelists,
         aggregator=aggregator,
         panel_name="Cultural Strategist",
@@ -337,7 +337,7 @@ def run(
         cultural_angle[:80],
         len(references),
     )
-    # telemetry is always populated by ParallelPanel; guard for safety
+    # telemetry is always populated by FairParallelPanel; guard for safety
     telemetry = loop_output.telemetry or AgentTelemetry(
         agent_name="Cultural Strategist", duration_seconds=0.0, iterations=0
     )

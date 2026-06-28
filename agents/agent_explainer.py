@@ -2,7 +2,7 @@ import logging
 
 from core.types import ConversationLog, EnrichedBrief, PersonaConfig
 from llm import LLMProvider
-from llm.parallel_panel import ParallelPanel
+from llm.fair_parallel_panel import FairParallelPanel
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ def generate_html(
     panelist_providers: list[list[LLMProvider]],
     aggregator_providers: list[LLMProvider],
 ) -> tuple[str, str]:
-    """Generate in-language and English HTML explanation files via ParallelPanel."""
+    """Generate in-language and English HTML explanation files via FairParallelPanel."""
     # Each slot is an ordered fallback chain; primary model name is the persona name.
     panelists = [
         PersonaConfig(
@@ -100,7 +100,7 @@ def generate_html(
         f"The lang attribute must be set to the appropriate ISO language code for "
         f"{enriched_brief.output_language}."
     )
-    in_lang_panel = ParallelPanel(
+    in_lang_panel = FairParallelPanel(
         panelists=panelists,
         aggregator=aggregator,
         panel_name="explainer-lang",
@@ -119,7 +119,7 @@ def generate_html(
         "with the target audience, and what makes the satirical angle effective. "
         "The lang attribute must be 'en'."
     )
-    english_panel = ParallelPanel(
+    english_panel = FairParallelPanel(
         panelists=panelists,
         aggregator=aggregator,
         panel_name="explainer-en",
