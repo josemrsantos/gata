@@ -1,6 +1,31 @@
 # CHANGELOG
 
 
+## v1.17.0 (2026-06-28)
+
+### Documentation
+
+* docs: mark specs 032, 033, 034 complete in CLAUDE.md
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`2667c7f`](https://github.com/josemrsantos/gata/commit/2667c7f5b1cb5778a602f1854b1eea2b6e61b264))
+
+### Features
+
+* feat: spec 034 — FairParallelPanel multi-round parallel protocol
+
+feat: spec 034 — FairParallelPanel multi-round parallel protocol ([`03d84ce`](https://github.com/josemrsantos/gata/commit/03d84ce6a3c8ef61610eead6f72c18e406ef0195))
+
+* feat: spec 034 — FairParallelPanel multi-round parallel protocol
+
+Replaces ParallelPanel in all agents with FairParallelPanel: panelists
+run concurrently in parallel threads, share peer verdicts between rounds
+(default 2 iterations), and are dropped on timeout or failure so a slow
+provider never blocks the panel. 60s slot budget preserves Spec 032
+cross-provider fallback chains.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`9374bc7`](https://github.com/josemrsantos/gata/commit/9374bc7b17ccb350c8141202d485853a74cdacab))
+
+
 ## v1.16.0 (2026-06-27)
 
 ### Features
