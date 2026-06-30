@@ -1,6 +1,43 @@
 # CHANGELOG
 
 
+## v1.19.0 (2026-06-30)
+
+### Documentation
+
+* docs: mark spec 036 complete in CLAUDE.md
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`4d955fe`](https://github.com/josemrsantos/gata/commit/4d955fe99c0c633b89928e5c92502c3a97e3f7d3))
+
+### Features
+
+* feat: spec 036 — per-provider call timeout via providers.yaml
+
+feat: spec 036 — per-provider call timeout via providers.yaml ([`5376db5`](https://github.com/josemrsantos/gata/commit/5376db5dcdfef48b647b5b862328b8ac0a7c3dec))
+
+* feat: spec 036 — per-provider call timeout via providers.yaml
+
+Add optional `timeout` field (float, seconds) to each provider entry in
+providers.yaml. When set, FairParallelPanel wraps that provider's generate()
+call in a 1-worker ThreadPoolExecutor and abandons it if it exceeds the budget,
+then tries the next provider with its own fresh budget.
+
+When `timeout` is absent (default), the direct-call path is used with zero
+executor overhead — no regression for existing setups.
+
+Changes: ModelSpec.timeout, LLMProvider.timeout (abstract property),
+ClaudeProvider/GeminiProvider/GrokProvider gains timeout arg,
+_build_provider() passes timeout=spec.timeout, _call_persona() reads
+provider.timeout. 7 new tests (3 config-loader, 4 fair-parallel-panel).
+414 tests passing.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`6e97832`](https://github.com/josemrsantos/gata/commit/6e978329a1c1f45c86c2b42eef9d20fd173e5e80))
+
+### Unknown
+
+* Create LICENSE ([`fdc8b03`](https://github.com/josemrsantos/gata/commit/fdc8b03f5b1326891a4ca0657024e6eeecc3c21f))
+
+
 ## v1.18.0 (2026-06-28)
 
 ### Documentation
