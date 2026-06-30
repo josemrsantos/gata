@@ -110,3 +110,9 @@ definitions and import groups are unaffected by this rule.
 RULE 15 - Before pushing anything, make sure the version is up to date.
 
 RULE 16 - if you need secrets run: source set_gata.sh
+
+RULE 17 — Before a spec PR is merged, three documents must be updated as hard gates (not suggestions):
+1. CHANGELOG.md — add a new version entry with a plain-English summary of what changed.
+2. README.md — reflect any new CLI flags, config files, or agent behaviour; update the status table.
+3. docs/architecture.md — update protocol names, add new flags, update any diagrams or examples that reference changed components.
+If any of these is stale, do not merge until it is fixed.

@@ -1,6 +1,30 @@
 # CHANGELOG
 
 
+## v1.19.0 (2026-06-30)
+
+### Features
+
+* feat: spec 036 — per-provider call timeout via providers.yaml
+
+Add optional `timeout` field (float, seconds) to each provider entry in
+providers.yaml. When set, `FairParallelPanel._call_persona()` wraps that
+provider's `generate()` call in a 1-worker `ThreadPoolExecutor`; if the call
+exceeds the budget the provider is abandoned and the next gets its own fresh
+budget. When `timeout` is absent (default), the direct-call path is used —
+zero executor overhead, no regression for existing setups.
+
+- `ModelSpec.timeout: float | None = None` added to `core/types.py`
+- `LLMProvider.timeout` abstract property added to `llm/base.py`
+- `ClaudeProvider`, `GeminiProvider`, `GrokProvider` gain `timeout` constructor arg
+- `_build_provider()` passes `timeout=spec.timeout` in `core/runner.py`
+- `_call_persona()` reads `provider.timeout` to choose direct vs executor path
+- `providers.yaml` updated with commented recommended values per model
+- 7 new tests (3 config-loader, 4 fair-parallel-panel); 414 total passing
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+
 ## v1.18.0 (2026-06-28)
 
 ### Documentation

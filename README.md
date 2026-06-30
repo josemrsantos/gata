@@ -97,6 +97,9 @@ gata "World Cup final: Argentina vs France"
 gata "Tech layoffs hit Silicon Valley again"
 gata "Portugal wins Eurovision"
 
+# Skip the Cultural Strategist — feed the topic straight to the Satirist
+gata "AI is replacing junior developers" --direct
+
 # Also generate HTML explanation pages
 gata "NATO summit in Brussels" --html
 ```
@@ -130,6 +133,12 @@ python pipeline.py --community portuguese-adults --panels 2 --layout vertical
 
 # HTML explanation pages + suppress title banner
 python pipeline.py --community uk-politics --html --no-title
+
+# Skip the Cultural Strategist (direct mode)
+python pipeline.py --topic "AI hype" --audience "developers" --language "English" --direct
+
+# Custom LLM provider chains via providers.yaml
+python pipeline.py --community uk-politics --providers providers.yaml
 ```
 
 ### Multi-panel flags
@@ -139,6 +148,8 @@ python pipeline.py --community uk-politics --html --no-title
 | `--panels` | 1–4 | 1 | Number of panels in the cartoon strip |
 | `--layout` | `horizontal`, `vertical` | `horizontal` | Panel arrangement direction |
 | `--no-title` | — | off | Suppress the title banner overlaid at the top of the image |
+| `--direct` | — | off | Skip the Cultural Strategist; feed topic straight to the Satirist |
+| `--providers` | path | built-in defaults | Path to `providers.yaml` — overrides built-in LLM assignments |
 
 ### Output bundle
 
@@ -169,6 +180,36 @@ audience, output language, tone, seed topics, and optionally a default panel cou
 | `us-startup-crowd` | English | Sarcastic Silicon Valley cynicism |
 
 To add a new community, add an entry to `communities.yaml` — no code changes required.
+
+## LLM provider configuration (`providers.yaml`)
+
+`providers.yaml` controls which LLM models handle each agent role and in what fallback order. It is optional — if absent, Gata uses its built-in defaults (Claude Sonnet, Grok-mini, and Gemini Flash as panelists; Grok-3 as aggregator).
+
+Each panelist slot is an ordered fallback chain. If the primary model fails, the next model in the slot is tried — including across provider boundaries (cross-provider fallback). The aggregator entry works the same way.
+
+```yaml
+panelists:
+  - - provider: claude
+      model: claude-sonnet-4-6
+      timeout: 25.0        # optional: per-call limit in seconds
+    - provider: gemini
+      model: gemini-2.5-flash
+      timeout: 15.0
+  - - provider: grok
+      model: grok-3-mini
+    - provider: gemini
+      model: gemini-2.5-flash
+
+aggregator:
+  - provider: grok
+    model: grok-3
+  - provider: claude
+    model: claude-sonnet-4-6
+```
+
+The optional `timeout` field (Spec 036) gives each provider its own per-call budget. If a provider stalls beyond that limit it is abandoned and the next provider in the chain starts with a fresh budget. Omit `timeout` (the default) to keep unbounded calls.
+
+Load a custom file with `--providers providers.yaml` or place it in `./providers.yaml` (auto-discovered).
 
 ## Comedy configuration (`humor.yaml`)
 
@@ -231,3 +272,8 @@ communication protocol framework.
 | 27 | Cartoon title banner + --no-title flag | ✅ |
 | 29 | Grok as primary decider — Grok-3 aggregator across all ParallelPanel agents | ✅ |
 | 30 | Documentation overhaul — README + architecture doc | ✅ |
+| 32 | LLM provider configurability + cross-provider fallback via `providers.yaml` | ✅ |
+| 33 | Enhanced cost reporting — per-model breakdown in telemetry summary | ✅ |
+| 34 | FairParallelPanel — multi-round parallel protocol with peer sharing | ✅ |
+| 35 | Direct Satirist mode — `--direct` flag bypasses Cultural Strategist | ✅ |
+| 36 | Per-provider call timeout — optional `timeout` field in `providers.yaml` | ✅ |
