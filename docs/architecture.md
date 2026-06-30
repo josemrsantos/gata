@@ -72,8 +72,19 @@ For both entry points, audience inference runs after the topic is known (one Gem
 and the result feeds into the Cultural Strategist alongside the UK audience.
 
 `pipeline.py` additionally supports `--community`, `--audience`, `--language`,
-`--tone`, `--panels`, `--layout`, `--html`, and `--no-title` flags. The `gata` command
-is a thin wrapper that supplies sensible defaults and exposes the most common flags.
+`--tone`, `--panels`, `--layout`, `--html`, `--no-title`, `--direct`, and `--providers`
+flags. The `gata` command is a thin wrapper that supplies sensible defaults and exposes
+the most common flags.
+
+`--direct` skips the Cultural Strategist entirely and builds a minimal `EnrichedBrief`
+directly from the topic and seed brief. This removes one agent's latency and cost when
+the extra cultural enrichment is not needed. Both entry points support `--direct`.
+
+`--providers PATH` loads a `providers.yaml` file that overrides the built-in LLM
+assignments. Each provider slot is an ordered fallback chain — if the primary provider
+fails, the next is tried (cross-provider fallback, Spec 032). An optional `timeout`
+field per provider (Spec 036) sets a per-call budget; if exceeded, the provider is
+abandoned and the next starts with its own fresh budget.
 
 **Example**
 
@@ -154,8 +165,9 @@ _Output_
 ### Cultural Strategist
 
 Negotiates a cultural angle and audience-specific references for the topic. Uses the
-**ParallelPanel** protocol: three independent Framers propose angles; Grok-3 (Resonator)
-aggregates all proposals and picks the sharpest one.
+**FairParallelPanel** protocol: three independent Framers propose angles across two
+exchange rounds (sharing peer verdicts in round 2); Grok-3 (Resonator) aggregates all
+proposals and picks the sharpest one. Skipped entirely when `--direct` is set.
 
 ```mermaid
 flowchart TD
@@ -206,9 +218,9 @@ JOKE TYPE: absurdist comparison
 
 ### Satirist
 
-Generates a cartoon concept from the enriched brief. Uses the **ParallelPanel** protocol:
-three independent Panelists each propose a concept; Grok-3 (Aggregator) picks the
-strongest and wraps it in a `<verdict>` JSON block.
+Generates a cartoon concept from the enriched brief. Uses the **FairParallelPanel**
+protocol: three independent Panelists each propose a concept across two exchange rounds;
+Grok-3 (Aggregator) picks the strongest and wraps it in a `<verdict>` JSON block.
 
 ```mermaid
 flowchart TD
@@ -365,9 +377,9 @@ verdict: APPROVED
 ### Explainer
 
 Produces two HTML explanation pages — one in the target language (for end users) and one
-in English (for operators). Uses **ParallelPanel** for each: three Writers independently
-draft a page; Grok-3 (Editor) picks the best. The same aggregator `PersonaConfig` is
-shared across both panel runs.
+in English (for operators). Uses **FairParallelPanel** for each: three Writers
+independently draft a page across two exchange rounds; Grok-3 (Editor) picks the best.
+The same aggregator `PersonaConfig` is shared across both panel runs.
 
 ```mermaid
 flowchart TD
@@ -518,33 +530,44 @@ class ConversationProtocol(ABC):
 `LoopOutput` carries `verdict` (the final output text), `log` (the full conversation for
 audit), and `telemetry` (timing + token counts).
 
-### ParallelPanel (current)
+### FairParallelPanel (current)
 
-Defined in `llm/parallel_panel.py`. The active protocol for Cultural Strategist,
-Satirist, and Explainer.
+Defined in `llm/fair_parallel_panel.py`. The active protocol for Cultural Strategist,
+Satirist, and Explainer (replaces `ParallelPanel` as of Spec 034).
 
 **How it works:**
 
-1. Each panelist receives the same `initial_input` independently — no panelist sees
-   another's output
-2. Successful panelist outputs are numbered and concatenated into an aggregation message
-3. The aggregator receives all concepts at once and returns the best one via a `PICK: N`
-   label plus its own `<verdict>` block
+1. **Round 1** — all panelists receive the same `initial_input` and respond in parallel
+   threads; no panelist sees another's output
+2. **Round 2–N** — each surviving panelist receives a composite prompt that includes its
+   own round-1 response plus all peers' round-1 verdicts; they run in parallel again
+3. **Aggregation** — the aggregator receives each panelist's *final-round* verdict and
+   returns the best one via a `PICK: N` label plus its own `<verdict>` block
 
 ```
 initial_input
     │
-    ├──► Panelist A ──┐
-    ├──► Panelist B ──┼──► aggregation_message ──► Aggregator ──► LoopOutput
-    └──► Panelist C ──┘
+    ├──► Panelist A (round 1) ──┐  peer verdicts  ┌── Panelist A (round 2) ──┐
+    ├──► Panelist B (round 1) ──┼────────────────►├── Panelist B (round 2) ──┼──► Aggregator ──► LoopOutput
+    └──► Panelist C (round 1) ──┘                 └── Panelist C (round 2) ──┘
 ```
 
 **Key properties:**
-- Panelists run sequentially in code but are logically independent (no shared state)
-- A panelist failure is logged and skipped; the run continues as long as at least one
-  panelist succeeds
-- Aggregator always runs with Grok-3 (constitution §6 amendment, v1.1)
-- Single iteration — no back-and-forth; one round of proposals → one aggregation decision
+- Panelists run in true parallel threads via `concurrent.futures.ThreadPoolExecutor`
+- A panelist that times out (`panelist_timeout=60s` outer budget) or fails is dropped;
+  the run continues as long as at least one panelist survives
+- Default: `iterations=2` (one round of peer sharing before aggregation)
+- Per-provider timeout (Spec 036): each provider in a fallback chain can have its own
+  `timeout` field in `providers.yaml`; if it stalls, the next provider starts fresh
+- Aggregator always runs with Grok-3
+
+### ParallelPanel (legacy)
+
+Defined in `llm/parallel_panel.py`. Superseded by `FairParallelPanel`. Kept in the
+codebase for reference but no longer used by any agent.
+
+Single-round: panelists respond independently (no peer sharing), outputs are
+concatenated, aggregator picks the best. Sequential execution — no parallel threads.
 
 ### DualPersonaLoop (available)
 
@@ -628,8 +651,8 @@ tries the next one in order.
 
 **4. Wire it into an agent**
 
-Replace the `ParallelPanel(...)` or `DualPersonaLoop(...)` construction in the relevant
-agent file with `MyProtocol(...)`. The agent's `run()` function only calls
+Replace the `FairParallelPanel(...)` or `DualPersonaLoop(...)` construction in the
+relevant agent file with `MyProtocol(...)`. The agent's `run()` function only calls
 `protocol.run(initial_input)` and unpacks `LoopOutput`, so swapping protocols requires
 no other changes.
 
@@ -639,7 +662,7 @@ Mock the protocol class in tests, not the individual LLM providers. The pattern 
 throughout the test suite is:
 
 ```python
-with patch("agents.agent_xyz.ParallelPanel") as MockPanel:
+with patch("agents.agent_xyz.FairParallelPanel") as MockPanel:
     MockPanel.return_value.run.return_value = LoopOutput(
         verdict="...", log=ConversationLog(loop_name="xyz")
     )
