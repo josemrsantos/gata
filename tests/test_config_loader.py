@@ -1,8 +1,11 @@
+import textwrap
+
 import pytest
 
 from core.config_loader import (
     load_communities,
     load_humor_config,
+    load_providers_config,
     sanitize_path_segment,
 )
 from core.types import Community, HumorConfig
@@ -517,3 +520,64 @@ def test_load_humor_config_dual_satirist_defaults_to_false(tmp_path):
     p.write_text(_HUMOR_WITHOUT_INCONVENIENCE)
     config = load_humor_config(str(p))
     assert config.critic.dual_satirist is False
+
+
+# ---------------------------------------------------------------------------
+# load_providers_config — timeout field (Spec 036)
+# ---------------------------------------------------------------------------
+
+_PROVIDERS_WITH_TIMEOUT = textwrap.dedent("""\
+    panelists:
+      - - provider: claude
+          model: claude-sonnet-4-6
+          timeout: 25.0
+    aggregator:
+      - provider: grok
+        model: grok-3
+    """)
+
+_PROVIDERS_NO_TIMEOUT = textwrap.dedent("""\
+    panelists:
+      - - provider: claude
+          model: claude-sonnet-4-6
+    aggregator:
+      - provider: grok
+        model: grok-3
+    """)
+
+_PROVIDERS_NEGATIVE_TIMEOUT = textwrap.dedent("""\
+    panelists:
+      - - provider: claude
+          model: claude-sonnet-4-6
+          timeout: -5
+    aggregator:
+      - provider: grok
+        model: grok-3
+    """)
+
+
+def test_providers_timeout_parsed(tmp_path):
+    # A numeric timeout field on a provider entry must be parsed into ModelSpec.timeout
+    # so FairParallelPanel can enforce a per-provider budget from config alone.
+    p = tmp_path / "providers.yaml"
+    p.write_text(_PROVIDERS_WITH_TIMEOUT)
+    config = load_providers_config(str(p))
+    assert config.panelists[0][0].timeout == 25.0
+
+
+def test_providers_timeout_absent_is_none(tmp_path):
+    # A provider entry without a timeout field must yield ModelSpec.timeout of None
+    # so omitting the field preserves today's unbounded behaviour with no regression.
+    p = tmp_path / "providers.yaml"
+    p.write_text(_PROVIDERS_NO_TIMEOUT)
+    config = load_providers_config(str(p))
+    assert config.panelists[0][0].timeout is None
+
+
+def test_providers_timeout_invalid_raises(tmp_path):
+    # A non-positive timeout must raise ValueError to surface misconfiguration early
+    # before any LLM calls are made, giving a clear error rather than silent failure.
+    p = tmp_path / "providers.yaml"
+    p.write_text(_PROVIDERS_NEGATIVE_TIMEOUT)
+    with pytest.raises(ValueError, match="timeout"):
+        load_providers_config(str(p))

@@ -165,7 +165,7 @@ def test_build_provider_claude():
         result = _build_provider(
             ModelSpec(provider="claude", model="claude-sonnet-4-6")
         )
-        MockClaude.assert_called_once_with("claude-sonnet-4-6")
+        MockClaude.assert_called_once_with("claude-sonnet-4-6", timeout=None)
         assert result is instance
 
 
@@ -175,7 +175,7 @@ def test_build_provider_gemini():
         instance = MagicMock()
         MockGemini.return_value = instance
         result = _build_provider(ModelSpec(provider="gemini", model="gemini-2.5-flash"))
-        MockGemini.assert_called_once_with("gemini-2.5-flash")
+        MockGemini.assert_called_once_with("gemini-2.5-flash", timeout=None)
         assert result is instance
 
 
@@ -185,7 +185,7 @@ def test_build_provider_grok():
         instance = MagicMock()
         MockGrok.return_value = instance
         result = _build_provider(ModelSpec(provider="grok", model="grok-3"))
-        MockGrok.assert_called_once_with("grok-3")
+        MockGrok.assert_called_once_with("grok-3", timeout=None)
         assert result is instance
 
 

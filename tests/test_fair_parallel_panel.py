@@ -1,5 +1,6 @@
 import concurrent.futures
 import threading
+import time
 from unittest.mock import patch
 
 from core.types import PersonaConfig, TokenUsage
@@ -355,3 +356,96 @@ def test_aggregator_receives_final_round_responses():
     assert "b-final-r2" in agg_prompt
     assert "a-stale-r1" not in agg_prompt
     assert "b-stale-r1" not in agg_prompt
+
+
+# ---------------------------------------------------------------------------
+# Per-provider timeout (Spec 036)
+# ---------------------------------------------------------------------------
+
+
+class _MockProvider:
+    """Minimal LLMProvider stand-in with controllable timeout and generate behaviour."""
+
+    def __init__(self, result=None, timeout=None, sleep_s=0.0):
+        self._result = result or ("response", _make_usage())
+        self._timeout = timeout
+        self._sleep_s = sleep_s
+
+    @property
+    def model_id(self):
+        return "mock"
+
+    @property
+    def timeout(self):
+        return self._timeout
+
+    def generate(self, system_prompt, messages, max_tokens=2048):
+        if self._sleep_s:
+            time.sleep(self._sleep_s)
+        if isinstance(self._result, BaseException):
+            raise self._result
+        return self._result
+
+
+def _persona_with(*providers):
+    return PersonaConfig(
+        name="p", providers=list(providers), system_prompt="sys", max_tokens=100
+    )
+
+
+def test_per_provider_timeout_none_calls_directly():
+    # When provider.timeout is None, _call_persona must call generate() without an
+    # executor and return its result — preserving current behaviour with no overhead.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    expected = ("direct-resp", _make_usage())
+    provider = _MockProvider(result=expected, timeout=None)
+    persona = _persona_with(provider)
+    panel = FairParallelPanel([persona], _make_aggregator())
+    result = panel._call_persona(persona, [{"role": "user", "content": "q"}])
+    assert result == expected
+
+
+def test_per_provider_timeout_fires_tries_next():
+    # When the first provider exceeds its per-provider timeout the second provider
+    # must be tried and its result returned, fulfilling the fallback guarantee.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    expected = ("fallback-resp", _make_usage())
+    p_a = _MockProvider(result=("slow", _make_usage()), timeout=0.01, sleep_s=0.05)
+    p_b = _MockProvider(result=expected, timeout=0.1)
+    persona = _persona_with(p_a, p_b)
+    panel = FairParallelPanel([persona], _make_aggregator())
+    result = panel._call_persona(persona, [{"role": "user", "content": "q"}])
+    assert result == expected
+
+
+def test_per_provider_timeout_second_gets_full_budget():
+    # The second provider must receive its own full timeout budget regardless of how
+    # long the first provider ran, confirming per-provider isolation not shared budget.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    expected = ("b-ok", _make_usage())
+    # p_a times out after 0.01s; p_b (sleep=0.005s, timeout=0.05s) succeeds only
+    # if it receives a full fresh budget rather than the leftover from p_a.
+    p_a = _MockProvider(result=("slow-a", _make_usage()), timeout=0.01, sleep_s=0.05)
+    p_b = _MockProvider(result=expected, timeout=0.05, sleep_s=0.005)
+    persona = _persona_with(p_a, p_b)
+    panel = FairParallelPanel([persona], _make_aggregator())
+    result = panel._call_persona(persona, [{"role": "user", "content": "q"}])
+    assert result == expected
+
+
+def test_per_provider_timeout_all_timeout_raises():
+    # When every provider in the chain times out RuntimeError must be raised because
+    # there is no result to return and the caller must know the slot is exhausted.
+    import pytest
+
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    p_a = _MockProvider(result=("slow", _make_usage()), timeout=0.01, sleep_s=0.05)
+    p_b = _MockProvider(result=("slow2", _make_usage()), timeout=0.01, sleep_s=0.05)
+    persona = _persona_with(p_a, p_b)
+    panel = FairParallelPanel([persona], _make_aggregator())
+    with pytest.raises(RuntimeError, match="all providers exhausted"):
+        panel._call_persona(persona, [{"role": "user", "content": "q"}])

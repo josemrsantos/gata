@@ -29,11 +29,11 @@ logger = logging.getLogger(__name__)
 def _build_provider(spec: ModelSpec) -> LLMProvider:
     """Instantiate the correct LLMProvider from a ModelSpec."""
     if spec.provider == "claude":
-        return ClaudeProvider(spec.model)
+        return ClaudeProvider(spec.model, timeout=spec.timeout)
     if spec.provider == "gemini":
-        return GeminiProvider(spec.model)
+        return GeminiProvider(spec.model, timeout=spec.timeout)
     if spec.provider == "grok":
-        return GrokProvider(spec.model)
+        return GrokProvider(spec.model, timeout=spec.timeout)
     raise ValueError(f"unknown provider: {spec.provider!r}")
 
 
