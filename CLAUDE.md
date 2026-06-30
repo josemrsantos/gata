@@ -50,6 +50,7 @@ data-model.md, contracts/, tasks.md, quickstart.md)
 | 033 | Enhanced cost reporting — per-model breakdown + disclaimer | ✅ |
 | 034 | FairParallelPanel — multi-round parallel protocol | ✅ |
 | 035 | Direct Satirist mode — --direct flag bypasses Cultural Strategist | ✅ |
+| 036 | Per-provider call timeout — optional timeout field in providers.yaml | ✅ |
 <!-- SPECKIT END -->
 
 LLM REVIEW PROTOCOL — this is a hard stop, not a suggestion. Violating it is not acceptable under any circumstances,
