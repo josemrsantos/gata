@@ -147,6 +147,7 @@ _VALID_PROVIDER_NAMES: frozenset[str] = frozenset({"claude", "gemini", "grok"})
 class ModelSpec:
     provider: str  # "claude" | "gemini" | "grok"
     model: str
+    timeout: float | None = None  # per-call limit in seconds; None = unbounded
 
 
 @dataclass

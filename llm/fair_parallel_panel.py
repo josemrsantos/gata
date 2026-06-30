@@ -50,8 +50,27 @@ class FairParallelPanel(ConversationProtocol):
     ) -> tuple[str, TokenUsage]:
         for provider in persona.providers:
             try:
-                return provider.generate(
-                    persona.system_prompt, messages, max_tokens=persona.max_tokens
+                if provider.timeout is None:
+                    # No per-provider timeout — call directly, no executor overhead.
+                    return provider.generate(
+                        persona.system_prompt, messages, max_tokens=persona.max_tokens
+                    )
+                # Per-provider timeout set — wrap in a 1-worker executor so a stalled
+                # call is abandoned and the next provider gets its own fresh budget.
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+                    future = ex.submit(
+                        provider.generate,
+                        persona.system_prompt,
+                        messages,
+                        max_tokens=persona.max_tokens,
+                    )
+                    return future.result(timeout=provider.timeout)
+            except concurrent.futures.TimeoutError:
+                logger.warning(
+                    "%s: provider %s exceeded %ss — trying next provider",
+                    persona.name,
+                    provider.model_id,
+                    provider.timeout,
                 )
             except Exception as exc:
                 logger.warning(

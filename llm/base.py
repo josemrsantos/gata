@@ -12,6 +12,10 @@ class LLMProvider(ABC):
     @abstractmethod
     def model_id(self) -> str: ...
 
+    @property
+    @abstractmethod
+    def timeout(self) -> float | None: ...
+
     @abstractmethod
     def generate(
         self,

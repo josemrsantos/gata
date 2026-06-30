@@ -42,12 +42,17 @@ def get_gemini_client() -> genai.Client:
 
 
 class GeminiProvider(LLMProvider):
-    def __init__(self, model: str) -> None:
+    def __init__(self, model: str, timeout: float | None = None) -> None:
         self._model = model
+        self._timeout = timeout
 
     @property
     def model_id(self) -> str:
         return self._model
+
+    @property
+    def timeout(self) -> float | None:
+        return self._timeout
 
     def compute_cost(self, input_tokens: int, output_tokens: int) -> float:
         """Return estimated USD cost for this model; unknown models cost 0.0."""

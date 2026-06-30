@@ -170,7 +170,16 @@ def load_providers_config(path: str) -> ProvidersConfig | None:
             )
         if not isinstance(model, str) or not model.strip():
             raise ValueError(f"{path}: {context} model must be a non-blank string")
-        return ModelSpec(provider=provider, model=model)
+        # Parse optional per-provider call timeout; absent means unbounded.
+        timeout_raw = item.get("timeout")
+        if timeout_raw is not None:
+            if not isinstance(timeout_raw, (int, float)) or timeout_raw <= 0:
+                raise ValueError(
+                    f"{path}: {context} timeout must be a positive number,"
+                    f" got {timeout_raw!r}"
+                )
+        timeout = float(timeout_raw) if timeout_raw is not None else None
+        return ModelSpec(provider=provider, model=model, timeout=timeout)
 
     raw_panelists = raw.get("panelists")
     if not isinstance(raw_panelists, list) or not raw_panelists:

@@ -28,12 +28,17 @@ def _get_client() -> openai.OpenAI:
 
 
 class GrokProvider(LLMProvider):
-    def __init__(self, model: str) -> None:
+    def __init__(self, model: str, timeout: float | None = None) -> None:
         self._model = model
+        self._timeout = timeout
 
     @property
     def model_id(self) -> str:
         return self._model
+
+    @property
+    def timeout(self) -> float | None:
+        return self._timeout
 
     def generate(
         self,
