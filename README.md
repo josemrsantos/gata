@@ -150,6 +150,7 @@ python pipeline.py --community uk-politics --providers providers.yaml
 | `--no-title` | — | off | Suppress the title banner overlaid at the top of the image |
 | `--direct` | — | off | Skip the Cultural Strategist; feed topic straight to the Satirist |
 | `--providers` | path | built-in defaults | Path to `providers.yaml` — overrides built-in LLM assignments |
+| `--linkedin-post` | — | off | Generate a LinkedIn article (`linkedin_post.md`) and notification snippet (`linkedin_notification.txt`) in the output bundle |
 
 ### Output bundle
 
@@ -165,6 +166,8 @@ Each run writes a bundle folder containing:
 | `summary.txt` | Per-agent time, iterations, and cost (human-readable) |
 | `explanation.html` | In-language explanation of the joke (`--html` only) |
 | `deep_dive_en.html` | English operator deep-dive (`--html` only) |
+| `linkedin_post.md` | Five-section LinkedIn newsletter article in Gata's voice (`--linkedin-post` only) |
+| `linkedin_notification.txt` | Push-notification snippet for LinkedIn followers (`--linkedin-post` only) |
 
 ## Communities
 
@@ -277,3 +280,4 @@ communication protocol framework.
 | 34 | FairParallelPanel — multi-round parallel protocol with peer sharing | ✅ |
 | 35 | Direct Satirist mode — `--direct` flag bypasses Cultural Strategist | ✅ |
 | 36 | Per-provider call timeout — optional `timeout` field in `providers.yaml` | ✅ |
+| 38 | LinkedIn Newsletter companion post — `--linkedin-post` generates `linkedin_post.md` + `linkedin_notification.txt` | ✅ |

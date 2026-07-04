@@ -92,6 +92,15 @@ def main() -> None:
         metavar="PATH",
         help="path to providers.yaml — overrides built-in LLM/model assignments",
     )
+    parser.add_argument(
+        "--linkedin-post",
+        action="store_true",
+        default=False,
+        help=(
+            "generate a LinkedIn article (linkedin_post.md) and notification snippet"
+            " (linkedin_notification.txt) in the output bundle"
+        ),
+    )
     args = parser.parse_args()
     # Reject an empty --community immediately — blank string is not a valid description
     if args.community is not None and not args.community.strip():
@@ -210,6 +219,7 @@ def main() -> None:
                 show_title=not args.no_title,
                 providers_config=providers_config,
                 skip_cultural_strategist=args.direct,
+                generate_linkedin_post=args.linkedin_post,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -258,6 +268,7 @@ def main() -> None:
                 show_title=not args.no_title,
                 providers_config=providers_config,
                 skip_cultural_strategist=args.direct,
+                generate_linkedin_post=args.linkedin_post,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -346,6 +357,7 @@ def main() -> None:
                 show_title=not args.no_title,
                 providers_config=providers_config,
                 skip_cultural_strategist=args.direct,
+                generate_linkedin_post=args.linkedin_post,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -397,6 +409,7 @@ def main() -> None:
                 show_title=not args.no_title,
                 providers_config=providers_config,
                 skip_cultural_strategist=args.direct,
+                generate_linkedin_post=args.linkedin_post,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)

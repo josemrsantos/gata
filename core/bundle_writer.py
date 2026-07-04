@@ -88,6 +88,7 @@ def write_bundle(
     include_html: bool = False,
     panelist_providers: "list[list[LLMProvider]] | None" = None,
     aggregator_providers: "list[LLMProvider] | None" = None,
+    linkedin_post: "tuple[str, str] | None" = None,
 ) -> str:
     """Create the bundle folder and write all output files. Never raises."""
     bundle_dir = Path(output_path).parent / Path(output_path).stem
@@ -102,6 +103,10 @@ def write_bundle(
     if telemetry is not None:
         _write_text(bundle_dir / "telemetry.json", _serialise_telemetry(telemetry))
         _write_text(bundle_dir / "summary.txt", format_summary(telemetry))
+    if linkedin_post is not None:
+        article_md, notification_txt = linkedin_post
+        _write_text(bundle_dir / "linkedin_post.md", article_md)
+        _write_text(bundle_dir / "linkedin_notification.txt", notification_txt)
     if include_html and enriched_brief is not None and image_prompt is not None:
         # Use providers supplied by caller; fall back to hardcoded defaults if absent.
         if panelist_providers is None or aggregator_providers is None:

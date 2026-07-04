@@ -1,6 +1,32 @@
 # CHANGELOG
 
 
+## v1.20.0 (2026-07-04)
+
+### Features
+
+* feat: spec 038 — LinkedIn Newsletter companion post generator
+
+Add `--linkedin-post` flag to `pipeline.py` (and `core/cli.py`). When set, a new
+`LinkedIn Post` agent generates a fully structured LinkedIn article and a separate
+push-notification snippet after the pipeline completes.
+
+- `agents/agent_linkedin_post.py` — new agent; single `generate_linkedin_post()` call
+  to an LLM (default: Grok-3 aggregator) with five structured response sections
+  (TITLE, MESSAGE, COMMENT, PUNCHLINE, NOTIFICATION) delimited by `===MARKER===` tags.
+- Article assembles as Markdown: Section 1 (H1 title), Section 2 (telemetry caption
+  from real run metrics), Section 3 (`# A Message from Gata 🐾` with generated body
+  + static closing block: repost appeal, comment question, story-idea invite, subscribe
+  link, email), Section 4 (static tech stack + LLM-generated italic punchline).
+- `linkedin_post.md` and `linkedin_notification.txt` written to the output bundle.
+- LLM failure is non-fatal: other bundle artifacts are still written; a WARNING is logged.
+- `pipeline.py` flag wired to all four invocation modes (manual, community-topic, named
+  community, random community).
+- LinkedIn Post agent appears in the telemetry summary with its own timing and cost line.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+
 ## v1.19.0 (2026-06-30)
 
 ### Documentation
