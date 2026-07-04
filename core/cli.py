@@ -71,6 +71,15 @@ def main() -> None:
         action="store_true",
         help="skip the Cultural Strategist and feed the topic straight to the Satirist",
     )
+    parser.add_argument(
+        "--linkedin-post",
+        action="store_true",
+        default=False,
+        help=(
+            "generate a LinkedIn article (linkedin_post.md) and notification snippet"
+            " (linkedin_notification.txt) in the output bundle"
+        ),
+    )
     args = parser.parse_args()
     if not args.topic.strip():
         print("error: topic must not be empty", file=sys.stderr)
@@ -119,6 +128,7 @@ def main() -> None:
                 include_html=args.html,
                 show_title=not args.no_title,
                 skip_cultural_strategist=args.direct,
+                generate_linkedin_post=args.linkedin_post,
             )
             audience_telemetry.append((audience.name, telemetry))
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:

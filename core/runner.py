@@ -6,6 +6,7 @@ from agents import (
     agent_cultural_strategist,
     agent_image_evaluator,
     agent_image_generator,
+    agent_linkedin_post,
     agent_satirist,
 )
 from core import bundle_writer
@@ -68,6 +69,7 @@ def run_pipeline(
     show_title: bool = True,
     providers_config: ProvidersConfig | None = None,
     skip_cultural_strategist: bool = False,
+    generate_linkedin_post: bool = False,
 ) -> RunTelemetry:
     """Run the full pipeline for a single topic and write the output image."""
     # Build provider lists from config when supplied; otherwise wrap hardcoded defaults
@@ -167,6 +169,26 @@ def run_pipeline(
             image_prompt = concept.full_text if has_panels else concept.image_prompt
         else:
             image_prompt = None
+        linkedin_post: tuple[str, str] | None = None
+        # Generate LinkedIn post only when requested and the pipeline produced a brief.
+        _can_generate_post = (
+            generate_linkedin_post
+            and enriched_brief is not None
+            and image_prompt is not None
+        )
+        if _can_generate_post:
+            print("  LinkedIn Post...", flush=True)
+            article_md, notification_txt = agent_linkedin_post.generate_linkedin_post(
+                enriched_brief,
+                image_prompt,
+                topic,
+                telemetry,
+                aggregator_providers,
+            )
+            if article_md:
+                linkedin_post = (article_md, notification_txt)
+            else:
+                logger.warning("linkedin_post: generation failed — files not written")
         bundle_writer.write_bundle(
             output_path,
             agent0_log,
@@ -177,6 +199,7 @@ def run_pipeline(
             include_html=include_html,
             panelist_providers=panelist_providers,
             aggregator_providers=aggregator_providers,
+            linkedin_post=linkedin_post,
         )
         print(bundle_writer.format_summary(telemetry))
     return telemetry

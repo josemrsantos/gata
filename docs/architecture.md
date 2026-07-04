@@ -17,6 +17,7 @@ flowchart LR
     IG[Image Generator]
     IE[Image Evaluator]
     EX[Explainer]
+    LP[LinkedIn Post]
     BW[Bundle Writer]
 
     GT -->|top topic| CS
@@ -29,9 +30,11 @@ flowchart LR
     CS -.->|"--html"| EX
     SAT -.->|"--html"| EX
     EX -.->|HTML pages| BW
+    SAT -.->|"--linkedin-post"| LP
+    LP -.->|".md + .txt"| BW
 ```
 
-Solid arrows are the default path. Dashed arrows run only when `--html` is set.
+Solid arrows are the default path. Dashed arrows run only when the corresponding flag is set.
 The HLD has two entry points into the pipeline (both feeding Cultural Strategist):
 **Gata** (direct topic) and **Trend Scout** (auto-topic). Only one fires per run.
 
@@ -449,6 +452,36 @@ the UK housing market — a second crisis the audience lives daily.</p>
 
 ---
 
+### LinkedIn Post
+
+Generates a launch-ready LinkedIn newsletter article (`linkedin_post.md`) and a
+push-notification snippet (`linkedin_notification.txt`) in Gata's sardonic voice.
+Only runs when `--linkedin-post` is set. Uses the aggregator provider (Grok-3 by
+default) with a single LLM call.
+
+The response is structured with five `===MARKER===`-delimited sections:
+
+| Marker | Content |
+|--------|---------|
+| `TITLE` | Article H1 — satirical, punchy |
+| `MESSAGE` | Body of "A Message from Gata 🐾" — max 4 paragraphs, one bold sentence |
+| `COMMENT` | One reader-engagement question tied to the topic |
+| `PUNCHLINE` | Closing italic line for the tech stack section |
+| `NOTIFICATION` | 2–3 sentence push-notification snippet ending with 🐾 |
+
+The agent assembles the final Markdown: Section 1 (title), Section 2 (telemetry
+caption from real run metrics), Section 3 (Gata message body + static closing block
+with repost appeal, comment question, story-idea invite, subscribe link, email),
+Section 4 (static tech stack body + LLM punchline). The notification goes to its own
+plain-text file.
+
+LLM failure is non-fatal: a WARNING is logged and neither file is written; the rest
+of the bundle is unaffected.
+
+Only runs when `--linkedin-post` is set.
+
+---
+
 ### Bundle Writer
 
 Saves all outputs to disk. Not an LLM agent — pure I/O.
@@ -463,10 +496,12 @@ flowchart LR
     F5["telemetry.json"]
     F6["summary.txt"]
     FH["explanation.html\ndeep_dive_en.html"]
+    FL["linkedin_post.md\nlinkedin_notification.txt"]
 
     IN --> BW
     BW --> F2 & F3 & F4 & F5 & F6
     BW -.->|"--html only"| FH
+    BW -.->|"--linkedin-post only"| FL
 ```
 
 The cartoon PNG is written by **Image Generator** to `output_path` before Bundle Writer

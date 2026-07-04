@@ -1,5 +1,18 @@
 # TODO
 
+## Spec 038 — LinkedIn Newsletter companion post
+
+**Goal:** Add a `--linkedin-post` flag that generates a fully structured LinkedIn
+companion post in Gata's voice after a successful pipeline run, saved as
+`linkedin_post.txt` in the output bundle.
+
+**Reason:** The first Gata newsletter post required a separate hand-crafted companion
+message. Automating this makes every issue launch-ready with no manual writing step.
+
+**Spec:** `specs/038-linkedin-post/spec.md`
+
+---
+
 ## Spec 035 — Direct Satirist mode
 
 Flag (e.g. `--direct`) that bypasses the Cultural Strategist and feeds the user's
