@@ -58,15 +58,15 @@ working directory — one for the inferred audience and one for the UK public.
 1. **Trend Scout** fetches today's top headlines for the community and ranks them by
    satirical potential; only used by `pipeline.py` when `--topic` is not supplied —
    the `gata` command always requires a topic and never invokes Trend Scout
-2. **Cultural Strategist** — three Framers (Claude, Grok-mini, Gemini) independently
-   propose a cultural angle; Grok-3 (Resonator) aggregates and picks the sharpest one
-3. **Satirist** — three Panelists (Claude, Grok-mini, Gemini) independently generate a
-   cartoon concept; Grok-3 (Aggregator) picks the strongest concept
+2. **Cultural Strategist** — three Framers (Claude, Grok-build, Gemini) independently
+   propose a cultural angle; Grok-4.3 (Resonator) aggregates and picks the sharpest one
+3. **Satirist** — three Panelists (Claude, Grok-build, Gemini) independently generate a
+   cartoon concept; Grok-4.3 (Aggregator) picks the strongest concept
 4. **Image Generator** renders the approved concept into a PNG via a fallback chain of
    Gemini image models; overlays the Satirist-authored title as a dark banner at the top
    (suppressed with `--no-title`)
-5. **Explainer** (opt-in via `--html`) — three Writers (Claude, Grok-mini, Gemini)
-   independently draft an HTML explanation page; Grok-3 (Editor) picks the best one;
+5. **Explainer** (opt-in via `--html`) — three Writers (Claude, Grok-build, Gemini)
+   independently draft an HTML explanation page; Grok-4.3 (Editor) picks the best one;
    runs twice — once in the target language, once in English
 6. **Bundle Writer** saves the full output package: image, conversation logs, prompt
    card, telemetry, and summary
@@ -76,11 +76,11 @@ working directory — one for the inferred audience and one for the UK public.
 | Agent | Sub-agents | LLMs | What it does |
 |---|---|---|---|
 | **Trend Scout** | — | Gemini | Fetches today's headlines from NewsAPI.org and picks the top 3 ranked by satirical potential for the community |
-| **Cultural Strategist** | Framer ×3, Resonator | Claude · Grok-mini · Gemini (Framers) · Grok-3 (Resonator/aggregator) | Three Framers independently propose a cultural angle and audience references; Resonator picks the sharpest one |
-| **Satirist** | Panelist ×3, Aggregator | Claude · Grok-mini · Gemini (panelists) · Grok-3 (aggregator) | Three panelists independently generate a cartoon concept; Aggregator picks the strongest |
+| **Cultural Strategist** | Framer ×3, Resonator | Claude · Grok-build (grok-build-0.1) · Gemini (Framers) · Grok-4.3 (Resonator/aggregator) | Three Framers independently propose a cultural angle and audience references; Resonator picks the sharpest one |
+| **Satirist** | Panelist ×3, Aggregator | Claude · Grok-build (grok-build-0.1) · Gemini (panelists) · Grok-4.3 (aggregator) | Three panelists independently generate a cartoon concept; Aggregator picks the strongest |
 | **Image Generator** | — | Gemini image models | Renders the approved image prompt into a PNG; tries up to 5 models in order before failing |
 | **Image Evaluator** | — | Gemini vision models | Checks for LLM rendering artifacts and rates comedy; triggers regeneration up to 2 times on rejection |
-| **Explainer** | Writer ×3, Editor | Claude · Grok-mini · Gemini (writers) · Grok-3 (editor/aggregator) | Three Writers independently draft HTML explanation pages (in-language + English); Editor picks the best per run |
+| **Explainer** | Writer ×3, Editor | Claude · Grok-build (grok-build-0.1) · Gemini (writers) · Grok-4.3 (editor/aggregator) | Three Writers independently draft HTML explanation pages (in-language + English); Editor picks the best per run |
 
 ## `gata` command
 
@@ -186,7 +186,7 @@ To add a new community, add an entry to `communities.yaml` — no code changes r
 
 ## LLM provider configuration (`providers.yaml`)
 
-`providers.yaml` controls which LLM models handle each agent role and in what fallback order. It is optional — if absent, Gata uses its built-in defaults (Claude Sonnet, Grok-mini, and Gemini Flash as panelists; Grok-3 as aggregator).
+`providers.yaml` controls which LLM models handle each agent role and in what fallback order. It is optional — if absent, Gata uses its built-in defaults (Claude Sonnet, Grok grok-build-0.1, and Gemini Flash as panelists; Grok grok-4.3 as aggregator).
 
 Each panelist slot is an ordered fallback chain. If the primary model fails, the next model in the slot is tried — including across provider boundaries (cross-provider fallback). The aggregator entry works the same way.
 
@@ -199,13 +199,13 @@ panelists:
       model: gemini-2.5-flash
       timeout: 15.0
   - - provider: grok
-      model: grok-3-mini
+      model: grok-build-0.1
     - provider: gemini
       model: gemini-2.5-flash
 
 aggregator:
   - provider: grok
-    model: grok-3
+    model: grok-4.3
   - provider: claude
     model: claude-sonnet-4-6
 ```

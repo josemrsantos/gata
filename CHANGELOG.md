@@ -1,6 +1,51 @@
 # CHANGELOG
 
 
+## v1.21.0 (2026-07-27)
+
+### Fixes & Model Currency
+
+* fix: spec 039 — provider pricing & model currency refresh
+
+A web check against each provider's official pricing (2026-07-27) found stale
+cost-table entries and two dead/retired default models baked into the code since
+each provider was integrated.
+
+- **Cost-table corrections** — `llm/claude.py`: Claude Opus 4.7/4.8 were still
+  priced at the old $15.00/$75.00 rate (real rate: $5.00/$25.00); Claude Haiku 4.5
+  was still priced at the old Haiku 3.5 rate of $0.80/$4.00 (real rate:
+  $1.00/$5.00). `llm/gemini.py`: `gemini-3.1-flash-lite` and
+  `gemini-3.1-pro-preview` were priced at launch-promo/copied rates, corrected to
+  $0.25/$1.50 and $2.00/$12.00 respectively. Added `claude-sonnet-5`,
+  `claude-opus-5` entries so telemetry doesn't silently report $0.00 if
+  `providers.yaml` is pointed at them.
+- **Dead model removed** — `gemini-2.0-flash` was shut down by Google on
+  2026-06-01; it was still the last-resort entry in `core/runner.py`'s
+  `_GEMINI_PRO_CHAIN` and `agents/agent_cultural_strategist.py`'s
+  `_INFERENCE_MODELS`, meaning that fallback path hard-failed instead of
+  degrading gracefully. Replaced with `gemini-2.5-flash-lite`.
+- **Retired Grok defaults swapped** — a live API check confirmed `grok-3` (retired
+  2026-05-15) and `grok-3-mini` both now silently redirect to and bill as
+  `grok-4.3` — the *same* model, which had quietly collapsed the
+  aggregator-vs-panelist distinction introduced in Spec 029. Default aggregator
+  moved to `grok-4.3`; default panelist moved to `grok-build-0.1` (the cheapest
+  genuinely-live Grok model) to restore that distinction. Updated in
+  `providers.yaml`, `core/runner.py` (`_PARALLEL_PANELISTS`, `_GROK_AGGREGATOR`),
+  and `core/bundle_writer.py`. The retired slugs (`grok-3`, `grok-3-mini`,
+  `grok-3-fast`, `grok-3-mini-fast`) remain in `llm/grok.py`'s `_COST_PER_M` as
+  priced aliases at the `grok-4.3` rate they now actually bill, so a leftover
+  custom `providers.yaml` entry still gets a correct cost instead of a silent
+  $0.00.
+- **Constitution amended to v1.1** — §1 and §6 named `grok-3`/`grok-3-mini` by
+  string as the SDK/model rule; updated to `grok-4.3`/`grok-build-0.1` per the
+  Amendment Procedure.
+- New test coverage: `tests/test_claude_provider.py`, `tests/test_gemini_provider.py`
+  (cost-table parity with `tests/test_grok_provider.py`, previously the only
+  provider with dedicated pricing tests).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+
+
 ## v1.20.0 (2026-07-04)
 
 ### Features

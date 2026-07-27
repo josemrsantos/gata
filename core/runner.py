@@ -47,14 +47,14 @@ _CLAUDE_CHAIN = [
 _GEMINI_PRO_CHAIN = [
     GeminiProvider("gemini-2.5-pro"),
     GeminiProvider("gemini-2.5-flash"),
-    GeminiProvider("gemini-2.0-flash"),
+    GeminiProvider("gemini-2.5-flash-lite"),
 ]
 _PARALLEL_PANELISTS = [
     ClaudeProvider("claude-sonnet-4-6"),
-    GrokProvider("grok-3-mini"),
+    GrokProvider("grok-build-0.1"),
     GeminiProvider("gemini-2.5-flash"),
 ]
-_GROK_AGGREGATOR = [GrokProvider("grok-3")]
+_GROK_AGGREGATOR = [GrokProvider("grok-4.3")]
 _GEMINI_EVAL_CHAIN = _GEMINI_PRO_CHAIN  # same model priority as evaluator chain
 
 

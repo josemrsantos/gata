@@ -114,10 +114,10 @@ def write_bundle(
 
             panelist_providers = [
                 [ClaudeProvider("claude-sonnet-4-6")],
-                [GrokProvider("grok-3-mini")],
+                [GrokProvider("grok-build-0.1")],
                 [GeminiProvider("gemini-2.5-flash")],
             ]
-            aggregator_providers = [GrokProvider("grok-3")]
+            aggregator_providers = [GrokProvider("grok-4.3")]
         try:
             in_lang_html, english_html = agent_explainer.generate_html(
                 enriched_brief,

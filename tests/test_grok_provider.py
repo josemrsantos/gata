@@ -131,23 +131,48 @@ def test_generate_raises_runtime_error_on_none_content():
 
 
 def test_generate_computes_correct_cost_for_grok3():
-    # generate() must compute cost_usd using grok-3 rates ($3.00/$15.00 per million).
+    # grok-3 is retired and confirmed (live API check, spec 039) to silently redirect
+    # to and bill as grok-4.3 ($1.25/$2.50 per million) — cost_usd must reflect that
+    # real billed rate, not the old standalone grok-3 rate.
     provider = GrokProvider("grok-3")
     fake_resp = _make_response("x", in_tok=1_000_000, out_tok=1_000_000)
     with patch("llm.grok._get_client") as mock_client_fn:
         mock_client_fn.return_value.chat.completions.create.return_value = fake_resp
         _, usage = provider.generate("s", [{"role": "user", "content": "q"}])
-    assert abs(usage.cost_usd - 18.00) < 0.001  # $3 input + $15 output
+    assert abs(usage.cost_usd - 3.75) < 0.001  # $1.25 input + $2.50 output
 
 
 def test_generate_computes_correct_cost_for_grok3_mini():
-    # generate() must use grok-3-mini rates ($0.30/$0.50 per million) for cost_usd.
+    # grok-3-mini is also confirmed (live API check, spec 039) to silently redirect
+    # to and bill as grok-4.3 — same rate and same reasoning as grok-3 above.
     provider = GrokProvider("grok-3-mini")
     fake_resp = _make_response("x", in_tok=1_000_000, out_tok=1_000_000)
     with patch("llm.grok._get_client") as mock_client_fn:
         mock_client_fn.return_value.chat.completions.create.return_value = fake_resp
         _, usage = provider.generate("s", [{"role": "user", "content": "q"}])
-    assert abs(usage.cost_usd - 0.80) < 0.001  # $0.30 input + $0.50 output
+    assert abs(usage.cost_usd - 3.75) < 0.001  # $1.25 input + $2.50 output
+
+
+def test_generate_computes_correct_cost_for_grok4_3():
+    # grok-4.3 is a genuinely live model (confirmed, does not redirect) — its own
+    # entry in _COST_PER_M must carry its real rate ($1.25/$2.50 per million).
+    provider = GrokProvider("grok-4.3")
+    fake_resp = _make_response("x", in_tok=1_000_000, out_tok=1_000_000)
+    with patch("llm.grok._get_client") as mock_client_fn:
+        mock_client_fn.return_value.chat.completions.create.return_value = fake_resp
+        _, usage = provider.generate("s", [{"role": "user", "content": "q"}])
+    assert abs(usage.cost_usd - 3.75) < 0.001  # $1.25 input + $2.50 output
+
+
+def test_generate_computes_correct_cost_for_grok_build_0_1():
+    # grok-build-0.1 is the cheapest genuinely-live Grok model (confirmed, does not
+    # redirect) — used as the new default panelist; rate is $1.00/$2.00 per million.
+    provider = GrokProvider("grok-build-0.1")
+    fake_resp = _make_response("x", in_tok=1_000_000, out_tok=1_000_000)
+    with patch("llm.grok._get_client") as mock_client_fn:
+        mock_client_fn.return_value.chat.completions.create.return_value = fake_resp
+        _, usage = provider.generate("s", [{"role": "user", "content": "q"}])
+    assert abs(usage.cost_usd - 3.00) < 0.001  # $1.00 input + $2.00 output
 
 
 def test_generate_cost_defaults_to_zero_for_unknown_model():
@@ -166,9 +191,27 @@ def test_generate_cost_defaults_to_zero_for_unknown_model():
 
 
 def test_cost_table_covers_all_expected_models():
-    # _COST_PER_M must include entries for all four grok-3 model variants.
-    expected = {"grok-3", "grok-3-mini", "grok-3-fast", "grok-3-mini-fast"}
+    # _COST_PER_M must include the three genuinely-live models (spec 039) plus the
+    # four retired grok-3 variants, kept as priced aliases at the grok-4.3 rate they
+    # now actually bill, so a leftover custom providers.yaml still gets a real cost.
+    expected = {
+        "grok-4.5",
+        "grok-4.3",
+        "grok-build-0.1",
+        "grok-3",
+        "grok-3-mini",
+        "grok-3-fast",
+        "grok-3-mini-fast",
+    }
     assert expected.issubset(_COST_PER_M.keys())
+
+
+def test_cost_table_retired_grok3_variants_priced_at_grok4_3_rate():
+    # All four retired grok-3-family slugs are confirmed (live API check, spec 039)
+    # to redirect to and bill as grok-4.3 — their table entries must match that rate
+    # exactly, not their old individual (and now wrong) standalone rates.
+    for model in ("grok-3", "grok-3-mini", "grok-3-fast", "grok-3-mini-fast"):
+        assert _COST_PER_M[model] == (1.25, 2.50)
 
 
 # ---------------------------------------------------------------------------

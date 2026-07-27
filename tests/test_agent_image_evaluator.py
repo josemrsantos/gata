@@ -69,7 +69,7 @@ _NOT_FUNNY_JSON = {
     "verdict": "REJECTED",
 }
 
-_DEFAULT_MODELS = ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"]
+_DEFAULT_MODELS = ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"]
 
 
 def _make_response(json_dict: dict, usage_metadata=None) -> MagicMock:
@@ -96,7 +96,7 @@ def _make_providers(response=None, *, side_effect=None):
     return [
         _make_provider("gemini-2.5-pro", response, side_effect=side_effect),
         _make_provider("gemini-2.5-flash"),
-        _make_provider("gemini-2.0-flash"),
+        _make_provider("gemini-2.5-flash-lite"),
     ]
 
 

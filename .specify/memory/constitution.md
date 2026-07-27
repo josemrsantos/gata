@@ -1,9 +1,15 @@
 # Gata Newsroom — Project Constitution
 
-**Version**: 1.0
+**Version**: 1.1
 **Ratified**: 2026-06-22
 **Ratified by**: Jose Santos (project lead)
 **Status**: Active
+
+**Amendment log**:
+- v1.1 (2026-07-27) — Spec 039: Grok default models updated from `grok-3` /
+  `grok-3-mini` (confirmed retired, silently redirecting to and billing as
+  `grok-4.3`) to `grok-4.3` (aggregator) / `grok-build-0.1` (panelist). §1 and §6
+  updated.
 
 ---
 
@@ -38,7 +44,7 @@ the plan's Complexity Tracking table and explicitly accepted by the project lead
 - Gemini text models: `gemini-2.5-flash` (primary for most agents);
   `gemini-2.5-pro` for evaluator tasks
 - Grok SDK: `from openai import OpenAI` with `base_url="https://api.x.ai/v1"`;
-  primary model `grok-3`
+  primary model `grok-4.3`
 - No other LLM providers or SDKs without a constitution amendment
 
 ### §2 — Image Output Rule
@@ -110,14 +116,15 @@ The Satirist's `<verdict>` block contains valid JSON with this schema:
 Iteration rules:
 
 - Maximum 5 iterations per Satirist/Co-Satirist exchange
-- Grok (`grok-3`) is the aggregator/decider across all `ParallelPanel` agents.
-  Grok-3-mini participates as panelist alongside Claude and Gemini. The Final Say
-  Protocol (acknowledge → override rationale → synthesis) is expressed in Grok's
-  aggregator prompt rather than in the DualPersonaLoop.
+- Grok (`grok-4.3`) is the aggregator/decider across all `ParallelPanel` agents.
+  Grok's `grok-build-0.1` participates as panelist alongside Claude and Gemini, kept
+  deliberately distinct from the aggregator model. The Final Say Protocol
+  (acknowledge → override rationale → synthesis) is expressed in Grok's aggregator
+  prompt rather than in the DualPersonaLoop.
 - Gemini (as Co-Satirist or critic) cannot force rejection past iteration 5
-- The ParallelPanel topology (Claude + Grok-mini + Gemini as independent panelists;
-  Grok-3 as aggregator) is the current implementation for Satirist, Cultural
-  Strategist, and Explainer agents
+- The ParallelPanel topology (Claude + grok-build-0.1 + Gemini as independent
+  panelists; grok-4.3 as aggregator) is the current implementation for Satirist,
+  Cultural Strategist, and Explainer agents
 
 ### §7 — Language Rule
 
