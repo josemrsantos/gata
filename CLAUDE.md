@@ -15,7 +15,7 @@ data-model.md, contracts/, tasks.md, quickstart.md)
 
 **Active stage**: 030 — documentation overhaul. See TODO.md for next items.
 
-## Completed Stages (as of 2026-06-23)
+## Completed Stages (as of 2026-07-27)
 
 | Spec | Name                                                    | Status |
 |------|---------------------------------------------------------|--------|
@@ -51,6 +51,7 @@ data-model.md, contracts/, tasks.md, quickstart.md)
 | 034 | FairParallelPanel — multi-round parallel protocol | ✅ |
 | 035 | Direct Satirist mode — --direct flag bypasses Cultural Strategist | ✅ |
 | 036 | Per-provider call timeout — optional timeout field in providers.yaml | ✅ |
+| 039 | Provider pricing & model currency refresh — corrected cost tables, replaced retired/dead default models (grok-3→grok-4.3, grok-3-mini→grok-build-0.1, gemini-2.0-flash→gemini-2.5-flash-lite) | ✅ |
 <!-- SPECKIT END -->
 
 LLM REVIEW PROTOCOL — this is a hard stop, not a suggestion. Violating it is not acceptable under any circumstances,
