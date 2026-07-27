@@ -7,10 +7,12 @@ from llm.base import LLMProvider
 
 _COST_PER_M: dict[str, tuple[float, float]] = {
     "claude-sonnet-4-6": (3.00, 15.00),
-    "claude-opus-4-8": (15.00, 75.00),
-    "claude-opus-4-7": (15.00, 75.00),
     "claude-sonnet-4-5": (3.00, 15.00),
-    "claude-haiku-4-5-20251001": (0.80, 4.00),
+    "claude-sonnet-5": (3.00, 15.00),
+    "claude-opus-4-8": (5.00, 25.00),
+    "claude-opus-4-7": (5.00, 25.00),
+    "claude-opus-5": (5.00, 25.00),
+    "claude-haiku-4-5-20251001": (1.00, 5.00),
 }
 
 _client: anthropic.Anthropic | None = None

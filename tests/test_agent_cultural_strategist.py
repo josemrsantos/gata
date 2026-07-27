@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from agents.agent_cultural_strategist import run
+from agents.agent_cultural_strategist import _INFERENCE_MODELS, run
 from core.types import ConversationLog, EnrichedBrief, LoopOutput, StrategyBrief
 
 
@@ -12,6 +12,12 @@ def _mock_infer_mood():
     # infer_mood() makes live Gemini calls; patch it out so unit tests stay offline.
     with patch("agents.agent_cultural_strategist.infer_mood", return_value=None):
         yield
+
+
+def test_inference_models_excludes_dead_gemini_2_0_flash():
+    # gemini-2.0-flash was shut down by Google on 2026-06-01 — it must not remain
+    # in the audience-inference fallback chain, or that fallback hard-fails.
+    assert "gemini-2.0-flash" not in _INFERENCE_MODELS
 
 
 _SEED = StrategyBrief(

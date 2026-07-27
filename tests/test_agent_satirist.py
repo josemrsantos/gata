@@ -498,28 +498,46 @@ def test_satirist_prompt_includes_title_instruction():
 # ---------------------------------------------------------------------------
 
 
-def test_runner_parallel_panelists_uses_grok_mini():
-    # _PARALLEL_PANELISTS must use grok-3-mini so Grok participates as a panelist
-    # without also being the sole proposer evaluated by the grok-3 aggregator.
+def test_runner_parallel_panelists_uses_grok_build():
+    # _PARALLEL_PANELISTS must use grok-build-0.1 so Grok participates as a panelist
+    # without also being the sole proposer evaluated by the grok-4.3 aggregator.
+    # (grok-3-mini was confirmed retired — spec 039 — and now silently redirects to
+    # grok-4.3, the same model the aggregator uses, which would defeat this test's
+    # whole premise if left unchanged.)
     from core.runner import _PARALLEL_PANELISTS
 
     model_ids = [p.model_id for p in _PARALLEL_PANELISTS]
-    assert "grok-3-mini" in model_ids
+    assert "grok-build-0.1" in model_ids
 
 
-def test_runner_parallel_panelists_excludes_grok3():
-    # grok-3 must not appear in _PARALLEL_PANELISTS — it is reserved for the
+def test_runner_parallel_panelists_excludes_grok4_3():
+    # grok-4.3 must not appear in _PARALLEL_PANELISTS — it is reserved for the
     # aggregator role; including it as a panelist would conflate judge and proposer.
     from core.runner import _PARALLEL_PANELISTS
 
     model_ids = [p.model_id for p in _PARALLEL_PANELISTS]
-    assert "grok-3" not in model_ids
+    assert "grok-4.3" not in model_ids
 
 
-def test_runner_grok_aggregator_constant_uses_grok3():
-    # _GROK_AGGREGATOR must exist and contain grok-3 so all ParallelPanel agents
-    # can reference a single authoritative aggregator constant from the runner.
+def test_runner_grok_aggregator_constant_uses_grok4_3():
+    # _GROK_AGGREGATOR must exist and contain grok-4.3 (spec 039: grok-3 is
+    # confirmed retired and redirects here) so all ParallelPanel agents can
+    # reference a single authoritative aggregator constant from the runner.
     from core.runner import _GROK_AGGREGATOR
 
     model_ids = [p.model_id for p in _GROK_AGGREGATOR]
-    assert "grok-3" in model_ids
+    assert "grok-4.3" in model_ids
+
+
+# ---------------------------------------------------------------------------
+# Stage 039 — dead model removal (gemini-2.0-flash shut down 2026-06-01)
+# ---------------------------------------------------------------------------
+
+
+def test_runner_gemini_pro_chain_excludes_dead_gemini_2_0_flash():
+    # gemini-2.0-flash was shut down by Google on 2026-06-01 — it must not remain
+    # as the Gemini fallback chain's last resort, or that fallback hard-fails.
+    from core.runner import _GEMINI_PRO_CHAIN
+
+    model_ids = [p.model_id for p in _GEMINI_PRO_CHAIN]
+    assert "gemini-2.0-flash" not in model_ids

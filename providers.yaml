@@ -14,8 +14,8 @@
 #   Omit `timeout` (as below) to keep the current unbounded behaviour.
 #   Recommended starting values based on observed latencies:
 #     claude-sonnet-4-6:  timeout: 25.0
-#     grok-3:             timeout: 20.0
-#     grok-3-mini:        timeout: 12.0
+#     grok-4.3:           timeout: 20.0
+#     grok-build-0.1:     timeout: 12.0
 #     gemini-2.5-flash:   timeout: 15.0
 #     gemini-2.5-pro:     timeout: 30.0
 
@@ -25,9 +25,9 @@ panelists:
     - provider: gemini
       model: gemini-2.5-flash
     - provider: grok
-      model: grok-3-mini
+      model: grok-build-0.1
   - - provider: grok
-      model: grok-3-mini
+      model: grok-build-0.1
     - provider: gemini
       model: gemini-2.5-flash
     - provider: claude
@@ -35,13 +35,13 @@ panelists:
   - - provider: gemini
       model: gemini-2.5-flash
     - provider: grok
-      model: grok-3-mini
+      model: grok-build-0.1
     - provider: claude
       model: claude-haiku-4-5-20251001
 
 aggregator:
   - provider: grok
-    model: grok-3
+    model: grok-4.3
   - provider: claude
     model: claude-sonnet-4-6
   - provider: gemini

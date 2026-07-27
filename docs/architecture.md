@@ -169,16 +169,16 @@ _Output_
 
 Negotiates a cultural angle and audience-specific references for the topic. Uses the
 **FairParallelPanel** protocol: three independent Framers propose angles across two
-exchange rounds (sharing peer verdicts in round 2); Grok-3 (Resonator) aggregates all
+exchange rounds (sharing peer verdicts in round 2); Grok-4.3 (Resonator) aggregates all
 proposals and picks the sharpest one. Skipped entirely when `--direct` is set.
 
 ```mermaid
 flowchart TD
     IN["topic + strategy brief"]
     F1["Framer — Claude\nclaude-sonnet-4-6"]
-    F2["Framer — Grok\ngrok-3-mini"]
+    F2["Framer — Grok\ngrok-build-0.1"]
     F3["Framer — Gemini\ngemini-2.5-flash"]
-    RES["Resonator — Grok-3\naggregator"]
+    RES["Resonator — Grok-4.3\naggregator"]
     OUT["EnrichedBrief\n(cultural angle + references)"]
 
     IN --> F1 & F2 & F3
@@ -223,15 +223,15 @@ JOKE TYPE: absurdist comparison
 
 Generates a cartoon concept from the enriched brief. Uses the **FairParallelPanel**
 protocol: three independent Panelists each propose a concept across two exchange rounds;
-Grok-3 (Aggregator) picks the strongest and wraps it in a `<verdict>` JSON block.
+Grok-4.3 (Aggregator) picks the strongest and wraps it in a `<verdict>` JSON block.
 
 ```mermaid
 flowchart TD
     IN["EnrichedBrief + topic"]
     P1["Panelist — Claude\nclaude-sonnet-4-6"]
-    P2["Panelist — Grok\ngrok-3-mini"]
+    P2["Panelist — Grok\ngrok-build-0.1"]
     P3["Panelist — Gemini\ngemini-2.5-flash"]
-    AGG["Aggregator — Grok-3\npicks strongest concept"]
+    AGG["Aggregator — Grok-4.3\npicks strongest concept"]
     OUT["cartoon concept JSON\n(panels, layout, title, scenes)"]
 
     IN --> P1 & P2 & P3
@@ -381,7 +381,7 @@ verdict: APPROVED
 
 Produces two HTML explanation pages — one in the target language (for end users) and one
 in English (for operators). Uses **FairParallelPanel** for each: three Writers
-independently draft a page across two exchange rounds; Grok-3 (Editor) picks the best.
+independently draft a page across two exchange rounds; Grok-4.3 (Editor) picks the best.
 The same aggregator `PersonaConfig` is shared across both panel runs.
 
 ```mermaid
@@ -390,9 +390,9 @@ flowchart TD
 
     subgraph "Run 1 — in-language"
         W1a["Writer — Claude"]
-        W2a["Writer — Grok-mini"]
+        W2a["Writer — Grok-build"]
         W3a["Writer — Gemini"]
-        ED1["Editor — Grok-3"]
+        ED1["Editor — Grok-4.3"]
         IL["in-language HTML"]
         IN --> W1a & W2a & W3a
         W1a & W2a & W3a --> ED1 --> IL
@@ -400,9 +400,9 @@ flowchart TD
 
     subgraph "Run 2 — English"
         W1b["Writer — Claude"]
-        W2b["Writer — Grok-mini"]
+        W2b["Writer — Grok-build"]
         W3b["Writer — Gemini"]
-        ED2["Editor — Grok-3"]
+        ED2["Editor — Grok-4.3"]
         EN["English HTML"]
         IN --> W1b & W2b & W3b
         W1b & W2b & W3b --> ED2 --> EN
@@ -456,7 +456,7 @@ the UK housing market — a second crisis the audience lives daily.</p>
 
 Generates a launch-ready LinkedIn newsletter article (`linkedin_post.md`) and a
 push-notification snippet (`linkedin_notification.txt`) in Gata's sardonic voice.
-Only runs when `--linkedin-post` is set. Uses the aggregator provider (Grok-3 by
+Only runs when `--linkedin-post` is set. Uses the aggregator provider (Grok-4.3 by
 default) with a single LLM call.
 
 The response is structured with five `===MARKER===`-delimited sections:
@@ -594,7 +594,7 @@ initial_input
 - Default: `iterations=2` (one round of peer sharing before aggregation)
 - Per-provider timeout (Spec 036): each provider in a fallback chain can have its own
   `timeout` field in `providers.yaml`; if it stalls, the next provider starts fresh
-- Aggregator always runs with Grok-3
+- Aggregator always runs with Grok-4.3
 
 ### ParallelPanel (legacy)
 
