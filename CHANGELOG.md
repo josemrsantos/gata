@@ -48,35 +48,59 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 
 ## v1.20.0 (2026-07-04)
 
+### Documentation
+
+* docs: sync CHANGELOG, README, architecture + add RULE 17
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`0cab587`](https://github.com/josemrsantos/gata/commit/0cab58772feb51de50e88b25643b50e10328daff))
+
+* docs: sync CHANGELOG, README, architecture + add RULE 17
+
+CHANGELOG: add v1.19.0 entry for spec 036 (per-provider timeout).
+
+README:
+- gata CLI: add --direct example
+- pipeline.py: add --direct and --providers examples; expand flags table
+- Add providers.yaml section (cross-provider fallback, timeout field)
+- Status table: add specs 032–036
+
+docs/architecture.md:
+- Cultural Strategist, Satirist, Explainer: ParallelPanel → FairParallelPanel
+- Protocol section: rename "ParallelPanel (current)" to "FairParallelPanel (current)";
+  add peer-sharing round diagram, per-provider timeout note, parallel threads note;
+  demote ParallelPanel to "legacy" with one-line description
+- Entry points: add --direct and --providers flag descriptions
+- Mock example: update patch target to FairParallelPanel
+
+CLAUDE.md: add RULE 17 — CHANGELOG, README, and docs/architecture.md are
+hard gates before any spec PR merges, not optional checks.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`a44570c`](https://github.com/josemrsantos/gata/commit/a44570ce174c1a6d0de8a43c0e05703d0e3ae8ec))
+
 ### Features
 
-* feat: spec 038 — LinkedIn Newsletter companion post generator
+* feat: spec 038 — LinkedIn Newsletter companion post via --linkedin-post (#15)
 
-Add `--linkedin-post` flag to `pipeline.py` (and `core/cli.py`). When set, a new
-`LinkedIn Post` agent generates a fully structured LinkedIn article and a separate
-push-notification snippet after the pipeline completes.
+Add --linkedin-post flag to pipeline.py (and core/cli.py). When set, a new
+LinkedIn Post agent generates a fully structured five-section Markdown article
+(linkedin_post.md) and a push-notification snippet (linkedin_notification.txt)
+in Gata's sardonic voice, saved to the output bundle after the pipeline completes.
 
-- `agents/agent_linkedin_post.py` — new agent; single `generate_linkedin_post()` call
-  to an LLM (default: Grok-3 aggregator) with five structured response sections
-  (TITLE, MESSAGE, COMMENT, PUNCHLINE, NOTIFICATION) delimited by `===MARKER===` tags.
-- Article assembles as Markdown: Section 1 (H1 title), Section 2 (telemetry caption
-  from real run metrics), Section 3 (`# A Message from Gata 🐾` with generated body
-  + static closing block: repost appeal, comment question, story-idea invite, subscribe
-  link, email), Section 4 (static tech stack + LLM-generated italic punchline).
-- `linkedin_post.md` and `linkedin_notification.txt` written to the output bundle.
-- LLM failure is non-fatal: other bundle artifacts are still written; a WARNING is logged.
-- `pipeline.py` flag wired to all four invocation modes (manual, community-topic, named
-  community, random community).
-- LinkedIn Post agent appears in the telemetry summary with its own timing and cost line.
+The agent calls the aggregator LLM once with five ===MARKER===-delimited sections:
+TITLE, MESSAGE, COMMENT, PUNCHLINE, NOTIFICATION. The article assembles real
+telemetry values into the Section 2 caption and appends a static closing block
+(repost appeal, comment question, story-idea invite, subscribe link, email) so the
+output is launch-ready with no manual editing.
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+LLM failure is non-fatal — other bundle artifacts are unaffected. The LinkedIn Post
+agent appears in the telemetry summary with its own timing and cost line.
+
+Co-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com> ([`74c53a7`](https://github.com/josemrsantos/gata/commit/74c53a72445b902c6c22aa0bb3b7117b713b5d53))
 
 
 ## v1.19.0 (2026-06-30)
 
 ### Documentation
-
-* docs: sync CHANGELOG, README, architecture + add RULE 17
 
 * docs: mark spec 036 complete in CLAUDE.md
 
@@ -86,20 +110,23 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`4d955fe`](https://g
 
 * feat: spec 036 — per-provider call timeout via providers.yaml
 
-Add optional `timeout` field (float, seconds) to each provider entry in
-providers.yaml. When set, `FairParallelPanel._call_persona()` wraps that
-provider's `generate()` call in a 1-worker `ThreadPoolExecutor`; if the call
-exceeds the budget the provider is abandoned and the next gets its own fresh
-budget. When `timeout` is absent (default), the direct-call path is used —
-zero executor overhead, no regression for existing setups.
+feat: spec 036 — per-provider call timeout via providers.yaml ([`5376db5`](https://github.com/josemrsantos/gata/commit/5376db5dcdfef48b647b5b862328b8ac0a7c3dec))
 
-- `ModelSpec.timeout: float | None = None` added to `core/types.py`
-- `LLMProvider.timeout` abstract property added to `llm/base.py`
-- `ClaudeProvider`, `GeminiProvider`, `GrokProvider` gain `timeout` constructor arg
-- `_build_provider()` passes `timeout=spec.timeout` in `core/runner.py`
-- `_call_persona()` reads `provider.timeout` to choose direct vs executor path
-- `providers.yaml` updated with commented recommended values per model
-- 7 new tests (3 config-loader, 4 fair-parallel-panel); 414 total passing
+* feat: spec 036 — per-provider call timeout via providers.yaml
+
+Add optional `timeout` field (float, seconds) to each provider entry in
+providers.yaml. When set, FairParallelPanel wraps that provider's generate()
+call in a 1-worker ThreadPoolExecutor and abandons it if it exceeds the budget,
+then tries the next provider with its own fresh budget.
+
+When `timeout` is absent (default), the direct-call path is used with zero
+executor overhead — no regression for existing setups.
+
+Changes: ModelSpec.timeout, LLMProvider.timeout (abstract property),
+ClaudeProvider/GeminiProvider/GrokProvider gains timeout arg,
+_build_provider() passes timeout=spec.timeout, _call_persona() reads
+provider.timeout. 7 new tests (3 config-loader, 4 fair-parallel-panel).
+414 tests passing.
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com> ([`6e97832`](https://github.com/josemrsantos/gata/commit/6e978329a1c1f45c86c2b42eef9d20fd173e5e80))
 
