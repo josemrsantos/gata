@@ -1,6 +1,54 @@
 # CHANGELOG
 
 
+## v1.21.0 (2026-08-03)
+
+### Documentation
+
+* docs: mark spec 039 complete in CLAUDE.md
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com> ([`50936fd`](https://github.com/josemrsantos/gata/commit/50936fdefe59c0c5d597e373bb182d8a34266c0f))
+
+### Features
+
+* feat: spec 040 — newsletter edition merge
+
+Adds a standalone script, newsletter_merge.py, that merges two or more
+already-generated stories' linkedin_post.md files into one newsletter-edition
+draft, replacing the manual copy-paste-into-Gemini step used until now.
+
+Story order comes from a mandatory leading number on each story folder
+(01_story-name, ...) rather than from timestamps or a model guess. The merge
+itself is one LLM call (text only, no images) made through a new
+"Newsletter Editor" agent (agents/agent_newsletter_editor.py), attempted
+against a cost-ordered fallback chain: every active Gemini text model
+cheapest-first, then Claude/Grok cheapest-first if every Gemini option fails.
+
+Before calling, core/newsletter_merge.py sums each story's stored
+"Image Generator" cost from its own telemetry.json (all iterations) and adds
+a conservative estimate for the merge call itself, using the priciest model
+in the whole chain so the total is never an undercount. The model is
+instructed to append that total, with a note that human review time isn't
+included, as the last line of the document — the output is always a draft,
+never auto-published.
+
+No existing pipeline file is touched (pipeline.py, core/cli.py, core/runner.py
+unchanged) — this is an additive, separately-invoked tool.
+
+Also, while fixing a credential-name bug caught in self-review:
+- Amends constitution to v1.2 (§10): corrects GROK_API_KEY -> XAI_API_KEY and
+  NEWSAPI_KEY -> NEWSAPI_ORG_KEY, matching the names the code has always
+  actually used (documentation-only correction, no code changed).
+- README.md: adds the previously-missing "LinkedIn Post" agent row (spec 038
+  gap) and a new "Newsletter Editor" row.
+- docs/architecture.md: adds the "Newsletter Merge" entry-point section and
+  the "Newsletter Editor" agent section.
+- CLAUDE.md RULE 6: now also covers docs/architecture.md, not just README.md,
+  for the standing "check docs for staleness on every change" habit.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com> ([`88e157c`](https://github.com/josemrsantos/gata/commit/88e157c16b1d2a2a551c6bc0d6c6194f41efff96))
+
+
 ## v1.20.1 (2026-07-27)
 
 
