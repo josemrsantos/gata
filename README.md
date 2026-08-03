@@ -81,6 +81,8 @@ working directory — one for the inferred audience and one for the UK public.
 | **Image Generator** | — | Gemini image models | Renders the approved image prompt into a PNG; tries up to 5 models in order before failing |
 | **Image Evaluator** | — | Gemini vision models | Checks for LLM rendering artifacts and rates comedy; triggers regeneration up to 2 times on rejection |
 | **Explainer** | Writer ×3, Editor | Claude · Grok-build (grok-build-0.1) · Gemini (writers) · Grok-4.3 (editor/aggregator) | Three Writers independently draft HTML explanation pages (in-language + English); Editor picks the best per run |
+| **LinkedIn Post** | — | Grok-4.3 (aggregator chain — same fallback as Cultural Strategist/Satirist aggregator) | Writes the LinkedIn companion article (title, message, comment prompt, punchline, push notification) for the approved concept (`--linkedin-post` only) |
+| **Newsletter Editor** | — | Gemini text models (primary) · Grok · Claude (fallback only, cheapest-first) | Merges several stories' `linkedin_post.md` files into one newsletter-edition draft, invoked via the standalone `newsletter_merge.py` script — not part of the `gata`/`pipeline.py` flow |
 
 ## `gata` command
 
