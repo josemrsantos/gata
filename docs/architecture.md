@@ -125,6 +125,47 @@ Saved:
 
 ---
 
+### Newsletter Merge (standalone script)
+
+`newsletter_merge.py` (Spec 040) is a second, separate entry point — it does not go
+through `core/runner.py` and does not appear in the high-level overview diagram above,
+because it is not a stage of the per-story pipeline. It runs *after* several pipeline
+runs have already completed (each generated with `--linkedin-post`), merging their
+output rather than generating anything new from a topic.
+
+Given an edition folder containing two or more story sub-folders — each named with a
+leading number that fixes its position (`01_story-name`, `02_story-name`, …) — it reads
+every story's `linkedin_post.md`, in that numeric order, and hands them to the
+**Newsletter Editor** agent (see [Agents](#agents)) to merge into one draft document
+with shared boilerplate collapsed to appear once.
+
+```bash
+python newsletter_merge.py gata/newsletter/03_special_edition
+python newsletter_merge.py gata/newsletter/03_special_edition --audience uk -o custom.md
+```
+
+**Example**
+
+_Input_
+
+```
+gata/newsletter/03_special_edition/
+    01_return-to-office/uk/linkedin_post.md
+    02_job-postings/uk/linkedin_post.md
+    03_ai-pricing/uk/linkedin_post.md
+```
+
+_Output_
+
+```
+gata/newsletter/03_special_edition/merged_linkedin_post.md
+```
+
+A story folder missing its leading number, or missing `<audience>/linkedin_post.md`,
+fails the run before any LLM call is made.
+
+---
+
 ## Agents
 
 ### Trend Scout
@@ -479,6 +520,35 @@ LLM failure is non-fatal: a WARNING is logged and neither file is written; the r
 of the bundle is unaffected.
 
 Only runs when `--linkedin-post` is set.
+
+---
+
+### Newsletter Editor
+
+Invoked only by the standalone `newsletter_merge.py` script (see
+[Newsletter Merge](#newsletter-merge-standalone-script)) — not part of the `gata` /
+`pipeline.py` flow and never called from `core/runner.py`.
+
+Merges N already-written `linkedin_post.md` files (N ≥ 2) into one edition draft, in an
+operator-fixed order (each story folder's leading number), consolidating any content
+repeated across stories into a single shared section. Sends text only — no images, to
+keep the call cheap and fast.
+
+Makes one successful call against an ordered fallback chain: every active Gemini text
+model, cheapest combined per-million-token rate first, then Claude/Grok models (also
+cheapest first) only if every Gemini option fails. Every attempt — success or failure —
+is logged with model, tokens, and cost.
+
+Before calling, the script sums every story's stored `"Image Generator"` cost from its
+own `telemetry.json` (all iterations, not just the approved one) and adds a conservative
+estimate for the merge call itself, using the priciest model in the whole chain and its
+`max_tokens` ceiling — so the estimate is never an undercount of what the call could
+actually cost. The model is instructed to append that total, plus a fixed note that
+human review time isn't included, as the last line of the document.
+
+The output is always a draft: nothing publishes automatically, and no template-shape
+validation is applied to the input `linkedin_post.md` files — a human reviews and edits
+the merged result before posting.
 
 ---
 

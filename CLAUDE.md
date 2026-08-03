@@ -82,8 +82,9 @@ RULE 13 — At the start of every conversation, before anything else:
 3. If nothing is pending, show the full TODO.md item list as a numbered one-liner list and ask
    what the next stage should be.
 
-RULE 6 — Whenever anything new is added or changed, check README.md for outdated content. If outdated, tell the
-developer exactly what is stale and propose the fix. Do not silently leave README behind.
+RULE 6 — Whenever anything new is added or changed, check README.md and docs/architecture.md for outdated
+content. If outdated, tell the developer exactly what is stale and propose the fix. Do not silently leave README
+or architecture docs behind.
 
 RULE 7 — If the developer asks "what is next" or equivalent, respond with a numbered one-line-per-item list drawn
 from TODO.md. Do not reorder, do not filter, do not expand — just the titles.

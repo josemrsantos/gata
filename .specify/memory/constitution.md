@@ -1,11 +1,16 @@
 # Gata Newsroom — Project Constitution
 
-**Version**: 1.1
+**Version**: 1.2
 **Ratified**: 2026-06-22
 **Ratified by**: Jose Santos (project lead)
 **Status**: Active
 
 **Amendment log**:
+- v1.2 (2026-08-03) — Spec 040: corrected §10's env var names to match actual code
+  — `GROK_API_KEY` → `XAI_API_KEY` (see `llm/grok.py`), `NEWSAPI_KEY` →
+  `NEWSAPI_ORG_KEY` (see `agents/trend_scout.py`, `agents/sources/newsapi.py`). Both
+  had been wrong since the constitution's original ratification; no code changed,
+  documentation-only correction.
 - v1.1 (2026-07-27) — Spec 039: Grok default models updated from `grok-3` /
   `grok-3-mini` (confirmed retired, silently redirecting to and billing as
   `grok-4.3`) to `grok-4.3` (aggregator) / `grok-build-0.1` (panelist). §1 and §6
@@ -171,7 +176,7 @@ Rules:
 ### §10 — Secrets and Security
 
 - API keys are loaded exclusively from environment variables:
-  `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `GROK_API_KEY`, `NEWSAPI_KEY`
+  `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `NEWSAPI_ORG_KEY`
 - Load via `source set_gata.sh` (RULE 16 in CLAUDE.md)
 - API keys are NEVER hardcoded in source files, test files, or configuration files
 - `set_gata.sh` and any `.env` files are gitignored
@@ -214,3 +219,4 @@ Rules:
 |---------|------|-----------|--------|-------------|
 | 1.0 | 2026-06-22 | All | Initial ratification | Jose Santos |
 | 1.1 | 2026-06-22 | §6 | Grok-3 replaces Claude as aggregator across all ParallelPanel agents; Grok-3-mini becomes the Grok panelist | Jose Santos |
+| 1.2 | 2026-08-03 | §10 | Corrected env var names to match code: `GROK_API_KEY` → `XAI_API_KEY`, `NEWSAPI_KEY` → `NEWSAPI_ORG_KEY` | Jose Santos |

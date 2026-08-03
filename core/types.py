@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -252,3 +253,14 @@ class ImageEvaluation:
     is_funny: bool
     funny_notes: str
     model_used: str
+
+
+@dataclass
+class OrderedStory:
+    # One newsletter-edition story folder, its position (from its numeric filename
+    # prefix, Spec 040 FR-004/005), its linkedin_post.md text, and its summed
+    # "Image Generator" cost from telemetry.json (Spec 040 FR-010a).
+    path: Path
+    order: int
+    text: str
+    image_generator_cost_usd: float

@@ -1,5 +1,23 @@
 # TODO
 
+## Spec 040 — Newsletter edition merge
+
+**Goal:** A standalone script that takes an edition folder of numbered story
+sub-folders and sends their `linkedin_post.md` text to a single Gemini call (cheapest
+model first, falling back through progressively pricier models on failure) that
+merges them into one Markdown document, boilerplate collapsed to appear once, ending
+with a total edition cost note (image generation + this call). Output is always a
+draft for human review.
+
+**Reason:** Publishing a multi-story newsletter edition currently means manually
+pasting LinkedIn posts into Gemini and asking it to merge them — repetitive, with no
+scripted way to hand Gemini the same inputs in a fixed order, and no record of what
+the merge step itself costs on top of each story's image generation.
+
+**Spec:** `specs/040-newsletter-edition-merge/spec.md`
+
+---
+
 ## Spec 038 — LinkedIn Newsletter companion post
 
 **Goal:** Add a `--linkedin-post` flag that generates a fully structured LinkedIn
