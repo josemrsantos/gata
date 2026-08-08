@@ -264,3 +264,14 @@ class OrderedStory:
     order: int
     text: str
     image_generator_cost_usd: float
+
+
+@dataclass
+class EditionMergeResult:
+    # The merged article body, the optional network-facing teaser parsed from the
+    # same merge call (None when the model omitted ===NOTIFICATION===, Spec 041
+    # FR-014), and the optional engagement image path (None when skipped via
+    # --no-image or soft-failed, Spec 041 FR-008).
+    article_text: str
+    notification_text: str | None
+    engagement_image_path: str | None

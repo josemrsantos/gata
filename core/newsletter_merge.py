@@ -5,8 +5,10 @@ import logging
 import re
 from pathlib import Path
 
-from agents.agent_newsletter_editor import generate_merged_post
-from core.types import OrderedStory
+from agents import agent_engagement_image
+from agents.agent_newsletter_editor import generate_merged_post, parse_merge_response
+from core.image_generation import ImageGeneration
+from core.types import EditionMergeResult, ModelSpec, OrderedStory, ProvidersConfig
 from llm.base import LLMProvider
 from llm.claude import _COST_PER_M as _CLAUDE_COST_PER_M
 from llm.claude import ClaudeProvider
@@ -21,6 +23,7 @@ _PREFIX_RE = re.compile(r"^(\d+)[-_]")
 _IMAGE_GENERATOR_AGENT_NAME = "Image Generator"
 _DEFAULT_MAX_TOKENS = 4096
 _CHARS_PER_TOKEN_ESTIMATE = 4
+_ENGAGEMENT_IMAGE_FILENAME = "engagement_image.png"
 
 # Active Gemini text models considered for the merge call — image models are
 # excluded, this call never generates or evaluates an image (Spec 040 FR-007).
@@ -34,6 +37,16 @@ _GEMINI_TEXT_MODELS = [
 # Claude/Grok models tried once every Gemini option has failed (FR-013).
 _CLAUDE_MODELS = ["claude-haiku-4-5-20251001", "claude-sonnet-4-6", "claude-opus-4-7"]
 _GROK_MODELS = ["grok-build-0.1", "grok-4.3", "grok-4.5"]
+
+# Default engagement-image deliberation providers, mirroring core/runner.py's
+# _PARALLEL_PANELISTS / _GROK_AGGREGATOR defaults — used when no providers.yaml
+# override is supplied (Spec 041 FR-002).
+_DEFAULT_PANELIST_PROVIDERS: list[LLMProvider] = [
+    ClaudeProvider("claude-sonnet-4-6"),
+    GrokProvider("grok-build-0.1"),
+    GeminiProvider("gemini-2.5-flash"),
+]
+_DEFAULT_AGGREGATOR_PROVIDERS: list[LLMProvider] = [GrokProvider("grok-4.3")]
 
 
 class NewsletterMergeError(Exception):
@@ -138,8 +151,73 @@ def build_fallback_chain() -> list[tuple[LLMProvider, tuple[float, float]]]:
     return gemini_tier + other_tier
 
 
+def _build_provider(spec: ModelSpec) -> LLMProvider:
+    """Instantiate the correct LLMProvider from a ModelSpec (mirrors core/runner.py)."""
+    if spec.provider == "claude":
+        return ClaudeProvider(spec.model, timeout=spec.timeout)
+    if spec.provider == "gemini":
+        return GeminiProvider(spec.model, timeout=spec.timeout)
+    if spec.provider == "grok":
+        return GrokProvider(spec.model, timeout=spec.timeout)
+    raise ValueError(f"unknown provider: {spec.provider!r}")
+
+
+def _build_engagement_providers(
+    providers_config: ProvidersConfig | None,
+) -> tuple[list[list[LLMProvider]], list[LLMProvider]]:
+    """Build the FairParallelPanel provider lists for the engagement-image concept.
+
+    Reuses providers.yaml's existing panelists/aggregator schema (Spec 041 FR-002)
+    when supplied; otherwise falls back to the same hardcoded defaults
+    core/runner.py uses for every other FairParallelPanel agent.
+    """
+    if providers_config is not None:
+        panelist_providers = [
+            [_build_provider(s) for s in slot] for slot in providers_config.panelists
+        ]
+        aggregator_providers = [_build_provider(s) for s in providers_config.aggregator]
+        return panelist_providers, aggregator_providers
+    return [[p] for p in _DEFAULT_PANELIST_PROVIDERS], list(
+        _DEFAULT_AGGREGATOR_PROVIDERS
+    )
+
+
+def generate_engagement_image(
+    stories: list[OrderedStory],
+    edition_dir: Path,
+    providers_config: ProvidersConfig | None = None,
+) -> tuple[str | None, float]:
+    """Run the concept deliberation and render the engagement image.
+
+    Returns (image_path, total_cost). On any failure this is a soft failure per
+    Spec 041 FR-008: logs a warning and returns (None, 0.0) rather than raising —
+    the caller must still be able to write the merged article.
+    """
+    panelist_providers, aggregator_providers = _build_engagement_providers(
+        providers_config
+    )
+    try:
+        prompt, concept_tel = agent_engagement_image.run(
+            stories, panelist_providers, aggregator_providers
+        )
+        output_path = str(edition_dir / _ENGAGEMENT_IMAGE_FILENAME)
+        image_path, image_tel = ImageGeneration().generate(
+            prompt, output_path, show_title=False
+        )
+    except Exception as exc:
+        logger.warning("newsletter_merge: engagement image step failed — %s", exc)
+        return None, 0.0
+    total_cost = concept_tel.total_cost_usd + image_tel.total_cost_usd
+    logger.info(
+        "newsletter_merge: engagement image written to %s (cost=$%.4f)",
+        image_path,
+        total_cost,
+    )
+    return image_path, total_cost
+
+
 def write_output(text: str, output_path: Path) -> None:
-    """Write the merged document verbatim to output_path (FR-016)."""
+    """Write text verbatim to output_path (FR-016)."""
     try:
         output_path.write_text(text, encoding="utf-8")
     except OSError as exc:
@@ -147,10 +225,26 @@ def write_output(text: str, output_path: Path) -> None:
 
 
 def merge_edition(
-    edition_dir: Path, audience: str = "uk", max_tokens: int = _DEFAULT_MAX_TOKENS
-) -> str:
-    """Discover, cost, and merge one edition folder into a single draft document."""
+    edition_dir: Path,
+    audience: str = "uk",
+    max_tokens: int = _DEFAULT_MAX_TOKENS,
+    generate_image: bool = True,
+    providers_config: ProvidersConfig | None = None,
+) -> EditionMergeResult:
+    """Discover, cost, and merge one edition folder into a single draft document.
+
+    When generate_image is True (default), also runs the engagement-image
+    deliberation and rendering before the merge-text call, so the resulting exact
+    cost can be folded into the published total (Spec 041 FR-010). A failure in
+    that step is soft (FR-008): the merge still proceeds and still succeeds.
+    """
     stories = discover_and_order_stories(edition_dir, audience)
+    engagement_image_path: str | None = None
+    engagement_cost = 0.0
+    if generate_image:
+        engagement_image_path, engagement_cost = generate_engagement_image(
+            stories, edition_dir, providers_config
+        )
     chain = build_fallback_chain()
     # The priciest candidate in the *whole* chain sets the estimate's rate, so the
     # published total is a true upper bound no matter which model actually
@@ -160,7 +254,7 @@ def merge_edition(
     combined_text = "\n\n".join(story.text for story in stories)
     merge_estimate = estimate_merge_call_cost(priciest_rate, combined_text, max_tokens)
     image_costs_total = sum(story.image_generator_cost_usd for story in stories)
-    total_estimate = image_costs_total + merge_estimate
+    total_estimate = image_costs_total + merge_estimate + engagement_cost
     providers = [provider for provider, _ in chain]
     merged_text, usage = generate_merged_post(
         providers,
@@ -168,13 +262,24 @@ def merge_edition(
         estimated_total_cost_usd=total_estimate,
         max_tokens=max_tokens,
     )
+    article_text, notification_text = parse_merge_response(merged_text)
+    if notification_text is None:
+        logger.warning(
+            "newsletter_merge: merge response had no ===NOTIFICATION=== section —"
+            " edition_notification.txt will not be written"
+        )
     logger.info(
         "newsletter_merge: published total=$%.4f (images=$%.4f + merge"
-        " estimate=$%.4f) — actual merge-call cost=$%.4f (model=%s)",
+        " estimate=$%.4f + engagement=$%.4f) — actual merge-call cost=$%.4f (model=%s)",
         total_estimate,
         image_costs_total,
         merge_estimate,
+        engagement_cost,
         usage.cost_usd,
         usage.model,
     )
-    return merged_text
+    return EditionMergeResult(
+        article_text=article_text,
+        notification_text=notification_text,
+        engagement_image_path=engagement_image_path,
+    )

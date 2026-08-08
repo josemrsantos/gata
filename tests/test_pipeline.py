@@ -202,7 +202,7 @@ def test_community_mode_output_path():
     ):
         pipeline.main()
 
-    output_path = mock_gen.call_args.args[2]
+    output_path = mock_gen.call_args.args[1]
     assert output_path == "output/uk-tech-engineers/english_ai_hype.png"
 
 
@@ -282,7 +282,7 @@ def test_named_community_output_folder_uses_community_name():
         patch("os.makedirs"),
     ):
         pipeline.main()
-    output_path = mock_gen.call_args.args[2]
+    output_path = mock_gen.call_args.args[1]
     assert "uk-tech-engineers" in output_path
     assert "us_community" not in output_path
 
@@ -355,7 +355,7 @@ def test_random_mode_uses_selected_community_topics():
     ):
         pipeline.main()
 
-    output_path = mock_gen.call_args.args[2]
+    output_path = mock_gen.call_args.args[1]
     assert output_path == "output/portuguese-adults/portuguese_housing_crisis.png"
 
 
@@ -462,7 +462,7 @@ def test_manual_mode_output_path():
     ):
         pipeline.main()
 
-    output_path = mock_gen.call_args.args[2]
+    output_path = mock_gen.call_args.args[1]
     assert output_path == "output/manual/english_ai_hype.png"
 
 
@@ -997,7 +997,7 @@ def test_free_text_community_output_path_uses_sanitized_description():
         patch("os.makedirs"),
     ):
         pipeline.main()
-    output_path = mock_gen.call_args.args[2]
+    output_path = mock_gen.call_args.args[1]
     assert "us_community_that_dislikes_trump" in output_path
     assert "manual" not in output_path
 
@@ -1387,7 +1387,7 @@ def test_multi_panel_filename_has_nh_prefix():
         patch("os.makedirs"),
     ):
         pipeline.main()
-    output_path = mock_gen.call_args.args[2]
+    output_path = mock_gen.call_args.args[1]
     filename = output_path.split("/")[-1]
     assert filename.startswith("3h_")
 
@@ -1423,7 +1423,7 @@ def test_single_panel_filename_has_no_prefix():
         patch("os.makedirs"),
     ):
         pipeline.main()
-    output_path = mock_gen.call_args.args[2]
+    output_path = mock_gen.call_args.args[1]
     filename = output_path.split("/")[-1]
     # Single-panel filenames start with the language slug, not a panel prefix
     assert not filename[0].isdigit()
@@ -1613,7 +1613,7 @@ def test_community_topic_mode_output_path_uses_community_folder():
         patch("os.makedirs"),
     ):
         pipeline.main()
-    output_path = mock_gen.call_args.args[2]
+    output_path = mock_gen.call_args.args[1]
     assert output_path.startswith("output/uk-tech-engineers/")
 
 
