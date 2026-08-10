@@ -1,6 +1,74 @@
 # CHANGELOG
 
 
+## v1.22.0 (2026-08-10)
+
+### Documentation
+
+* docs: CLAUDE.md — RULE 8 approval gate + mark spec 041 complete
+
+RULE 8: nothing may be added to or removed from TODO.md without the
+developer's express approval of that specific change — agreeing on an idea is
+not approval to write it to the file.
+
+Completed Stages: add row 041; refresh the "as of" date; the "Active stage"
+line pointed at Spec 030 (stale since 2026-07-27) and now points at TODO.md
+instead of naming a specific stage.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com> ([`ab5f85b`](https://github.com/josemrsantos/gata/commit/ab5f85b431b8e6a8dd2e6447ea242adfcbe3c1c9))
+
+* docs: sync README + architecture for spec 041
+
+README: add Engagement Image Concept to the Agents table; update Newsletter
+Editor's row for the new notification output; add Status row 41.
+
+docs/architecture.md:
+- Newsletter Merge section: describe the two new steps, --no-image flag,
+  updated input/output example tree
+- Newsletter Editor: document the ARTICLE/NOTIFICATION marker split and
+  parse_merge_response()'s lenient parsing
+- New Engagement Image Concept agent section
+- Image Generator: note the core/image_generation.py extraction shared by
+  both rendering paths
+- FairParallelPanel: note reuse by the Engagement Image Concept step
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com> ([`c355f5c`](https://github.com/josemrsantos/gata/commit/c355f5ca5d82127c6c8de4cf2ec73851cbf8b044))
+
+### Features
+
+* feat: spec 041 — newsletter engagement image & notification
+
+newsletter_merge.py automatically produces, on by default:
+
+1. engagement_image.png — a FairParallelPanel deliberation (same protocol as
+   Cultural Strategist/Satirist) proposes a single image-generation prompt that
+   visually unifies the edition from its stories' text only, never their
+   rendered images. Panelists are named by model_id, aggregator is "Art
+   Director". Rendered via a shared core/image_generation.py ImageGeneration
+   class extracted from agents/agent_image_generator.py, so the per-story and
+   per-edition paths render through identical code.
+
+2. edition_notification.txt — a short, catchy network-facing teaser for
+   LinkedIn's "notify your network" field, in Gata's voice, ending with a
+   subscribe call to action. Generated as a second ===NOTIFICATION=== section
+   in the existing merge-text call rather than a new LLM call.
+
+Both steps fail soft: a failed image or notification step still leaves
+merged_linkedin_post.md written, with a warning logged.
+
+agents/agent_image_generator.generate() drops its unused `brief` parameter
+(dead code — never read in the function body) as part of the extraction;
+core/runner.py's sole call site is updated to match. New --no-image flag on
+newsletter_merge.py skips both new steps with zero added cost.
+
+68 new/updated tests. Verified end-to-end against a real 3-story edition
+fixture, including the mandatory Constitution §5 visual style (greyscale
+background, Gata in Selective Color, 1970s newsroom, ON THE SPOT chalkboard)
+now enforced in the engagement-image panelist/aggregator prompts.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com> ([`12a260b`](https://github.com/josemrsantos/gata/commit/12a260bc97868afd665e573f381ad2de0e2e17ed))
+
+
 ## v1.21.0 (2026-08-03)
 
 ### Documentation
