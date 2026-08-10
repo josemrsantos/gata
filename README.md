@@ -82,7 +82,8 @@ working directory — one for the inferred audience and one for the UK public.
 | **Image Evaluator** | — | Gemini vision models | Checks for LLM rendering artifacts and rates comedy; triggers regeneration up to 2 times on rejection |
 | **Explainer** | Writer ×3, Editor | Claude · Grok-build (grok-build-0.1) · Gemini (writers) · Grok-4.3 (editor/aggregator) | Three Writers independently draft HTML explanation pages (in-language + English); Editor picks the best per run |
 | **LinkedIn Post** | — | Grok-4.3 (aggregator chain — same fallback as Cultural Strategist/Satirist aggregator) | Writes the LinkedIn companion article (title, message, comment prompt, punchline, push notification) for the approved concept (`--linkedin-post` only) |
-| **Newsletter Editor** | — | Gemini text models (primary) · Grok · Claude (fallback only, cheapest-first) | Merges several stories' `linkedin_post.md` files into one newsletter-edition draft, invoked via the standalone `newsletter_merge.py` script — not part of the `gata`/`pipeline.py` flow |
+| **Engagement Image Concept** | Panelist ×N, Art Director | Same provider chains as Satirist panelists/aggregator (or `providers.yaml`) | Deliberates one image-generation prompt that visually unifies an entire newsletter edition from its stories' text only (never their rendered images); rendered via the shared `ImageGeneration` class. Runs before the Newsletter Editor call, on by default, skippable with `--no-image` |
+| **Newsletter Editor** | — | Gemini text models (primary) · Grok · Claude (fallback only, cheapest-first) | Merges several stories' `linkedin_post.md` files into one newsletter-edition draft plus a network-facing notification teaser (`edition_notification.txt`), invoked via the standalone `newsletter_merge.py` script — not part of the `gata`/`pipeline.py` flow |
 
 ## `gata` command
 
@@ -283,3 +284,4 @@ communication protocol framework.
 | 35 | Direct Satirist mode — `--direct` flag bypasses Cultural Strategist | ✅ |
 | 36 | Per-provider call timeout — optional `timeout` field in `providers.yaml` | ✅ |
 | 38 | LinkedIn Newsletter companion post — `--linkedin-post` generates `linkedin_post.md` + `linkedin_notification.txt` | ✅ |
+| 41 | Newsletter engagement image & notification — `newsletter_merge.py` auto-generates `engagement_image.png` (FairParallelPanel concept panel + shared `core/image_generation.py` renderer) and `edition_notification.txt` | ✅ |

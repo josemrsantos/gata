@@ -13,9 +13,10 @@ Read the constitution before starting any new stage.
 **Spec artifacts**: `specs/NNN-feature-name/` (spec.md, plan.md, research.md,
 data-model.md, contracts/, tasks.md, quickstart.md)
 
-**Active stage**: 030 — documentation overhaul. See TODO.md for next items.
+**Active stage**: See TODO.md for candidate next features; the table below reflects
+what has already merged to `main`.
 
-## Completed Stages (as of 2026-07-27)
+## Completed Stages (as of 2026-08-08)
 
 | Spec | Name                                                    | Status |
 |------|---------------------------------------------------------|--------|
@@ -52,6 +53,7 @@ data-model.md, contracts/, tasks.md, quickstart.md)
 | 035 | Direct Satirist mode — --direct flag bypasses Cultural Strategist | ✅ |
 | 036 | Per-provider call timeout — optional timeout field in providers.yaml | ✅ |
 | 039 | Provider pricing & model currency refresh — corrected cost tables, replaced retired/dead default models (grok-3→grok-4.3, grok-3-mini→grok-build-0.1, gemini-2.0-flash→gemini-2.5-flash-lite) | ✅ |
+| 041 | Newsletter engagement image & notification — `newsletter_merge.py` auto-generates `engagement_image.png` (FairParallelPanel concept panel + shared `core/image_generation.py` renderer) and `edition_notification.txt` (network teaser, same merge call) | ✅ |
 <!-- SPECKIT END -->
 
 LLM REVIEW PROTOCOL — this is a hard stop, not a suggestion. Violating it is not acceptable under any circumstances,
@@ -90,7 +92,9 @@ RULE 7 — If the developer asks "what is next" or equivalent, respond with a nu
 from TODO.md. Do not reorder, do not filter, do not expand — just the titles.
 
 RULE 8 — If the developer mentions a new feature idea mid-development, ask for the title, propose a reason, reach
-consensus, then add title + reason to TODO.md. Do not implement it immediately.
+consensus, then add title + reason to TODO.md. Do not implement it immediately. Nothing may be added to, or removed
+from, TODO.md without the developer's express approval of that specific change — reaching consensus on the idea
+itself is not approval to write it to the file; show the proposed entry (or removal) and wait for an explicit go-ahead.
 
 RULE 9 — New agents must have human-readable names (e.g. "Satirist", "Cultural Strategist"). Single-character or
 numeric names (A, B, C, 0) are not acceptable.

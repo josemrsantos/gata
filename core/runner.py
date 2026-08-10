@@ -129,7 +129,6 @@ def run_pipeline(
         for _attempt in range(_MAX_IMAGE_RETRIES + 1):
             _image_path, image_tel = agent_image_generator.generate(
                 concept,
-                enriched_brief,
                 output_path,
                 layout=chosen_layout,
                 show_title=show_title,

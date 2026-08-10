@@ -11,11 +11,12 @@ from core.newsletter_merge import (
     build_fallback_chain,
     discover_and_order_stories,
     estimate_merge_call_cost,
+    generate_engagement_image,
     merge_edition,
     sum_image_generator_cost,
     write_output,
 )
-from core.types import TokenUsage
+from core.types import AgentTelemetry, EditionMergeResult, TokenUsage
 
 # -- fixtures / helpers --
 
@@ -275,7 +276,8 @@ def test_write_output_raises_on_unwritable_path(tmp_path):
 def test_merge_edition_passes_summed_total_to_agent_and_returns_its_text(tmp_path):
     # merge_edition's whole job is arithmetic + wiring: it must hand the agent the
     # correct total (image costs + merge-call estimate) and return exactly what
-    # the agent produced.
+    # the agent produced. generate_image=False isolates this from the engagement
+    # image step, covered separately below.
     _make_story(tmp_path, "01_a", image_costs=[0.10])
     _make_story(tmp_path, "02_b", image_costs=[0.20])
     fake_provider = MagicMock()
@@ -291,8 +293,9 @@ def test_merge_edition_passes_summed_total_to_agent_and_returns_its_text(tmp_pat
             return_value=("the merged document", fake_usage),
         ) as mock_generate,
     ):
-        result = merge_edition(tmp_path, audience="uk")
-    assert result == "the merged document"
+        result = merge_edition(tmp_path, audience="uk", generate_image=False)
+    assert result.article_text == "the merged document"
+    assert result.engagement_image_path is None
     total_arg = mock_generate.call_args.kwargs["estimated_total_cost_usd"]
     assert total_arg > 0.30  # at least the 0.10 + 0.20 image costs, plus the estimate
 
@@ -339,12 +342,168 @@ def test_merge_edition_uses_the_priciest_rate_in_the_whole_chain_not_just_last(
             return_value=("merged", fake_usage),
         ) as mock_generate,
     ):
-        merge_edition(tmp_path, audience="uk")
+        merge_edition(tmp_path, audience="uk", generate_image=False)
     total_arg = mock_generate.call_args.kwargs["estimated_total_cost_usd"]
     # If the bug were present ("last"'s rate (2.0, 2.0) used instead), the
     # estimate would be roughly 0.0082; with the fix, "pricey"'s (100.0, 100.0)
     # rate must be used instead, giving a much larger figure.
     assert total_arg > 0.1
+
+
+# -- generate_engagement_image (Spec 041 User Stories 1, 2, 5) --
+
+
+def _fake_image_telemetry(cost: float) -> AgentTelemetry:
+    tel = AgentTelemetry(
+        agent_name="Image Generator", duration_seconds=0.1, iterations=1
+    )
+    tel.calls.append(
+        TokenUsage(model="m", input_tokens=1, output_tokens=1, cost_usd=cost)
+    )
+    return tel
+
+
+def test_generate_engagement_image_writes_file_and_sums_cost(tmp_path):
+    # Given a successful concept + render, the returned path and cost must reflect
+    # both steps — the concept panel's tokens and the image generator's own cost.
+    concept_tel = _fake_image_telemetry(0.02)
+    image_tel = _fake_image_telemetry(0.05)
+    with (
+        patch(
+            "core.newsletter_merge.agent_engagement_image.run",
+            return_value=("a vivid scene", concept_tel),
+        ),
+        patch(
+            "core.newsletter_merge.ImageGeneration.generate",
+            return_value=(str(tmp_path / "engagement_image.png"), image_tel),
+        ),
+    ):
+        path, cost = generate_engagement_image([], tmp_path)
+    assert path == str(tmp_path / "engagement_image.png")
+    assert cost == pytest.approx(0.07)
+
+
+def test_generate_engagement_image_soft_fails_when_concept_panel_raises(tmp_path):
+    # FR-008: every panelist failing must not raise out of this function — the
+    # caller (merge_edition) must still be able to write the merged article.
+    with patch(
+        "core.newsletter_merge.agent_engagement_image.run",
+        side_effect=RuntimeError("all panelists failed"),
+    ):
+        path, cost = generate_engagement_image([], tmp_path)
+    assert path is None
+    assert cost == 0.0
+
+
+def test_generate_engagement_image_soft_fails_when_rendering_raises(tmp_path):
+    # FR-008: image-model exhaustion after a successful concept must also be a
+    # soft failure, not propagate as an exception.
+    concept_tel = _fake_image_telemetry(0.02)
+    with (
+        patch(
+            "core.newsletter_merge.agent_engagement_image.run",
+            return_value=("a vivid scene", concept_tel),
+        ),
+        patch(
+            "core.newsletter_merge.ImageGeneration.generate",
+            side_effect=RuntimeError("no binary data from any model"),
+        ),
+    ):
+        path, cost = generate_engagement_image([], tmp_path)
+    assert path is None
+    assert cost == 0.0
+
+
+# -- merge_edition: engagement image + notification wiring (Spec 041) --
+
+
+def test_merge_edition_includes_engagement_cost_in_published_total(tmp_path):
+    # FR-010: a successful engagement-image step's exact cost must be folded into
+    # the total handed to the merge call, not just the per-story image costs.
+    _make_story(tmp_path, "01_a", image_costs=[0.0])
+    _make_story(tmp_path, "02_b", image_costs=[0.0])
+    fake_provider = MagicMock()
+    fake_provider.model_id = "fake-model"
+    fake_usage = TokenUsage(
+        model="fake-model", input_tokens=1, output_tokens=1, cost_usd=0.0
+    )
+    with (
+        patch(
+            "core.newsletter_merge.build_fallback_chain",
+            return_value=[(fake_provider, (0.0, 0.0))],
+        ),
+        patch(
+            "core.newsletter_merge.generate_engagement_image",
+            return_value=("engagement_image.png", 5.0),
+        ),
+        patch(
+            "core.newsletter_merge.generate_merged_post",
+            return_value=(
+                "===ARTICLE===\nbody\n===NOTIFICATION===\nteaser",
+                fake_usage,
+            ),
+        ) as mock_generate,
+    ):
+        result = merge_edition(tmp_path, audience="uk")
+    total_arg = mock_generate.call_args.kwargs["estimated_total_cost_usd"]
+    assert total_arg >= 5.0
+    assert result.engagement_image_path == "engagement_image.png"
+    assert result.article_text == "body"
+    assert result.notification_text == "teaser"
+
+
+def test_merge_edition_no_image_flag_skips_engagement_step_entirely(tmp_path):
+    # FR-009: --no-image must skip the concept panel and rendering entirely —
+    # no cost, no telemetry, no attempt.
+    _make_story(tmp_path, "01_a", image_costs=[0.0])
+    _make_story(tmp_path, "02_b", image_costs=[0.0])
+    fake_provider = MagicMock()
+    fake_provider.model_id = "fake-model"
+    fake_usage = TokenUsage(
+        model="fake-model", input_tokens=1, output_tokens=1, cost_usd=0.0
+    )
+    with (
+        patch(
+            "core.newsletter_merge.build_fallback_chain",
+            return_value=[(fake_provider, (0.0, 0.0))],
+        ),
+        patch("core.newsletter_merge.generate_engagement_image") as mock_engagement,
+        patch(
+            "core.newsletter_merge.generate_merged_post",
+            return_value=("merged text, no markers", fake_usage),
+        ),
+    ):
+        result = merge_edition(tmp_path, audience="uk", generate_image=False)
+    mock_engagement.assert_not_called()
+    assert result.engagement_image_path is None
+
+
+def test_merge_edition_missing_notification_marker_still_returns_article(tmp_path):
+    # FR-014: a merge response missing ===NOTIFICATION=== must still produce a
+    # usable article — only the notification artifact is affected.
+    _make_story(tmp_path, "01_a", image_costs=[0.0])
+    _make_story(tmp_path, "02_b", image_costs=[0.0])
+    fake_provider = MagicMock()
+    fake_provider.model_id = "fake-model"
+    fake_usage = TokenUsage(
+        model="fake-model", input_tokens=1, output_tokens=1, cost_usd=0.0
+    )
+    with (
+        patch(
+            "core.newsletter_merge.build_fallback_chain",
+            return_value=[(fake_provider, (0.0, 0.0))],
+        ),
+        patch(
+            "core.newsletter_merge.generate_engagement_image", return_value=(None, 0.0)
+        ),
+        patch(
+            "core.newsletter_merge.generate_merged_post",
+            return_value=("===ARTICLE===\njust the article", fake_usage),
+        ),
+    ):
+        result = merge_edition(tmp_path, audience="uk")
+    assert result.article_text == "just the article"
+    assert result.notification_text is None
 
 
 # -- CLI (newsletter_merge.py) --
@@ -379,10 +538,14 @@ def test_cli_writes_default_output_path(tmp_path):
     # <edition_folder>/merged_linkedin_post.md (FR-016).
     edition_dir = tmp_path / "edition"
     edition_dir.mkdir()
+    result = EditionMergeResult(
+        article_text="merged text", notification_text=None, engagement_image_path=None
+    )
     with (
         patch.dict("os.environ", ENV),
         patch("newsletter_merge.load_dotenv"),
-        patch("newsletter_merge.merge_edition", return_value="merged text"),
+        patch("newsletter_merge._find_providers_config", return_value=None),
+        patch("newsletter_merge.merge_edition", return_value=result),
         patch("sys.argv", ["newsletter_merge.py", str(edition_dir)]),
     ):
         newsletter_merge.main()
@@ -395,10 +558,14 @@ def test_cli_respects_output_override(tmp_path):
     edition_dir = tmp_path / "edition"
     edition_dir.mkdir()
     custom_output = tmp_path / "custom.md"
+    result = EditionMergeResult(
+        article_text="merged text", notification_text=None, engagement_image_path=None
+    )
     with (
         patch.dict("os.environ", ENV),
         patch("newsletter_merge.load_dotenv"),
-        patch("newsletter_merge.merge_edition", return_value="merged text"),
+        patch("newsletter_merge._find_providers_config", return_value=None),
+        patch("newsletter_merge.merge_edition", return_value=result),
         patch(
             "sys.argv",
             ["newsletter_merge.py", str(edition_dir), "-o", str(custom_output)],
@@ -406,6 +573,65 @@ def test_cli_respects_output_override(tmp_path):
     ):
         newsletter_merge.main()
     assert custom_output.read_text(encoding="utf-8") == "merged text"
+
+
+def test_cli_writes_notification_file_when_present(tmp_path):
+    # FR-014: a non-None notification_text must be written to
+    # <edition_folder>/edition_notification.txt.
+    edition_dir = tmp_path / "edition"
+    edition_dir.mkdir()
+    result = EditionMergeResult(
+        article_text="merged text",
+        notification_text="catchy teaser",
+        engagement_image_path=None,
+    )
+    with (
+        patch.dict("os.environ", ENV),
+        patch("newsletter_merge.load_dotenv"),
+        patch("newsletter_merge._find_providers_config", return_value=None),
+        patch("newsletter_merge.merge_edition", return_value=result),
+        patch("sys.argv", ["newsletter_merge.py", str(edition_dir)]),
+    ):
+        newsletter_merge.main()
+    notification_path = edition_dir / "edition_notification.txt"
+    assert notification_path.read_text(encoding="utf-8") == "catchy teaser"
+
+
+def test_cli_skips_notification_file_when_absent(tmp_path):
+    # A None notification_text (soft failure) must not create an empty file that
+    # looks like a real teaser was generated.
+    edition_dir = tmp_path / "edition"
+    edition_dir.mkdir()
+    result = EditionMergeResult(
+        article_text="merged text", notification_text=None, engagement_image_path=None
+    )
+    with (
+        patch.dict("os.environ", ENV),
+        patch("newsletter_merge.load_dotenv"),
+        patch("newsletter_merge._find_providers_config", return_value=None),
+        patch("newsletter_merge.merge_edition", return_value=result),
+        patch("sys.argv", ["newsletter_merge.py", str(edition_dir)]),
+    ):
+        newsletter_merge.main()
+    assert not (edition_dir / "edition_notification.txt").exists()
+
+
+def test_cli_no_image_flag_passed_through_to_merge_edition(tmp_path):
+    # FR-009: --no-image must reach merge_edition as generate_image=False.
+    edition_dir = tmp_path / "edition"
+    edition_dir.mkdir()
+    result = EditionMergeResult(
+        article_text="merged text", notification_text=None, engagement_image_path=None
+    )
+    with (
+        patch.dict("os.environ", ENV),
+        patch("newsletter_merge.load_dotenv"),
+        patch("newsletter_merge._find_providers_config", return_value=None),
+        patch("newsletter_merge.merge_edition", return_value=result) as mock_merge,
+        patch("sys.argv", ["newsletter_merge.py", str(edition_dir), "--no-image"]),
+    ):
+        newsletter_merge.main()
+    assert mock_merge.call_args.kwargs["generate_image"] is False
 
 
 def test_cli_exits_nonzero_and_writes_nothing_on_merge_error(tmp_path, caplog):

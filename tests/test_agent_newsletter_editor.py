@@ -4,7 +4,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from agents.agent_newsletter_editor import build_merge_prompt, generate_merged_post
+from agents.agent_newsletter_editor import (
+    _SYSTEM_PROMPT,
+    build_merge_prompt,
+    generate_merged_post,
+    parse_merge_response,
+)
 from core.newsletter_merge import OrderedStory
 from core.types import TokenUsage
 
@@ -139,3 +144,52 @@ def test_exhausting_every_provider_raises_and_makes_no_partial_output():
         generate_merged_post(
             [failing_a, failing_b], _STORIES, estimated_total_cost_usd=0.50
         )
+
+
+# -- system prompt: notification section instructions (Spec 041 FR-013/FR-015) --
+
+
+def test_system_prompt_requires_notification_marker():
+    # FR-013: the model must be told to emit a second, separately-parseable
+    # section carrying the network-facing teaser.
+    assert "===NOTIFICATION===" in _SYSTEM_PROMPT
+    assert "===ARTICLE===" in _SYSTEM_PROMPT
+
+
+def test_system_prompt_forbids_fabricated_follower_counts():
+    # The notification copy must sell the content, not invent growth numbers.
+    assert "follower or subscriber count" in _SYSTEM_PROMPT
+
+
+def test_system_prompt_requires_subscribe_call_to_action():
+    # FR-015: the teaser must end with an explicit invitation to subscribe.
+    assert "subscribe" in _SYSTEM_PROMPT.lower()
+
+
+# -- parse_merge_response --
+
+
+def test_parse_splits_article_and_notification():
+    # FR-013/FR-014: both sections must be recoverable from one raw response.
+    raw = "===ARTICLE===\nThe merged edition text.\n===NOTIFICATION===\nRead it.\n"
+    article, notification = parse_merge_response(raw)
+    assert article == "The merged edition text."
+    assert notification == "Read it."
+
+
+def test_parse_missing_notification_marker_returns_none():
+    # FR-014: a response missing the marker entirely must soft-fail for that
+    # artifact only — the article text must still come through.
+    raw = "===ARTICLE===\nThe merged edition text.\n"
+    article, notification = parse_merge_response(raw)
+    assert article == "The merged edition text."
+    assert notification is None
+
+
+def test_parse_missing_article_marker_still_returns_raw_text_as_article():
+    # User Story 3: a model that ignores the ===ARTICLE=== marker instruction
+    # must not have its merged text rejected outright.
+    raw = "Just the merged text, no markers at all."
+    article, notification = parse_merge_response(raw)
+    assert article == "Just the merged text, no markers at all."
+    assert notification is None

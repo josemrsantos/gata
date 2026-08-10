@@ -1,25 +1,8 @@
-import logging
-from pathlib import Path
+import inspect
 from unittest.mock import MagicMock, patch
 
-import pytest
-from google.genai.errors import ServerError
-from PIL import Image
-
 from agents import agent_image_generator
-from core.types import (
-    CartoonConcept,
-    CartoonLayout,
-    PanelConcept,
-    StrategyBrief,
-)
-from llm.gemini import compute_cost
-
-BRIEF = StrategyBrief(
-    target_audience="general public",
-    output_language="English",
-    tone="dry wit",
-)
+from core.types import AgentTelemetry, CartoonConcept, CartoonLayout, PanelConcept
 
 CONCEPT = CartoonConcept(
     full_text="<image_prompt>A cat at the UN table.</image_prompt>",
@@ -27,161 +10,81 @@ CONCEPT = CartoonConcept(
     iteration=1,
 )
 
-FAKE_PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 20
+_FAKE_TELEMETRY = AgentTelemetry(
+    agent_name="Image Generator", duration_seconds=0.01, iterations=1
+)
 
 
-def _make_gemini_response(binary_data=None, usage_metadata=None):
-    part = MagicMock()
-    if binary_data is not None:
-        part.inline_data = MagicMock(data=binary_data)
-    else:
-        part.inline_data = None
-    response = MagicMock()
-    response.candidates = [MagicMock(content=MagicMock(parts=[part]))]
-    response.usage_metadata = usage_metadata
-    return response
+def _capture_generate(out_path: str) -> tuple[MagicMock, dict]:
+    """Patch ImageGeneration so calls are captured instead of hitting Gemini."""
+    captured: dict = {}
 
+    def _fake_generate(prompt, output_path, title=None, show_title=True):
+        captured["prompt"] = prompt
+        captured["output_path"] = output_path
+        captured["title"] = title
+        captured["show_title"] = show_title
+        return out_path, _FAKE_TELEMETRY
 
-class _UsageMetadata:
-    # Plain object (not MagicMock) so getattr() with a default behaves like the real
-    # SDK type when an attribute is genuinely absent, instead of auto-vivifying one.
-    def __init__(self, prompt_token_count=0, candidates_token_count=None):
-        self.prompt_token_count = prompt_token_count
-        if candidates_token_count is not None:
-            self.candidates_token_count = candidates_token_count
+    mock_cls = MagicMock()
+    mock_cls.return_value.generate.side_effect = _fake_generate
+    return mock_cls, captured
 
 
 # ---------------------------------------------------------------------------
-# First model succeeds — no fallback needed
+# Delegation to core.image_generation.ImageGeneration (Spec 041 FR-006/FR-007)
 # ---------------------------------------------------------------------------
 
 
-def test_generate_first_model_succeeds(tmp_path):
-    # generate() writes the image and stops when the first model returns data.
-    out_file = tmp_path / "cartoon_output.png"
-    response = _make_gemini_response(FAKE_PNG)
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = response
-        path, _tel = agent_image_generator.generate(
-            CONCEPT, BRIEF, output_path=str(out_file)
-        )
-
-    assert Path(path).exists()
-    assert Path(path).read_bytes() == FAKE_PNG
-    assert mock_client.models.generate_content.call_count == 1
+def test_generate_does_not_accept_brief_parameter():
+    # FR-007: the unused `brief` parameter must be dropped from the public
+    # signature, not just ignored internally.
+    params = inspect.signature(agent_image_generator.generate).parameters
+    assert "brief" not in params
 
 
-# ---------------------------------------------------------------------------
-# Fallback when a model returns no binary data
-# ---------------------------------------------------------------------------
+def test_generate_delegates_single_panel_prompt_verbatim(tmp_path):
+    # generate() must hand ImageGeneration exactly concept.image_prompt when there
+    # are no panels — the single-panel path must be unaffected by the extraction.
+    out_file = tmp_path / "single.png"
+    mock_cls, captured = _capture_generate(str(out_file))
+    with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
+        path, tel = agent_image_generator.generate(CONCEPT, output_path=str(out_file))
+    assert captured["prompt"] == CONCEPT.image_prompt
+    assert captured["output_path"] == str(out_file)
+    assert path == str(out_file)
+    assert tel is _FAKE_TELEMETRY
 
 
-def test_generate_falls_back_when_no_data(tmp_path):
-    # generate() tries the next model when the current one returns no binary data.
-    out_file = tmp_path / "cartoon_output.png"
-    no_data = _make_gemini_response(binary_data=None)
-    with_data = _make_gemini_response(FAKE_PNG)
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.side_effect = [no_data, with_data]
-        path, _tel = agent_image_generator.generate(
-            CONCEPT, BRIEF, output_path=str(out_file)
-        )
-
-    assert Path(path).exists()
-    assert mock_client.models.generate_content.call_count == 2
+def test_generate_passes_empty_title_when_concept_has_none(tmp_path):
+    # A concept with no title (the default "") must still delegate that empty
+    # string through unchanged — ImageGeneration, not this module, decides that an
+    # empty title means no overlay.
+    out_file = tmp_path / "single.png"
+    mock_cls, captured = _capture_generate(str(out_file))
+    with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
+        agent_image_generator.generate(CONCEPT, output_path=str(out_file))
+    assert captured["title"] == ""
 
 
-# ---------------------------------------------------------------------------
-# Fallback when a model raises an API exception
-# ---------------------------------------------------------------------------
-
-
-def test_generate_falls_back_on_api_exception(tmp_path):
-    # generate() tries the next model when the current one raises an exception.
-    out_file = tmp_path / "cartoon_output.png"
-    with_data = _make_gemini_response(FAKE_PNG)
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.side_effect = [
-            ServerError(503, {"error": {"message": "Model temporarily unavailable"}}),
-            with_data,
-        ]
-        path, _tel = agent_image_generator.generate(
-            CONCEPT, BRIEF, output_path=str(out_file)
-        )
-
-    assert Path(path).exists()
-    assert mock_client.models.generate_content.call_count == 2
-
-
-# ---------------------------------------------------------------------------
-# All models fail → RuntimeError, no file written
-# ---------------------------------------------------------------------------
-
-
-def test_generate_all_models_fail_raises(tmp_path):
-    # generate() raises RuntimeError when every model in the chain returns no data.
-    out_file = tmp_path / "cartoon_output.png"
-    no_data = _make_gemini_response(binary_data=None)
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = no_data
-        with pytest.raises(RuntimeError, match="no binary data"):
-            agent_image_generator.generate(CONCEPT, BRIEF, output_path=str(out_file))
-
-    assert not out_file.exists()
-
-
-# ---------------------------------------------------------------------------
-# Failure preserves existing file at output path
-# ---------------------------------------------------------------------------
-
-
-def test_generate_failure_preserves_existing_file(tmp_path):
-    # A failed generate() call must not corrupt a pre-existing file at the output path.
-    out_file = tmp_path / "cartoon_output.png"
-    original_content = b"original PNG content"
-    out_file.write_bytes(original_content)
-    no_data = _make_gemini_response(binary_data=None)
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = no_data
-        with pytest.raises(RuntimeError):
-            agent_image_generator.generate(CONCEPT, BRIEF, output_path=str(out_file))
-
-    assert out_file.read_bytes() == original_content
-
-
-# ---------------------------------------------------------------------------
-# Logging compliance — Principle 13
-# ---------------------------------------------------------------------------
-
-
-def test_generate_logs_model_and_prompt_length(caplog, tmp_path):
-    # generate() logs model name and prompt length at DEBUG so they are accessible
-    # when troubleshooting without polluting normal CLI output.
-    out_file = tmp_path / "cartoon_output.png"
-    response = _make_gemini_response(FAKE_PNG)
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = response
-        caplog.set_level(logging.DEBUG, logger="agents.agent_image_generator")
-        agent_image_generator.generate(CONCEPT, BRIEF, output_path=str(out_file))
-
-    assert any(
-        r.levelno == logging.DEBUG and "gemini-3.1-flash-image-preview" in r.message
-        for r in caplog.records
+def test_generate_passes_concept_title_and_show_title_through(tmp_path):
+    # generate() must forward concept.title and the caller's show_title flag
+    # unchanged — the actual overlay decision now lives in ImageGeneration.
+    out_file = tmp_path / "single.png"
+    titled_concept = CartoonConcept(
+        full_text="", image_prompt="prompt text", iteration=1, title="Big Headline"
     )
-    prompt_len = str(len(CONCEPT.image_prompt))
-    assert any(
-        prompt_len in r.message for r in caplog.records if r.levelno == logging.DEBUG
-    )
+    mock_cls, captured = _capture_generate(str(out_file))
+    with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
+        agent_image_generator.generate(
+            titled_concept, output_path=str(out_file), show_title=False
+        )
+    assert captured["title"] == "Big Headline"
+    assert captured["show_title"] is False
 
 
 # ---------------------------------------------------------------------------
-# Multi-panel support (Stage 9)
+# Multi-panel prompt building (Stage 9) — still agent_image_generator's job
 # ---------------------------------------------------------------------------
 
 _3_PANELS = [
@@ -209,20 +112,12 @@ def test_generate_multi_panel_uses_composite_prompt(tmp_path):
     # When concept.panels is non-None, generate() must build a composite prompt
     # containing all panel scenes rather than using the empty image_prompt field.
     out_file = tmp_path / "multi.png"
-    response = _make_gemini_response(FAKE_PNG)
-    captured = {}
-
-    def _capture(*args, **kwargs):
-        captured["prompt"] = kwargs.get("contents") or (args[0] if args else "")
-        return response
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.side_effect = _capture
+    mock_cls, captured = _capture_generate(str(out_file))
+    with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
         agent_image_generator.generate(
-            _MULTI_CONCEPT_3H, BRIEF, output_path=str(out_file), layout=_LAYOUT_3H
+            _MULTI_CONCEPT_3H, output_path=str(out_file), layout=_LAYOUT_3H
         )
-
-    prompt = captured.get("prompt", "")
+    prompt = captured["prompt"]
     assert "Gata reads the headline" in prompt
     assert "Gata raises an eyebrow" in prompt
     assert "Gata flips board" in prompt
@@ -232,20 +127,12 @@ def test_generate_multi_panel_horizontal_uses_left_right_labels(tmp_path):
     # A 3-panel horizontal strip must use LEFT/CENTER/RIGHT positional labels so the
     # image model knows the reading order and physical arrangement of the panels.
     out_file = tmp_path / "multi.png"
-    response = _make_gemini_response(FAKE_PNG)
-    captured = {}
-
-    def _capture(*args, **kwargs):
-        captured["prompt"] = kwargs.get("contents") or (args[0] if args else "")
-        return response
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.side_effect = _capture
+    mock_cls, captured = _capture_generate(str(out_file))
+    with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
         agent_image_generator.generate(
-            _MULTI_CONCEPT_3H, BRIEF, output_path=str(out_file), layout=_LAYOUT_3H
+            _MULTI_CONCEPT_3H, output_path=str(out_file), layout=_LAYOUT_3H
         )
-
-    prompt = captured.get("prompt", "")
+    prompt = captured["prompt"]
     assert "LEFT" in prompt
     assert "CENTER" in prompt
     assert "RIGHT" in prompt
@@ -255,20 +142,12 @@ def test_generate_multi_panel_vertical_uses_top_bottom_labels(tmp_path):
     # A 2-panel vertical strip must use TOP/BOTTOM positional labels so the image model
     # renders panels stacked vertically in reading order.
     out_file = tmp_path / "multi.png"
-    response = _make_gemini_response(FAKE_PNG)
-    captured = {}
-
-    def _capture(*args, **kwargs):
-        captured["prompt"] = kwargs.get("contents") or (args[0] if args else "")
-        return response
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.side_effect = _capture
+    mock_cls, captured = _capture_generate(str(out_file))
+    with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
         agent_image_generator.generate(
-            _MULTI_CONCEPT_2V, BRIEF, output_path=str(out_file), layout=_LAYOUT_2V
+            _MULTI_CONCEPT_2V, output_path=str(out_file), layout=_LAYOUT_2V
         )
-
-    prompt = captured.get("prompt", "")
+    prompt = captured["prompt"]
     assert "TOP" in prompt
     assert "BOTTOM" in prompt
 
@@ -277,20 +156,12 @@ def test_generate_multi_panel_includes_gata_description(tmp_path):
     # The Gata character description must appear in the multi-panel prompt so the
     # image model renders Gata consistently across all panels.
     out_file = tmp_path / "multi.png"
-    response = _make_gemini_response(FAKE_PNG)
-    captured = {}
-
-    def _capture(*args, **kwargs):
-        captured["prompt"] = kwargs.get("contents") or (args[0] if args else "")
-        return response
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.side_effect = _capture
+    mock_cls, captured = _capture_generate(str(out_file))
+    with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
         agent_image_generator.generate(
-            _MULTI_CONCEPT_3H, BRIEF, output_path=str(out_file), layout=_LAYOUT_3H
+            _MULTI_CONCEPT_3H, output_path=str(out_file), layout=_LAYOUT_3H
         )
-
-    prompt = captured.get("prompt", "")
+    prompt = captured["prompt"]
     assert "GATA" in prompt or "calico" in prompt.lower()
 
 
@@ -298,18 +169,10 @@ def test_generate_single_panel_unchanged_when_panels_is_none(tmp_path):
     # When concept.panels is None, generate() must use concept.image_prompt verbatim
     # so the existing single-panel path is unaffected by Stage 9 changes.
     out_file = tmp_path / "single.png"
-    response = _make_gemini_response(FAKE_PNG)
-    captured = {}
-
-    def _capture(*args, **kwargs):
-        captured["prompt"] = kwargs.get("contents") or (args[0] if args else "")
-        return response
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.side_effect = _capture
-        agent_image_generator.generate(CONCEPT, BRIEF, output_path=str(out_file))
-
-    assert captured.get("prompt") == CONCEPT.image_prompt
+    mock_cls, captured = _capture_generate(str(out_file))
+    with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
+        agent_image_generator.generate(CONCEPT, output_path=str(out_file))
+    assert captured["prompt"] == CONCEPT.image_prompt
 
 
 def test_generate_multi_panel_beat_not_in_prompt(tmp_path):
@@ -317,157 +180,10 @@ def test_generate_multi_panel_beat_not_in_prompt(tmp_path):
     # Satirist — they must never appear in the image prompt or the image model renders
     # them as visible text in the output image.
     out_file = tmp_path / "multi.png"
-    response = _make_gemini_response(FAKE_PNG)
-    captured = {}
-
-    def _capture(*args, **kwargs):
-        captured["prompt"] = kwargs.get("contents") or (args[0] if args else "")
-        return response
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.side_effect = _capture
+    mock_cls, captured = _capture_generate(str(out_file))
+    with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
         agent_image_generator.generate(
-            _MULTI_CONCEPT_3H, BRIEF, output_path=str(out_file), layout=_LAYOUT_3H
+            _MULTI_CONCEPT_3H, output_path=str(out_file), layout=_LAYOUT_3H
         )
-
-    prompt = captured.get("prompt", "").upper()
+    prompt = captured["prompt"].upper()
     assert "BEAT:" not in prompt
-
-
-# ---------------------------------------------------------------------------
-# Cost telemetry reflects real Gemini usage (Stage 015)
-# ---------------------------------------------------------------------------
-
-
-def test_generate_records_real_output_tokens_and_nonzero_cost(tmp_path):
-    # Image generation must record the actual billed output token count and a
-    # non-zero cost, instead of the previous hardcoded output_tokens=0 / $0.00 bug.
-    out_file = tmp_path / "cartoon_output.png"
-    usage = _UsageMetadata(prompt_token_count=500, candidates_token_count=1120)
-    response = _make_gemini_response(FAKE_PNG, usage_metadata=usage)
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = response
-        _, telemetry = agent_image_generator.generate(
-            CONCEPT, BRIEF, output_path=str(out_file)
-        )
-
-    call = telemetry.calls[0]
-    assert call.model == "gemini-3.1-flash-image-preview"
-    assert call.input_tokens == 500
-    assert call.output_tokens == 1120
-    assert call.cost_usd == pytest.approx(compute_cost(call.model, 500, 1120))
-    assert call.cost_usd > 0
-
-
-def test_generate_defaults_tokens_to_zero_when_usage_metadata_absent(tmp_path):
-    # When the SDK response carries no usage_metadata, token counts and cost must
-    # default to 0 rather than raising — mirrors the existing dual_loop.py guard.
-    out_file = tmp_path / "cartoon_output.png"
-    response = _make_gemini_response(FAKE_PNG, usage_metadata=None)
-
-    with patch("agents.agent_image_generator._gemini_client") as mock_client:
-        mock_client.models.generate_content.return_value = response
-        _, telemetry = agent_image_generator.generate(
-            CONCEPT, BRIEF, output_path=str(out_file)
-        )
-
-    call = telemetry.calls[0]
-    assert call.input_tokens == 0
-    assert call.output_tokens == 0
-    assert call.cost_usd == 0.0
-
-
-# ---------------------------------------------------------------------------
-# Title overlay — Spec 027
-# ---------------------------------------------------------------------------
-
-_CONCEPT_WITH_TITLE = CartoonConcept(
-    full_text="<image_prompt>A cat at the G7 table.</image_prompt>",
-    image_prompt="A cat at the G7 table.",
-    iteration=1,
-    title="AI Circus Comes to Town",
-)
-
-
-def _make_real_png(path: str, width: int = 512, height: int = 384) -> None:
-    # PIL Image.new is the only reliable way to produce a file _overlay_title can load.
-    img = Image.new("RGB", (width, height), (180, 180, 180))
-    img.save(path)
-
-
-def test_overlay_title_expands_image_height(tmp_path):
-    # _overlay_title must add a banner above the image, expanding canvas height —
-    # if height is unchanged, the overlay did nothing and the title is invisible.
-    img_path = str(tmp_path / "test.png")
-    _make_real_png(img_path, width=512, height=384)
-    agent_image_generator._overlay_title(img_path, "G7 Lets AI Self-Regulate")
-    with Image.open(img_path) as result:
-        assert result.height > 384
-
-
-def test_overlay_title_preserves_image_width(tmp_path):
-    # _overlay_title must not alter image width — the banner spans the same horizontal
-    # extent as the original so the overall composition does not shift or crop.
-    img_path = str(tmp_path / "test.png")
-    _make_real_png(img_path, width=512, height=384)
-    agent_image_generator._overlay_title(img_path, "G7 Lets AI Self-Regulate")
-    with Image.open(img_path) as result:
-        assert result.width == 512
-
-
-def test_generate_calls_overlay_when_show_title_true_and_title_set(tmp_path):
-    # generate() must invoke _overlay_title when show_title=True and concept.title is
-    # non-empty — the title banner must physically reach the saved image file.
-    out_file = tmp_path / "cartoon_output.png"
-    response = _make_gemini_response(FAKE_PNG)
-    with (
-        patch("agents.agent_image_generator._gemini_client") as mock_client,
-        patch("agents.agent_image_generator._overlay_title") as mock_overlay,
-    ):
-        mock_client.models.generate_content.return_value = response
-        agent_image_generator.generate(
-            _CONCEPT_WITH_TITLE,
-            BRIEF,
-            output_path=str(out_file),
-            show_title=True,
-        )
-    mock_overlay.assert_called_once_with(str(out_file), "AI Circus Comes to Town")
-
-
-def test_generate_skips_overlay_when_show_title_false(tmp_path):
-    # generate() must NOT call _overlay_title when show_title=False — the --no-title
-    # flag must suppress the banner so the raw image is delivered without modification.
-    out_file = tmp_path / "cartoon_output.png"
-    response = _make_gemini_response(FAKE_PNG)
-    with (
-        patch("agents.agent_image_generator._gemini_client") as mock_client,
-        patch("agents.agent_image_generator._overlay_title") as mock_overlay,
-    ):
-        mock_client.models.generate_content.return_value = response
-        agent_image_generator.generate(
-            _CONCEPT_WITH_TITLE,
-            BRIEF,
-            output_path=str(out_file),
-            show_title=False,
-        )
-    mock_overlay.assert_not_called()
-
-
-def test_generate_skips_overlay_when_title_empty(tmp_path):
-    # generate() must NOT call _overlay_title when concept.title is "" — an empty
-    # title must not produce a blank banner; the guard prevents a visual blank strip.
-    out_file = tmp_path / "cartoon_output.png"
-    response = _make_gemini_response(FAKE_PNG)
-    with (
-        patch("agents.agent_image_generator._gemini_client") as mock_client,
-        patch("agents.agent_image_generator._overlay_title") as mock_overlay,
-    ):
-        mock_client.models.generate_content.return_value = response
-        agent_image_generator.generate(
-            CONCEPT,
-            BRIEF,
-            output_path=str(out_file),
-            show_title=True,
-        )
-    mock_overlay.assert_not_called()

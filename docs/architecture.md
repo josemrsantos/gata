@@ -135,13 +135,25 @@ output rather than generating anything new from a topic.
 
 Given an edition folder containing two or more story sub-folders — each named with a
 leading number that fixes its position (`01_story-name`, `02_story-name`, …) — it reads
-every story's `linkedin_post.md`, in that numeric order, and hands them to the
-**Newsletter Editor** agent (see [Agents](#agents)) to merge into one draft document
-with shared boilerplate collapsed to appear once.
+every story's `linkedin_post.md`, in that numeric order, and:
+
+1. Runs the **Engagement Image Concept** panel (see [Agents](#agents)) over the story
+   texts only, then renders the winning prompt into `engagement_image.png` — on by
+   default, skippable with `--no-image` (Spec 041).
+2. Hands the stories to the **Newsletter Editor** agent to merge into one draft
+   document with shared boilerplate collapsed to appear once, plus a second
+   `===NOTIFICATION===` section written to `edition_notification.txt` — a short,
+   catchy network-facing teaser ending with a subscribe call to action (Spec 041).
+
+Both the engagement image and the notification teaser fail soft: if either step fails,
+`merged_linkedin_post.md` is still written and a warning is logged — the run only hard-
+fails on the conditions listed below (bad story folders) or total exhaustion of the
+merge-call fallback chain.
 
 ```bash
 python newsletter_merge.py gata/newsletter/03_special_edition
 python newsletter_merge.py gata/newsletter/03_special_edition --audience uk -o custom.md
+python newsletter_merge.py gata/newsletter/03_special_edition --no-image
 ```
 
 **Example**
@@ -159,6 +171,8 @@ _Output_
 
 ```
 gata/newsletter/03_special_edition/merged_linkedin_post.md
+gata/newsletter/03_special_edition/engagement_image.png
+gata/newsletter/03_special_edition/edition_notification.txt
 ```
 
 A story folder missing its leading number, or missing `<audience>/linkedin_post.md`,
@@ -342,6 +356,12 @@ flowchart LR
 
 The image binary is written atomically using `tempfile + os.replace()` (constitution §2).
 The title overlay is suppressed when `--no-title` is set.
+
+The model fallback loop, atomic write, and title-overlay helper live in
+`core/image_generation.py`'s `ImageGeneration` class (Spec 041) — `agents/agent_image_generator.py`
+now only builds the prompt from the Satirist's concept and delegates rendering to it.
+The newsletter Engagement Image Concept step (see [Agents](#agents)) shares the exact
+same class, so both paths render through identical code.
 
 **Example**
 
@@ -539,16 +559,50 @@ model, cheapest combined per-million-token rate first, then Claude/Grok models (
 cheapest first) only if every Gemini option fails. Every attempt — success or failure —
 is logged with model, tokens, and cost.
 
+The response is two `===MARKER===`-delimited sections (Spec 041):
+
+| Marker | Content |
+|--------|---------|
+| `ARTICLE` | The merged newsletter edition itself, ending with the total cost line |
+| `NOTIFICATION` | 2–4 sentence catchy network-facing teaser, in Gata's voice, ending with a subscribe call to action — no follower/subscriber counts |
+
+`parse_merge_response()` splits the two apart leniently: a response missing
+`===NOTIFICATION===` still yields a usable article (only the teaser file is skipped);
+a response missing `===ARTICLE===` still publishes whatever text came back, unparsed.
+
 Before calling, the script sums every story's stored `"Image Generator"` cost from its
-own `telemetry.json` (all iterations, not just the approved one) and adds a conservative
-estimate for the merge call itself, using the priciest model in the whole chain and its
-`max_tokens` ceiling — so the estimate is never an undercount of what the call could
-actually cost. The model is instructed to append that total, plus a fixed note that
-human review time isn't included, as the last line of the document.
+own `telemetry.json` (all iterations, not just the approved one), the exact cost of the
+Engagement Image Concept panel and rendering (when it succeeded), and adds a
+conservative estimate for the merge call itself, using the priciest model in the whole
+chain and its `max_tokens` ceiling — so the estimate is never an undercount of what the
+call could actually cost. The model is instructed to append that total, plus a fixed
+note that human review time isn't included, as the last line of the `ARTICLE` section.
 
 The output is always a draft: nothing publishes automatically, and no template-shape
 validation is applied to the input `linkedin_post.md` files — a human reviews and edits
 the merged result before posting.
+
+---
+
+### Engagement Image Concept
+
+Invoked only by `newsletter_merge.py`, before the Newsletter Editor call, unless
+`--no-image` is set (Spec 041). Produces one image-generation prompt that visually
+unifies an entire edition, rendered into `engagement_image.png`.
+
+Reuses `FairParallelPanel` — the same protocol as Cultural Strategist and Satirist —
+over the edition's `linkedin_post.md` texts only; no story's rendered image is ever
+sent, avoiding a literal collage of mismatched art. Panelists are named by their
+`model_id` (mirroring Cultural Strategist); the aggregator is named **Art Director**.
+Both the panelist and aggregator system prompts restate the mandatory Constitution §5
+visual style (greyscale background, Gata in Selective Color, 1970s newsroom setting,
+`ON THE SPOT` chalkboard) — there is no cover-image carve-out from that rule.
+
+The winning prompt is rendered by the same `core/image_generation.py` `ImageGeneration`
+class the per-story pipeline uses (see [Image Generator](#image-generator)) — no title
+banner is applied. Any failure (every panelist failing, or every image model failing)
+is a soft failure: a warning is logged, no `engagement_image.png` is written, and the
+merge-text step proceeds unaffected.
 
 ---
 
@@ -638,7 +692,9 @@ audit), and `telemetry` (timing + token counts).
 ### FairParallelPanel (current)
 
 Defined in `llm/fair_parallel_panel.py`. The active protocol for Cultural Strategist,
-Satirist, and Explainer (replaces `ParallelPanel` as of Spec 034).
+Satirist, and Explainer (replaces `ParallelPanel` as of Spec 034), and reused as-is by
+the newsletter Engagement Image Concept step (Spec 041) — a single deliberation
+producing one image prompt, rather than a new bespoke protocol.
 
 **How it works:**
 
