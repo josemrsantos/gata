@@ -80,6 +80,16 @@ def main() -> None:
             " (linkedin_notification.txt) in the output bundle"
         ),
     )
+    parser.add_argument(
+        "--angle",
+        action="append",
+        metavar="TEXT",
+        help=(
+            "an angle the --linkedin-post article should explore; repeatable"
+            " (e.g. --angle 'X' --angle 'Y'). Has no effect without"
+            " --linkedin-post."
+        ),
+    )
     args = parser.parse_args()
     if not args.topic.strip():
         print("error: topic must not be empty", file=sys.stderr)
@@ -96,6 +106,8 @@ def main() -> None:
     if not os.getenv("GEMINI_API_KEY"):
         logger.error("GEMINI_API_KEY is not set")
         sys.exit(1)
+    if args.angle and not args.linkedin_post:
+        logger.info("--angle has no effect without --linkedin-post")
     humor = None
     if os.path.exists("humor.yaml"):
         try:
@@ -129,6 +141,7 @@ def main() -> None:
                 show_title=not args.no_title,
                 skip_cultural_strategist=args.direct,
                 generate_linkedin_post=args.linkedin_post,
+                angles=args.angle,
             )
             audience_telemetry.append((audience.name, telemetry))
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:

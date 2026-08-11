@@ -31,6 +31,16 @@ class ClaudeProvider(LLMProvider):
     def timeout(self) -> float | None:
         return self._timeout
 
+    @property
+    def client(self) -> anthropic.Anthropic:
+        # Exposes the underlying client for agents that need special Claude config
+        # (e.g. web search tool use) not expressible via generate() — mirrors
+        # GeminiProvider.client (Spec 042 FR-002).
+        global _client
+        if _client is None:
+            _client = anthropic.Anthropic()
+        return _client
+
     def generate(
         self,
         system_prompt: str,

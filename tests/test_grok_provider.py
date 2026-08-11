@@ -53,6 +53,20 @@ def test_model_id_returns_constructor_argument():
 
 
 # ---------------------------------------------------------------------------
+# client property (Spec 042 FR-002)
+# ---------------------------------------------------------------------------
+
+
+def test_client_property_returns_the_same_client_get_client_uses():
+    # client must expose the same singleton generate() uses via _get_client(),
+    # so agents needing raw SDK access (e.g. Live Search) share one client.
+    provider = GrokProvider("grok-4.3")
+    with patch("llm.grok._get_client") as mock_get_client:
+        mock_get_client.return_value = "fake-client"
+        assert provider.client == "fake-client"
+
+
+# ---------------------------------------------------------------------------
 # generate() — happy path
 # ---------------------------------------------------------------------------
 
