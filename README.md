@@ -81,7 +81,7 @@ working directory — one for the inferred audience and one for the UK public.
 | **Image Generator** | — | Gemini image models | Renders the approved image prompt into a PNG; tries up to 5 models in order before failing |
 | **Image Evaluator** | — | Gemini vision models | Checks for LLM rendering artifacts and rates comedy; triggers regeneration up to 2 times on rejection |
 | **Explainer** | Writer ×3, Editor | Claude · Grok-build (grok-build-0.1) · Gemini (writers) · Grok-4.3 (editor/aggregator) | Three Writers independently draft HTML explanation pages (in-language + English); Editor picks the best per run |
-| **LinkedIn Post** | — | Grok-4.3 (aggregator chain — same fallback as Cultural Strategist/Satirist aggregator) | Writes the LinkedIn companion article (title, message, comment prompt, punchline, push notification) for the approved concept (`--linkedin-post` only) |
+| **LinkedIn Post** | Research (Gemini/Claude/Grok, independent) → Angle Planner ×3 + Managing Editor → Writer ×3 + Managing Editor | Same panelist/aggregator chains as Satirist | Each panelist researches the topic with its own real web search, three panelists independently propose article angles (an optional `--angle` steers this), then three panelists draft a serious, non-satirical article from the agreed angles; a code-built Sources list (never LLM-authored) and an AI-authorship disclosure are appended (`--linkedin-post` only) |
 | **Engagement Image Concept** | Panelist ×N, Art Director | Same provider chains as Satirist panelists/aggregator (or `providers.yaml`) | Deliberates one image-generation prompt that visually unifies an entire newsletter edition from its stories' text only (never their rendered images); rendered via the shared `ImageGeneration` class. Runs before the Newsletter Editor call, on by default, skippable with `--no-image` |
 | **Newsletter Editor** | — | Gemini text models (primary) · Grok · Claude (fallback only, cheapest-first) | Merges several stories' `linkedin_post.md` files into one newsletter-edition draft plus a network-facing notification teaser (`edition_notification.txt`), invoked via the standalone `newsletter_merge.py` script — not part of the `gata`/`pipeline.py` flow |
 
@@ -105,6 +105,10 @@ gata "AI is replacing junior developers" --direct
 
 # Also generate HTML explanation pages
 gata "NATO summit in Brussels" --html
+
+# Generate a researched (non-satirical) companion article alongside the cartoon
+gata "Vibe coding in production" --linkedin-post
+gata "Vibe coding in production" --linkedin-post --angle "where it should not be used" --angle "where it's fine as long as..."
 ```
 
 Output folder: `{cwd}/{topic_slug}/` — one PNG per audience, plus a bundle folder per
@@ -142,6 +146,9 @@ python pipeline.py --topic "AI hype" --audience "developers" --language "English
 
 # Custom LLM provider chains via providers.yaml
 python pipeline.py --community uk-politics --providers providers.yaml
+
+# Researched (non-satirical) companion article, with operator-supplied angles
+python pipeline.py --topic "Vibe coding in production" --audience "engineering leaders" --language English --tone neutral --direct --linkedin-post --angle "where it should not be used" --angle "where it's fine as long as..."
 ```
 
 ### Multi-panel flags
@@ -153,7 +160,8 @@ python pipeline.py --community uk-politics --providers providers.yaml
 | `--no-title` | — | off | Suppress the title banner overlaid at the top of the image |
 | `--direct` | — | off | Skip the Cultural Strategist; feed topic straight to the Satirist |
 | `--providers` | path | built-in defaults | Path to `providers.yaml` — overrides built-in LLM assignments |
-| `--linkedin-post` | — | off | Generate a LinkedIn article (`linkedin_post.md`) and notification snippet (`linkedin_notification.txt`) in the output bundle |
+| `--linkedin-post` | — | off | Generate a researched LinkedIn article (`linkedin_post.md`) and notification snippet (`linkedin_notification.txt`) in the output bundle |
+| `--angle` | text, repeatable | none | An angle the `--linkedin-post` article should explore (e.g. `--angle "X" --angle "Y"`); has no effect without `--linkedin-post` |
 
 ### Output bundle
 
@@ -169,8 +177,8 @@ Each run writes a bundle folder containing:
 | `summary.txt` | Per-agent time, iterations, and cost (human-readable) |
 | `explanation.html` | In-language explanation of the joke (`--html` only) |
 | `deep_dive_en.html` | English operator deep-dive (`--html` only) |
-| `linkedin_post.md` | Five-section LinkedIn newsletter article in Gata's voice (`--linkedin-post` only) |
-| `linkedin_notification.txt` | Push-notification snippet for LinkedIn followers (`--linkedin-post` only) |
+| `linkedin_post.md` | Researched, non-satirical companion article — independently researched by Claude/Gemini/Grok, organised by agreed angles, with a code-built Sources list and an AI-authorship disclosure (`--linkedin-post` only) |
+| `linkedin_notification.txt` | Serious push-notification teaser for LinkedIn followers (`--linkedin-post` only) |
 
 ## Communities
 
@@ -285,3 +293,4 @@ communication protocol framework.
 | 36 | Per-provider call timeout — optional `timeout` field in `providers.yaml` | ✅ |
 | 38 | LinkedIn Newsletter companion post — `--linkedin-post` generates `linkedin_post.md` + `linkedin_notification.txt` | ✅ |
 | 41 | Newsletter engagement image & notification — `newsletter_merge.py` auto-generates `engagement_image.png` (FairParallelPanel concept panel + shared `core/image_generation.py` renderer) and `edition_notification.txt` | ✅ |
+| 42 | Researched LinkedIn article — `--linkedin-post` article is independently researched by Claude/Gemini/Grok (each with its own real web search), angle-planned and written via two `FairParallelPanel` stages, with a repeatable `--angle` flag and a code-built Sources list | ✅ |

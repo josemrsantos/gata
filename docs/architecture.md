@@ -75,9 +75,10 @@ For both entry points, audience inference runs after the topic is known (one Gem
 and the result feeds into the Cultural Strategist alongside the UK audience.
 
 `pipeline.py` additionally supports `--community`, `--audience`, `--language`,
-`--tone`, `--panels`, `--layout`, `--html`, `--no-title`, `--direct`, and `--providers`
-flags. The `gata` command is a thin wrapper that supplies sensible defaults and exposes
-the most common flags.
+`--tone`, `--panels`, `--layout`, `--html`, `--no-title`, `--direct`, `--providers`,
+`--linkedin-post`, and `--angle` flags. The `gata` command is a thin wrapper that
+supplies sensible defaults and exposes the most common flags, including
+`--linkedin-post` and `--angle`.
 
 `--direct` skips the Cultural Strategist entirely and builds a minimal `EnrichedBrief`
 directly from the topic and seed brief. This removes one agent's latency and cost when
@@ -515,31 +516,59 @@ the UK housing market — a second crisis the audience lives daily.</p>
 
 ### LinkedIn Post
 
-Generates a launch-ready LinkedIn newsletter article (`linkedin_post.md`) and a
-push-notification snippet (`linkedin_notification.txt`) in Gata's sardonic voice.
-Only runs when `--linkedin-post` is set. Uses the aggregator provider (Grok-4.3 by
-default) with a single LLM call.
+Generates a **researched, non-satirical** companion article (`linkedin_post.md`)
+and a serious push-notification teaser (`linkedin_notification.txt`). Only runs
+when `--linkedin-post` is set. Unlike the cartoon, this article deliberately drops
+Gata's sardonic voice — professional, analytical register, no jokes, no feline
+metaphors — on the premise that the cartoon already carries the joke, so the text
+should carry something the image can't (Spec 042).
 
-The response is structured with five `===MARKER===`-delimited sections:
+**Four stages, each using the same panelist/aggregator providers already
+configured for the Satirist:**
+
+1. **Independent research** — each of the three panelist providers performs its
+   own real, provider-native web search on the topic (plus any operator-supplied
+   `--angle` values): Gemini via its existing Google Search grounding tool,
+   Claude via Anthropic's `web_search_20250305` tool, Grok via xAI's Agent Tools
+   `web_search` tool (all three access their SDK client directly via a `client`
+   property — see [FairParallelPanel](#fairparallelpanel-current)). Each runs in
+   parallel, bounded by a 120-second timeout; one provider's failure only affects
+   that provider — it proceeds ungrounded, explicitly instructed not to present
+   unverified claims as fact, rather than aborting the whole run. Only if *all
+   three* fail does the feature soft-fail entirely.
+2. **Angle planning** — a `FairParallelPanel` run (panelists named by `model_id`,
+   aggregator named **Managing Editor**, default 60s timeout) where each panelist
+   proposes 2–4 distinct angles from its *own* research. Any operator-supplied
+   `--angle` values (repeatable flag) are mandatory inclusions in the final set.
+3. **Writing** — a second `FairParallelPanel` run (same panelists/aggregator,
+   `panelist_timeout=120` — longer than the 60s default because its prompt
+   embeds a full research digest and its output targets 500–800 words) drafts
+   the article from the agreed angles, one section per angle. Each panelist's
+   *own* research digest is embedded into that panelist's own system prompt —
+   not `FairParallelPanel`'s shared input, which stays the same for everyone
+   (topic + operator angles only) — so the protocol class itself needed no
+   changes.
+4. **Assembly** — four `===MARKER===`-delimited sections come back from the
+   writing panel:
 
 | Marker | Content |
 |--------|---------|
-| `TITLE` | Article H1 — satirical, punchy |
-| `MESSAGE` | Body of "A Message from Gata 🐾" — max 4 paragraphs, one bold sentence |
-| `COMMENT` | One reader-engagement question tied to the topic |
-| `PUNCHLINE` | Closing italic line for the tech stack section |
-| `NOTIFICATION` | 2–3 sentence push-notification snippet ending with 🐾 |
+| `TITLE` | Article H1 — professional, punchy |
+| `BODY` | Introduction + one section per agreed angle |
+| `COMMENT` | One serious, substantive discussion question |
+| `NOTIFICATION` | 2–3 sentence serious LinkedIn teaser |
 
-The agent assembles the final Markdown: Section 1 (title), Section 2 (telemetry
-caption from real run metrics), Section 3 (Gata message body + static closing block
-with repost appeal, comment question, story-idea invite, subscribe link, email),
-Section 4 (static tech stack body + LLM punchline). The notification goes to its own
-plain-text file.
+The final Markdown is assembled as: title, a real-metrics telemetry caption, a
+**code-inserted** AI-authorship disclosure (never LLM-authored) + the article
+body + the static closing block (repost ask, comment question, subscribe link),
+then a **Sources** section, then the static tech-stack body. The Sources list is
+built entirely in code from the deduplicated union of every panelist's own real
+sources — never parsed from or trusted to LLM output, so no citation can be
+fabricated.
 
-LLM failure is non-fatal: a WARNING is logged and neither file is written; the rest
-of the bundle is unaffected.
-
-Only runs when `--linkedin-post` is set.
+Any stage's total failure (all research, all angle-planning panelists, or all
+writing panelists) is non-fatal: a WARNING is logged and neither file is written;
+the rest of the bundle — including the cartoon — is unaffected.
 
 ---
 
@@ -692,9 +721,13 @@ audit), and `telemetry` (timing + token counts).
 ### FairParallelPanel (current)
 
 Defined in `llm/fair_parallel_panel.py`. The active protocol for Cultural Strategist,
-Satirist, and Explainer (replaces `ParallelPanel` as of Spec 034), and reused as-is by
-the newsletter Engagement Image Concept step (Spec 041) — a single deliberation
-producing one image prompt, rather than a new bespoke protocol.
+Satirist, and Explainer (replaces `ParallelPanel` as of Spec 034), reused as-is by
+the newsletter Engagement Image Concept step (Spec 041), and by the LinkedIn Post
+agent's two sequential stages — angle planning and writing (Spec 042). Each new use
+is a single deliberation producing one text output (an image prompt, an angle set,
+or an article), rather than a new bespoke protocol — including cases needing
+per-panelist-distinct context (each LinkedIn Post panelist's own research), met by
+varying each `PersonaConfig.system_prompt` rather than modifying this class.
 
 **How it works:**
 
