@@ -1,6 +1,73 @@
 # CHANGELOG
 
 
+## v1.23.0 (2026-08-11)
+
+### Documentation
+
+* docs: mark spec 042 complete in CLAUDE.md
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com> ([`f50d4b0`](https://github.com/josemrsantos/gata/commit/f50d4b060c3ae8321adfc226cd96ea3dc4e439c3))
+
+* docs: sync README + architecture for spec 042
+
+README: rewrite the LinkedIn Post agent table row for the new
+research/angle-planning/writing pipeline; add --angle to the flags table and
+CLI examples on both gata and pipeline.py; update the linkedin_post.md /
+linkedin_notification.txt output-bundle descriptions; add Status row 42.
+
+docs/architecture.md: rewrite the LinkedIn Post section (independent
+per-provider research, the two FairParallelPanel stages, code-built Sources
+list, AI-authorship disclosure); note the LinkedIn Post panels as a third
+FairParallelPanel consumer alongside Cultural Strategist/Satirist/Explainer
+and Spec 041's Engagement Image Concept; list --linkedin-post/--angle in the
+Entry points flag summary.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com> ([`18e3a28`](https://github.com/josemrsantos/gata/commit/18e3a2881edcbc2feb803904096690afe07d798e))
+
+### Features
+
+* feat: spec 042 — researched LinkedIn article
+
+--linkedin-post now generates a serious, non-satirical companion article
+instead of a second joke — the cartoon carries the humor, the text carries
+substance. Four stages, all using the existing panelist/aggregator providers:
+
+1. Independent research — each of the three panelist providers performs its
+   own real web search (Gemini's Google Search grounding, Claude's
+   web_search_20250305 tool, xAI's Agent Tools web_search tool), run in
+   parallel with a 120s timeout each. One provider failing doesn't abort the
+   run: that panelist proceeds ungrounded, explicitly told not to present
+   unverified claims as fact. Only total failure across all three soft-fails
+   the whole feature.
+2. Angle planning — a FairParallelPanel run where each panelist proposes
+   angles from its own research; a new repeatable --angle flag (gata and
+   pipeline.py) makes operator-supplied angles mandatory in the final set.
+3. Writing — a second FairParallelPanel run (panelist_timeout=120) drafting
+   the article from the agreed angles, each panelist drawing on its own
+   research embedded in its own system prompt — FairParallelPanel itself is
+   unmodified.
+4. Assembly — a code-inserted AI-authorship disclosure and a Sources list
+   built entirely from the deduplicated union of every panelist's real
+   sources, never parsed from or trusted to LLM output.
+
+ClaudeProvider and GrokProvider each gain a `client` property mirroring
+GeminiProvider's existing one, so this feature can make provider-specific
+search calls without touching generate()'s shared interface.
+
+Found and fixed during real end-to-end testing: a missing <verdict> wrapping
+instruction that failed every writing-panel response; xAI's Live Search being
+fully deprecated (confirmed via a live HTTP 410) and rebuilt against xAI's
+current Responses API; xAI's citation "title" field actually being the
+footnote index, not a page title; and a per-provider research duration
+measured at the wrong point in a parallel-results loop.
+
+68 new/updated tests. Verified end-to-end against a real topic with two
+operator-supplied angles.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com> ([`5a2be95`](https://github.com/josemrsantos/gata/commit/5a2be952de3a9b2962eb65754c9da16f537fb0c2))
+
+
 ## v1.22.0 (2026-08-10)
 
 ### Documentation
