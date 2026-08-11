@@ -108,6 +108,26 @@ class EnrichedBrief:
 
 
 @dataclass
+class ResearchSource:
+    # One real source from a panelist provider's own web search call (Gemini
+    # grounding, Claude web search, or xAI's search tool) — title and URL are
+    # taken verbatim from that provider's own response (Spec 042 FR-003).
+    title: str
+    url: str
+
+
+@dataclass
+class ResearchDigest:
+    # One provider's own grounded findings summary plus every real source backing
+    # it — up to three of these exist per run, one per panelist provider, never
+    # merged into a single shared digest. The published Sources list is always the
+    # deduplicated union of every digest's `sources` (Spec 042 FR-011) — never
+    # parsed from or trusted to LLM-authored text.
+    summary: str
+    sources: list[ResearchSource] = field(default_factory=list)
+
+
+@dataclass
 class FramerHumor:
     wordplay_scan: bool = True
     joke_types: list[str] = field(

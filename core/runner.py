@@ -70,6 +70,7 @@ def run_pipeline(
     providers_config: ProvidersConfig | None = None,
     skip_cultural_strategist: bool = False,
     generate_linkedin_post: bool = False,
+    angles: list[str] | None = None,
 ) -> RunTelemetry:
     """Run the full pipeline for a single topic and write the output image."""
     # Build provider lists from config when supplied; otherwise wrap hardcoded defaults
@@ -179,10 +180,11 @@ def run_pipeline(
             print("  LinkedIn Post...", flush=True)
             article_md, notification_txt = agent_linkedin_post.generate_linkedin_post(
                 enriched_brief,
-                image_prompt,
                 topic,
                 telemetry,
+                panelist_providers,
                 aggregator_providers,
+                angles=angles,
             )
             if article_md:
                 linkedin_post = (article_md, notification_txt)

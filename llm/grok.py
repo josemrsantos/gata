@@ -48,6 +48,13 @@ class GrokProvider(LLMProvider):
     def timeout(self) -> float | None:
         return self._timeout
 
+    @property
+    def client(self) -> openai.OpenAI:
+        # Exposes the underlying client for agents that need special Grok config
+        # (e.g. Live Search) not expressible via generate() — mirrors
+        # GeminiProvider.client (Spec 042 FR-002).
+        return _get_client()
+
     def generate(
         self,
         system_prompt: str,

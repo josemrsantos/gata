@@ -101,7 +101,19 @@ def main() -> None:
             " (linkedin_notification.txt) in the output bundle"
         ),
     )
+    parser.add_argument(
+        "--angle",
+        action="append",
+        metavar="TEXT",
+        help=(
+            "an angle the --linkedin-post article should explore; repeatable"
+            " (e.g. --angle 'X' --angle 'Y'). Has no effect without"
+            " --linkedin-post."
+        ),
+    )
     args = parser.parse_args()
+    if args.angle and not args.linkedin_post:
+        logger.info("--angle has no effect without --linkedin-post")
     # Reject an empty --community immediately — blank string is not a valid description
     if args.community is not None and not args.community.strip():
         logger.error("--community must not be empty")
@@ -220,6 +232,7 @@ def main() -> None:
                 providers_config=providers_config,
                 skip_cultural_strategist=args.direct,
                 generate_linkedin_post=args.linkedin_post,
+                angles=args.angle,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -269,6 +282,7 @@ def main() -> None:
                 providers_config=providers_config,
                 skip_cultural_strategist=args.direct,
                 generate_linkedin_post=args.linkedin_post,
+                angles=args.angle,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -358,6 +372,7 @@ def main() -> None:
                 providers_config=providers_config,
                 skip_cultural_strategist=args.direct,
                 generate_linkedin_post=args.linkedin_post,
+                angles=args.angle,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -410,6 +425,7 @@ def main() -> None:
                 providers_config=providers_config,
                 skip_cultural_strategist=args.direct,
                 generate_linkedin_post=args.linkedin_post,
+                angles=args.angle,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)

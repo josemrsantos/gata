@@ -54,6 +54,7 @@ what has already merged to `main`.
 | 036 | Per-provider call timeout — optional timeout field in providers.yaml | ✅ |
 | 039 | Provider pricing & model currency refresh — corrected cost tables, replaced retired/dead default models (grok-3→grok-4.3, grok-3-mini→grok-build-0.1, gemini-2.0-flash→gemini-2.5-flash-lite) | ✅ |
 | 041 | Newsletter engagement image & notification — `newsletter_merge.py` auto-generates `engagement_image.png` (FairParallelPanel concept panel + shared `core/image_generation.py` renderer) and `edition_notification.txt` (network teaser, same merge call) | ✅ |
+| 042 | Researched LinkedIn article — `--linkedin-post` article is independently researched by Claude/Gemini/Grok (each with its own real web search), angle-planned and written via two FairParallelPanel stages, with a repeatable `--angle` flag and a code-built Sources list | ✅ |
 <!-- SPECKIT END -->
 
 LLM REVIEW PROTOCOL — this is a hard stop, not a suggestion. Violating it is not acceptable under any circumstances,

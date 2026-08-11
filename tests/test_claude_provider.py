@@ -44,6 +44,24 @@ def test_model_id_returns_constructor_argument():
 
 
 # ---------------------------------------------------------------------------
+# client property (Spec 042 FR-002)
+# ---------------------------------------------------------------------------
+
+
+def test_client_property_returns_the_singleton_anthropic_client():
+    # client must expose the same lazily-created singleton generate() uses, so
+    # agents needing raw SDK access (e.g. web search tool use) share one client.
+    import llm.claude as claude_mod
+
+    provider = ClaudeProvider("claude-sonnet-4-6")
+    claude_mod._client = None
+    client = provider.client
+    assert client is claude_mod._client
+    # A second access must not create a new client.
+    assert provider.client is client
+
+
+# ---------------------------------------------------------------------------
 # generate() — happy path
 # ---------------------------------------------------------------------------
 
