@@ -1,6 +1,58 @@
 # CHANGELOG
 
 
+## v1.23.1 (2026-08-12)
+
+### Bug Fixes
+
+* fix: spec 043 — uniform source titles across all three providers
+
+Every entry in the LinkedIn Post Sources list now reads as "domain - page
+title", regardless of which provider found it. Before this fix the three were
+visually inconsistent: Gemini's grounding API only ever returns a bare domain
+(its .title field is literally e.g. "ibm.com"), Grok's citation "title" field
+turned out to be the in-text footnote number rather than a real title, and
+only Claude already returned a good title with no domain prefix.
+
+Gemini and Grok now share a fetch-based resolver: a direct httpx GET
+(following redirects) against the cited URL, parsing the destination page's
+<title> tag. Claude needs no fetch — its own title is already good, so this
+just prepends the parsed domain to it. Any failure anywhere (timeout,
+non-2xx, missing/empty title) falls back to the bare domain alone; this is a
+cosmetic layer, never a new failure mode for the underlying research.
+
+Real bug found and fixed while verifying this live: Wikipedia (and likely
+other sites) return HTTP 403 for requests with no User-Agent header, which
+was silently indistinguishable from "no title found" until traced back to
+the real cause. A single failed fetch against the exact real Wikipedia URL a
+prior test run had actually cited is what surfaced this — not a hypothetical
+edge case. Fixed by sending a browser-like User-Agent on every fetch;
+re-verified live afterwards that the same URL now resolves correctly
+("en.wikipedia.org - Vibe coding - Wikipedia"). This matters beyond this one
+site: Wikipedia citations show up constantly in real research results, so
+without this fix a meaningful fraction of sources would have silently kept
+their bare-domain fallback instead of getting a real title.
+
+22 new/updated tests. Verified live against real URLs for all three
+providers' code paths (Gemini redirect URL, a direct URL simulating Grok's
+case, and Claude's citation-based path).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com> ([`0650418`](https://github.com/josemrsantos/gata/commit/065041808cf97a65c947378efd5e8cfe9386a077))
+
+### Documentation
+
+* docs: sync README + architecture for spec 043
+
+README: add Status row 43.
+
+docs/architecture.md: rewrite the LinkedIn Post section's source-title note to
+cover all three providers (previously described the Gemini-only version of
+this fix) — the shared fetch resolver for Gemini/Grok, the domain-prefix-only
+path for Claude, and the Wikipedia User-Agent finding.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com> ([`6013405`](https://github.com/josemrsantos/gata/commit/60134057d0f545b7d62b1fca6c77389e72f27613))
+
+
 ## v1.23.0 (2026-08-11)
 
 ### Documentation
