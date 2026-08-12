@@ -566,6 +566,24 @@ built entirely in code from the deduplicated union of every panelist's own real
 sources — never parsed from or trusted to LLM output, so no citation can be
 fabricated.
 
+Spec 043 unifies every source in the list to `"{domain} - {page title}"`,
+regardless of provider — the three started out inconsistent. Gemini's Google
+Search grounding API only ever returns a bare domain as a source's title
+(confirmed live — its `.title` field is literally e.g. `"ibm.com"`, and
+`.domain` is always unset); xAI's citation `title` field turned out to be the
+in-text footnote number, not a title at all (also confirmed live); only
+Claude's citation API already returned a real title. For Gemini (redirect
+URLs) and Grok (real, direct URLs), a shared resolver fetches the URL directly
+via `httpx` (parallel across all of one call's sources, 5s per-URL budget,
+with a browser-like `User-Agent` header — confirmed live that Wikipedia and
+likely other sites 403 requests without one) and reads the destination page's
+real `<title>`. Claude needs no fetch — its own title is already good, and
+this step just prepends the domain to it (e.g. `"ibm.com - Vibe Coding
+Security Risks Aren't Like Ordinary Security Risks | IBM"`). Any failure
+anywhere — timeout, non-2xx, missing `<title>`, no citation title — leaves the
+source's title as the bare domain alone; this is a cosmetic enhancement,
+never a new failure mode.
+
 Any stage's total failure (all research, all angle-planning panelists, or all
 writing panelists) is non-fatal: a WARNING is logged and neither file is written;
 the rest of the bundle — including the cartoon — is unaffected.

@@ -294,3 +294,4 @@ communication protocol framework.
 | 38 | LinkedIn Newsletter companion post — `--linkedin-post` generates `linkedin_post.md` + `linkedin_notification.txt` | ✅ |
 | 41 | Newsletter engagement image & notification — `newsletter_merge.py` auto-generates `engagement_image.png` (FairParallelPanel concept panel + shared `core/image_generation.py` renderer) and `edition_notification.txt` | ✅ |
 | 42 | Researched LinkedIn article — `--linkedin-post` article is independently researched by Claude/Gemini/Grok (each with its own real web search), angle-planned and written via two `FairParallelPanel` stages, with a repeatable `--angle` flag and a code-built Sources list | ✅ |
+| 43 | Uniform source titles — every Sources-list entry reads as `domain - page title` regardless of provider; Gemini/Grok resolve it via a direct `httpx` fetch of the cited URL, Claude gets a domain prefix added to its own already-good title | ✅ |

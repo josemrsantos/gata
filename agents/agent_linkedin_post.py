@@ -1,7 +1,11 @@
 import concurrent.futures
+import html
 import logging
+import re
 import time
+from urllib.parse import urlparse
 
+import httpx
 from google.genai import types as genai_types
 
 from core.types import (
@@ -28,6 +32,23 @@ logger = logging.getLogger(__name__)
 # writing FairParallelPanel's per-round budget (FR-009) — both set to 120s.
 _RESEARCH_TIMEOUT_SECONDS = 120.0
 _WRITING_PANEL_TIMEOUT_SECONDS = 120.0
+
+# Per-URL budget for the source-title enrichment fetch, shared by Gemini and
+# Grok (Spec 043 FR-002/FR-003) — short enough that even a full set of
+# slow/hanging fetches can't meaningfully threaten either provider's 120s
+# research budget above.
+_TITLE_FETCH_TIMEOUT_SECONDS = 5.0
+_TITLE_TAG_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.IGNORECASE | re.DOTALL)
+# Confirmed live: Wikipedia (and likely other sites) return HTTP 403 for
+# requests with no User-Agent header, which _fetch_page_title would otherwise
+# silently treat as "no title found" — a real browser-like UA fixes this for
+# the sites that gate on it, without changing behaviour for sites that don't.
+_TITLE_FETCH_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+        " (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+    )
+}
 
 _RESEARCH_SYSTEM = (
     "You are a research assistant preparing background for a professional"
@@ -177,6 +198,74 @@ def _extract_gemini_sources(response) -> list[ResearchSource]:
     return sources
 
 
+def _domain_from_url(url: str) -> str:
+    """Clean display domain for a URL — www. stripped, falls back to the raw
+    URL itself if it can't be parsed into a usable domain (Spec 043 FR-001).
+    """
+    netloc = urlparse(url).netloc
+    if netloc.startswith("www."):
+        netloc = netloc[4:]
+    return netloc or url
+
+
+def _fetch_page_title(url: str) -> str | None:
+    """Best-effort fetch of a page's real <title>. Returns None on any failure —
+    timeout, connection error, non-2xx status, or a missing/empty tag (Spec 043
+    FR-002) — never raises. Shared by both Gemini (redirect URLs) and Grok
+    (direct URLs) — neither provider gives a usable title on its own.
+    """
+    try:
+        response = httpx.get(
+            url,
+            follow_redirects=True,
+            timeout=_TITLE_FETCH_TIMEOUT_SECONDS,
+            headers=_TITLE_FETCH_HEADERS,
+        )
+        response.raise_for_status()
+    except Exception:
+        return None
+    match = _TITLE_TAG_RE.search(response.text)
+    if not match:
+        return None
+    title = " ".join(html.unescape(match.group(1)).split())
+    return title or None
+
+
+def _enrich_source_titles_via_fetch(
+    sources: list[ResearchSource],
+) -> list[ResearchSource]:
+    """Rewrite each source's title to "{bare domain} - {page title}" when its
+    URL resolves to a page with a real <title> (Spec 043 FR-004, FR-005); any
+    source whose fetch fails is returned unchanged (already a bare domain).
+    Fetches run in parallel so total added latency stays low regardless of
+    source count (FR-003).
+    """
+    if not sources:
+        return sources
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(sources)) as executor:
+        futures = [executor.submit(_fetch_page_title, source.url) for source in sources]
+        enriched: list[ResearchSource] = []
+        for source, future in zip(sources, futures):
+            try:
+                page_title = future.result(timeout=_TITLE_FETCH_TIMEOUT_SECONDS + 2)
+            except Exception as exc:
+                logger.debug(
+                    "linkedin_research: title fetch failed for %s — %s",
+                    source.url,
+                    exc,
+                )
+                page_title = None
+            if page_title:
+                enriched.append(
+                    ResearchSource(
+                        title=f"{source.title} - {page_title}", url=source.url
+                    )
+                )
+            else:
+                enriched.append(source)
+    return enriched
+
+
 def _research_gemini(
     provider: GeminiProvider, query: str
 ) -> tuple[ResearchDigest | None, TokenUsage | None]:
@@ -201,7 +290,7 @@ def _research_gemini(
             "linkedin_research: gemini (%s) returned no text", provider.model_id
         )
         return None, None
-    sources = _extract_gemini_sources(response)
+    sources = _enrich_source_titles_via_fetch(_extract_gemini_sources(response))
     meta = getattr(response, "usage_metadata", None)
     in_tok = getattr(meta, "prompt_token_count", 0) or 0
     out_tok = getattr(meta, "candidates_token_count", 0) or 0
@@ -221,6 +310,8 @@ def _research_gemini(
 
 
 def _extract_claude_sources(response) -> list[ResearchSource]:
+    # Anthropic's citation API already gives a real title (unlike Gemini/Grok) —
+    # only a domain prefix is added, no fetch needed (Spec 043 FR-006).
     sources: list[ResearchSource] = []
     seen: set[str] = set()
     for block in getattr(response, "content", None) or []:
@@ -230,7 +321,9 @@ def _extract_claude_sources(response) -> list[ResearchSource]:
             if not url or url in seen:
                 continue
             seen.add(url)
-            title = getattr(citation, "title", None) or url
+            domain = _domain_from_url(url)
+            page_title = getattr(citation, "title", None)
+            title = f"{domain} - {page_title}" if page_title else domain
             sources.append(ResearchSource(title=title, url=url))
     return sources
 
@@ -291,8 +384,10 @@ def _extract_grok_sources(response) -> list[ResearchSource]:
     # confirmed live to return `AnnotationURLCitation` objects on the final
     # message's content. Its `title` field is the in-text footnote number (e.g.
     # "1"), not a page title — confirmed by inspecting a real response — so the
-    # URL itself is used as the display title, matching how the other two
-    # extractors fall back when no real title is available.
+    # bare domain is used as the pre-fetch baseline title (Spec 043 FR-005),
+    # the same starting point Gemini's own API already gives us for free; a
+    # real title is then resolved the same way as Gemini's, since Grok's URLs
+    # are real, direct destination URLs rather than redirects.
     sources: list[ResearchSource] = []
     seen: set[str] = set()
     for item in getattr(response, "output", None) or []:
@@ -302,7 +397,7 @@ def _extract_grok_sources(response) -> list[ResearchSource]:
                 if not url or url in seen:
                     continue
                 seen.add(url)
-                sources.append(ResearchSource(title=url, url=url))
+                sources.append(ResearchSource(title=_domain_from_url(url), url=url))
     return sources
 
 
@@ -327,7 +422,7 @@ def _research_grok(
             "linkedin_research: grok (%s) returned no text", provider.model_id
         )
         return None, None
-    sources = _extract_grok_sources(response)
+    sources = _enrich_source_titles_via_fetch(_extract_grok_sources(response))
     usage_obj = getattr(response, "usage", None)
     in_tok = getattr(usage_obj, "input_tokens", 0) or 0
     out_tok = getattr(usage_obj, "output_tokens", 0) or 0

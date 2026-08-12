@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, patch
 
+import httpx
+
 from agents import agent_linkedin_post as alp
 from core.types import (
     AgentTelemetry,
@@ -88,12 +90,15 @@ def test_extract_gemini_sources_handles_no_candidates():
 
 def test_extract_claude_sources_reads_citations_from_content_blocks():
     # Claude's citations are attached per content block — must be collected
-    # across all blocks, not just the first.
+    # across all blocks, not just the first. FR-006: the domain is prefixed
+    # onto Claude's already-good title, no fetch needed.
     citation = MagicMock(url="https://example.com/b", title="B Source")
     block = MagicMock(citations=[citation])
     response = MagicMock(content=[block])
     sources = alp._extract_claude_sources(response)
-    assert sources == [ResearchSource(title="B Source", url="https://example.com/b")]
+    assert sources == [
+        ResearchSource(title="example.com - B Source", url="https://example.com/b")
+    ]
 
 
 def test_extract_claude_sources_handles_no_citations():
@@ -103,6 +108,16 @@ def test_extract_claude_sources_handles_no_citations():
     assert alp._extract_claude_sources(response) == []
 
 
+def test_extract_claude_sources_falls_back_to_domain_when_no_title():
+    # FR-006: a citation with no title at all must fall back to the bare
+    # domain, not a domain-less blank or "None" string.
+    citation = MagicMock(url="https://example.com/b", title=None)
+    block = MagicMock(citations=[citation])
+    response = MagicMock(content=[block])
+    sources = alp._extract_claude_sources(response)
+    assert sources == [ResearchSource(title="example.com", url="https://example.com/b")]
+
+
 # -- _extract_grok_sources --
 
 
@@ -110,15 +125,14 @@ def test_extract_grok_sources_from_output_annotations():
     # xAI's Agent Tools / Responses API attaches citations as annotations on an
     # output message's content — must produce usable ResearchSource entries.
     # `title` on the real annotation is just the footnote number, not a page
-    # title, so the URL itself is used as the display title (confirmed live).
+    # title, so the bare domain is used as the pre-fetch baseline (Spec 043
+    # FR-005) — the same starting point Gemini's own API gives for free.
     annotation = MagicMock(url="https://example.com/c", title="1")
     content = MagicMock(annotations=[annotation])
     item = MagicMock(content=[content])
     response = MagicMock(output=[item])
     sources = alp._extract_grok_sources(response)
-    assert sources == [
-        ResearchSource(title="https://example.com/c", url="https://example.com/c")
-    ]
+    assert sources == [ResearchSource(title="example.com", url="https://example.com/c")]
 
 
 def test_extract_grok_sources_dedupes_by_url():
@@ -144,7 +158,9 @@ def test_extract_grok_sources_degrades_to_empty_on_unrecognised_shape():
 
 def test_research_gemini_success_returns_digest_and_usage():
     # A successful grounded call must produce a digest with real sources and a
-    # non-trivial usage record for cost tracking.
+    # non-trivial usage record for cost tracking. Title enrichment is mocked to
+    # a no-op (None) so this test makes no real network call — that path is
+    # covered separately below.
     provider = MagicMock(model_id="gemini-2.5-flash")
     web = MagicMock(title="G", uri="https://example.com/g")
     response = MagicMock(text="Findings here.")
@@ -155,7 +171,8 @@ def test_research_gemini_success_returns_digest_and_usage():
         prompt_token_count=100, candidates_token_count=200
     )
     provider.client.models.generate_content.return_value = response
-    digest, usage = alp._research_gemini(provider, "Topic: X")
+    with patch("agents.agent_linkedin_post._fetch_page_title", return_value=None):
+        digest, usage = alp._research_gemini(provider, "Topic: X")
     assert digest.summary == "Findings here."
     assert digest.sources[0].url == "https://example.com/g"
     assert usage.model == "gemini-2.5-flash"
@@ -177,6 +194,135 @@ def test_research_gemini_empty_text_returns_none():
     provider.client.models.generate_content.return_value = response
     digest, usage = alp._research_gemini(provider, "Topic: X")
     assert digest is None
+
+
+# -- _fetch_page_title (Spec 043) --
+
+
+def test_fetch_page_title_extracts_and_decodes_title():
+    # SC-001: a real <title> tag must be extracted, HTML-entity-decoded, and
+    # whitespace-collapsed.
+    html_body = (
+        "<html><head><title>What is Vibe coding  &amp; Why</title></head></html>"
+    )
+    with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
+        mock_get.return_value = MagicMock(text=html_body)
+        title = alp._fetch_page_title("https://example.com/redirect")
+    assert title == "What is Vibe coding & Why"
+
+
+def test_fetch_page_title_sends_a_user_agent_header():
+    # Regression: confirmed live that Wikipedia (and likely other sites) return
+    # HTTP 403 for requests with no User-Agent, which looked identical to "no
+    # title found" until traced back to the real cause — a browser-like UA
+    # must be sent on every request.
+    with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
+        mock_get.return_value = MagicMock(text="<title>T</title>")
+        alp._fetch_page_title("https://example.com/redirect")
+    assert "User-Agent" in mock_get.call_args.kwargs["headers"]
+
+
+def test_fetch_page_title_returns_none_on_request_exception():
+    # SC-002: a timeout/connection error must degrade to None, never raise.
+    with patch(
+        "agents.agent_linkedin_post.httpx.get", side_effect=httpx.TimeoutException("t")
+    ):
+        assert alp._fetch_page_title("https://example.com/redirect") is None
+
+
+def test_fetch_page_title_returns_none_on_non_2xx_status():
+    # SC-002: a non-2xx status must degrade to None, never raise.
+    response = MagicMock()
+    response.raise_for_status.side_effect = httpx.HTTPStatusError(
+        "404", request=MagicMock(), response=MagicMock()
+    )
+    with patch("agents.agent_linkedin_post.httpx.get", return_value=response):
+        assert alp._fetch_page_title("https://example.com/redirect") is None
+
+
+def test_fetch_page_title_returns_none_when_no_title_tag():
+    # SC-003: HTML with no <title> tag must degrade to None, not raise or
+    # return a garbage value.
+    with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
+        mock_get.return_value = MagicMock(
+            text="<html><body>no title here</body></html>"
+        )
+        assert alp._fetch_page_title("https://example.com/redirect") is None
+
+
+def test_fetch_page_title_returns_none_for_empty_title_tag():
+    # An empty <title></title> must not publish an empty string as a title.
+    with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
+        mock_get.return_value = MagicMock(
+            text="<html><head><title>   </title></head></html>"
+        )
+        assert alp._fetch_page_title("https://example.com/redirect") is None
+
+
+# -- _domain_from_url (Spec 043 FR-001) --
+
+
+def test_domain_from_url_strips_www_prefix():
+    assert (
+        alp._domain_from_url("https://www.ibm.com/think/topics/vibe-coding")
+        == "ibm.com"
+    )
+
+
+def test_domain_from_url_leaves_bare_domain_unchanged():
+    assert alp._domain_from_url("https://example.com/a") == "example.com"
+
+
+def test_domain_from_url_falls_back_to_raw_url_when_unparseable():
+    # An input with no parseable network location must not produce an empty
+    # string — fall back to the raw URL itself.
+    assert alp._domain_from_url("not-a-url") == "not-a-url"
+
+
+# -- _enrich_source_titles_via_fetch (Spec 043) — shared by Gemini and Grok --
+
+
+def test_enrich_source_titles_via_fetch_combines_domain_and_page_title():
+    # FR-004/FR-005: a successful fetch must produce "{bare domain} - {page title}".
+    sources = [ResearchSource(title="ibm.com", url="https://example.com/a")]
+    with patch(
+        "agents.agent_linkedin_post._fetch_page_title",
+        return_value="What is Vibe coding ?",
+    ):
+        enriched = alp._enrich_source_titles_via_fetch(sources)
+    assert enriched[0].title == "ibm.com - What is Vibe coding ?"
+    assert enriched[0].url == "https://example.com/a"
+
+
+def test_enrich_source_titles_via_fetch_leaves_source_unchanged_on_failure():
+    # A failed fetch must leave the source exactly as it was (bare domain).
+    sources = [ResearchSource(title="ibm.com", url="https://example.com/a")]
+    with patch("agents.agent_linkedin_post._fetch_page_title", return_value=None):
+        enriched = alp._enrich_source_titles_via_fetch(sources)
+    assert enriched[0].title == "ibm.com"
+
+
+def test_enrich_source_titles_via_fetch_one_failure_does_not_affect_others():
+    # Sources are enriched independently — one failure must not affect any
+    # other source's result.
+    sources = [
+        ResearchSource(title="ibm.com", url="https://example.com/a"),
+        ResearchSource(title="github.com", url="https://example.com/b"),
+    ]
+
+    def _side_effect(url):
+        return "Real Title" if url == "https://example.com/b" else None
+
+    with patch(
+        "agents.agent_linkedin_post._fetch_page_title", side_effect=_side_effect
+    ):
+        enriched = alp._enrich_source_titles_via_fetch(sources)
+    assert enriched[0].title == "ibm.com"
+    assert enriched[1].title == "github.com - Real Title"
+
+
+def test_enrich_source_titles_via_fetch_empty_list_returns_empty_list():
+    assert alp._enrich_source_titles_via_fetch([]) == []
 
 
 def test_research_claude_success_returns_digest_and_usage():
@@ -204,7 +350,9 @@ def test_research_claude_exception_returns_none():
 
 def test_research_grok_success_returns_digest_and_usage():
     # A successful Grok Responses-API web_search call must extract text and
-    # citations via output_text / output annotations.
+    # citations via output_text / output annotations. Title enrichment is
+    # mocked to a no-op so this test makes no real network call — that path is
+    # covered separately above.
     provider = MagicMock(model_id="grok-4.3")
     annotation = MagicMock(url="https://example.com/e", title="E")
     content = MagicMock(annotations=[annotation])
@@ -212,9 +360,11 @@ def test_research_grok_success_returns_digest_and_usage():
     response = MagicMock(output=[item], output_text="Grok findings.")
     response.usage = MagicMock(input_tokens=40, output_tokens=60)
     provider.client.responses.create.return_value = response
-    digest, usage = alp._research_grok(provider, "Topic: X")
+    with patch("agents.agent_linkedin_post._fetch_page_title", return_value=None):
+        digest, usage = alp._research_grok(provider, "Topic: X")
     assert digest.summary == "Grok findings."
     assert digest.sources[0].url == "https://example.com/e"
+    assert digest.sources[0].title == "example.com"
     assert usage.model == "grok-4.3"
 
 
