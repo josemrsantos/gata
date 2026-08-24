@@ -1,6 +1,73 @@
 # CHANGELOG
 
 
+## v1.24.0 (2026-08-24)
+
+### Documentation
+
+* docs: sync README + architecture for spec 044
+
+README: describe the Sources list's four-signal resolution chain and
+dropping in the LinkedIn Post agent row; add Status row 44.
+
+docs/architecture.md: rewrite the Sources-list section's spec-043 note to
+describe the extended spec-044 chain (og:title/twitter:title, URL-slug
+humanisation, provider-supplied same-call title, dropping as the final
+fallback) — dropping replaces the old bare-domain final fallback, since a
+bare domain is exactly the pattern this spec eliminates.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_0165dEUHdP1jGaVxmASxCb4r ([`f8331c8`](https://github.com/josemrsantos/gata/commit/f8331c87cd98a8c17a6cbaa38f2e1faf09f3ea39))
+
+### Features
+
+* feat: spec 044 — descriptive source titles, with dropping as the last resort
+
+Spec 043 got every source to read as "domain - title", but real runs still
+published bare domains (medium.com, facebook.com, sciencedirect.com,
+fidelity.com) or a domain plus the site's own name restated
+(reddit.com - Reddit) whenever the single <title>-tag fetch failed or
+returned something non-descriptive — common on bot-gated sites.
+
+Every source now resolves through a four-step chain, shared uniformly
+across Claude, Gemini, and Grok: (1) its own raw candidate title, (2) a live
+fetch's <title>, then og:title, then twitter:title — many bot-gated sites
+still render these for link-preview purposes even when they block the main
+page; (3) a humanised URL-path slug, since sites like Medium and Facebook
+encode the real post text directly in their URL; (4) a title the source's
+own provider supplies in the *same* research call, via a
+===SOURCE_TITLES=== block appended to its normal response — no second
+call, no extra cost or latency, and never trusted for a URL it didn't
+already verify citing. A title is rejected as non-descriptive whenever it's
+empty or amounts to nothing but the domain itself (label or full form). A
+source for which none of the four steps yields anything descriptive is
+dropped from the published list rather than published under a bare or
+domain-label-only title.
+
+agents/agent_linkedin_post.py: _fetch_page_title now returns
+(title, resolved_url) and also captures the redirect-resolved destination
+URL even when that destination then fails, so slug humanisation never falls
+back to a redirect-wrapper URL. _enrich_source_titles_via_fetch is removed,
+replaced by the shared _resolve_sources.
+
+Real bug found and fixed while verifying this live, the same way Spec 043's
+Wikipedia-403 issue was: a fetch through Gemini's own grounding-redirect
+host (vertexaisearch.cloud.google.com) that failed before any redirect
+resolved was silently causing _humanize_slug to treat that host's own
+opaque base64-ish path as if it were real page content, publishing noise as
+a "title". Fixed with _is_unresolved_redirect_wrapper — the slug step is
+now skipped whenever a fetch never actually escaped that host, falling
+through to the provider-supplied title instead. Re-verified live afterwards
+against a fresh 53-source real run: every source reads as a real
+domain - descriptive title, none bare or domain-label-only.
+
+Test suite grew from 53 to 78 tests for this module, all mocked per
+Constitution §9.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_0165dEUHdP1jGaVxmASxCb4r ([`88b7d8b`](https://github.com/josemrsantos/gata/commit/88b7d8b6cc457220de9c4f82dea1c61070e9de07))
+
+
 ## v1.23.1 (2026-08-12)
 
 ### Bug Fixes
