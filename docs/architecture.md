@@ -563,10 +563,13 @@ The final Markdown is assembled as: title, a real-metrics telemetry caption, a
 body + the static closing block (repost ask, comment question, subscribe link),
 then a **Sources** section, then the static tech-stack body. The Sources list is
 built entirely in code from the deduplicated union of every panelist's own real
-sources — never parsed from or trusted to LLM output, so no citation can be
-fabricated.
+sources — a source's **URL** is never parsed from or trusted to LLM output, so
+no citation's link can be fabricated; a source's **title**, as a last resort,
+may be text the source's own provider supplied (see below), but only for a URL
+already independently verified via that provider's own citation/grounding
+metadata.
 
-Spec 043 unifies every source in the list to `"{domain} - {page title}"`,
+Spec 043 unified every source in the list to `"{domain} - {page title}"`,
 regardless of provider — the three started out inconsistent. Gemini's Google
 Search grounding API only ever returns a bare domain as a source's title
 (confirmed live — its `.title` field is literally e.g. `"ibm.com"`, and
@@ -578,11 +581,30 @@ via `httpx` (parallel across all of one call's sources, 5s per-URL budget,
 with a browser-like `User-Agent` header — confirmed live that Wikipedia and
 likely other sites 403 requests without one) and reads the destination page's
 real `<title>`. Claude needs no fetch — its own title is already good, and
-this step just prepends the domain to it (e.g. `"ibm.com - Vibe Coding
-Security Risks Aren't Like Ordinary Security Risks | IBM"`). Any failure
-anywhere — timeout, non-2xx, missing `<title>`, no citation title — leaves the
-source's title as the bare domain alone; this is a cosmetic enhancement,
-never a new failure mode.
+this step just prepends the domain to it.
+
+Spec 044 found that a single-tier `<title>`-only fetch still wasn't enough:
+bot-gated sites (Facebook, Reddit, ScienceDirect, Fidelity) commonly 403 or
+serve a generic shell page, sometimes yielding a `<title>` that's only the
+site's own name (`"Reddit"`). `_resolve_sources` (shared by all three
+providers) now tries, in order: (1) the source's own raw candidate title —
+Claude's real citation title, or the bare-domain seed for Gemini/Grok; (2) a
+live fetch's `<title>`, then `og:title`, then `twitter:title` — many gated
+sites still render these for link-preview purposes; (3) a humanised URL-path
+slug, since sites like Medium and Facebook encode the real post text
+directly in their own URL; (4) a title the source's own provider supplies in
+the *same* research call, via a `===SOURCE_TITLES===` block appended after
+its normal response — no second call, and matched strictly by URL against
+that provider's own verified citations so an LLM can never introduce a new,
+unverified source. A candidate is rejected as non-descriptive whenever,
+once normalised, it's empty or amounts to nothing but the domain itself
+(its label, e.g. `"reddit"`, or the full form, e.g. `"reddit.com"`). A
+source for which none of the four steps yields anything descriptive is
+**dropped from the published list** — this replaced Spec 043's
+bare-domain-as-final-fallback, since a bare domain is exactly the pattern
+this spec exists to eliminate. Every failure along the chain — a fetch
+error, a missing/malformed provider-titles block, a dropped source — is
+logged at `DEBUG` and never blocks or fails the research step it belongs to.
 
 Any stage's total failure (all research, all angle-planning panelists, or all
 writing panelists) is non-fatal: a WARNING is logged and neither file is written;
