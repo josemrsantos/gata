@@ -50,11 +50,40 @@ _TITLE_FETCH_HEADERS = {
     )
 }
 
+# Spec 044: matches any <meta ...> tag so its attributes can be inspected
+# regardless of order (og:title/twitter:title put `content` before or after
+# `property`/`name` depending on the site).
+_META_TAG_RE = re.compile(r"<meta\b[^>]*>", re.IGNORECASE)
+_META_ATTR_RE = re.compile(r"""([a-zA-Z0-9:_-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')""")
+
+# Spec 044 FR-002: a candidate title is non-descriptive once it normalises to
+# nothing beyond the source's own domain label (e.g. "Reddit" for
+# reddit.com) — only alphanumerics are compared, case-insensitively.
+_NON_ALNUM_RE = re.compile(r"[^a-z0-9]+")
+
+# Spec 044 FR-003/FR-004: a URL-path segment needs at least this many real
+# (2+ letter) words to count as a descriptive slug — pinned here per the
+# spec's Assumptions (the spec's acceptance criteria are the contract, not
+# this literal value).
+_MIN_SLUG_WORDS = 3
+_SLUG_WORD_RE = re.compile(r"[A-Za-z]{2,}")
+
+# Spec 044 FR-007: every research call is asked to append a title for each
+# URL it cites after this marker, in its own same-call response — no second
+# call. FR-010: everything from this marker onward is stripped from the
+# stored digest summary.
+_SOURCE_TITLES_MARKER = "===SOURCE_TITLES==="
+
 _RESEARCH_SYSTEM = (
     "You are a research assistant preparing background for a professional"
     " article. Use web search to find current, factual, credible information"
     " about the given topic. Summarise your findings in clear, neutral prose (2-4"
     " paragraphs) — report what the sources say, do not editorialise or joke."
+    "\n\nAfter your findings, on their own line, write the exact marker"
+    f" {_SOURCE_TITLES_MARKER} followed by one line per URL you cited above,"
+    " each formatted exactly as:\n<url> | <short descriptive title of that"
+    " specific page, 6-14 words, based on what you actually found there —"
+    " never just the site's own name>"
 )
 
 _PLANNER_SYSTEM = (
@@ -208,11 +237,61 @@ def _domain_from_url(url: str) -> str:
     return netloc or url
 
 
-def _fetch_page_title(url: str) -> str | None:
-    """Best-effort fetch of a page's real <title>. Returns None on any failure —
-    timeout, connection error, non-2xx status, or a missing/empty tag (Spec 043
-    FR-002) — never raises. Shared by both Gemini (redirect URLs) and Grok
-    (direct URLs) — neither provider gives a usable title on its own.
+# Gemini's own grounding-redirect host (Spec 043) — its path is an opaque
+# tracking token, never real page content. Confirmed live (Spec 044): when a
+# fetch through this host fails before any redirect resolves, slug
+# humanisation would otherwise run on that opaque token and publish
+# base64-noise as a "title" — _resolve_sources skips the slug step in
+# exactly that situation (see _is_unresolved_redirect_wrapper).
+_GROUNDING_REDIRECT_HOST = "vertexaisearch.cloud.google.com"
+
+
+def _is_unresolved_redirect_wrapper(original_url: str, slug_url: str) -> bool:
+    return slug_url == original_url and _domain_from_url(original_url) == (
+        _GROUNDING_REDIRECT_HOST
+    )
+
+
+def _extract_title_tag(html_text: str) -> str | None:
+    match = _TITLE_TAG_RE.search(html_text)
+    if not match:
+        return None
+    title = " ".join(html.unescape(match.group(1)).split())
+    return title or None
+
+
+def _extract_meta_content(
+    html_text: str, attr_name: str, attr_value: str
+) -> str | None:
+    """Finds a <meta {attr_name}="{attr_value}" content="..."> tag regardless
+    of attribute order (Spec 044 FR-001 — og:title/twitter:title) and returns
+    its cleaned content, or None if the tag or its content is absent.
+    """
+    for tag in _META_TAG_RE.findall(html_text):
+        attrs: dict[str, str] = {}
+        for match in _META_ATTR_RE.finditer(tag):
+            key = match.group(1).lower()
+            attrs[key] = (
+                match.group(2) if match.group(2) is not None else match.group(3)
+            )
+        if attrs.get(attr_name, "").lower() != attr_value:
+            continue
+        content = attrs.get("content")
+        if content is None:
+            continue
+        cleaned = " ".join(html.unescape(content).split())
+        return cleaned or None
+    return None
+
+
+def _fetch_page_title(url: str) -> tuple[str | None, str]:
+    """Best-effort fetch of a page's real title, trying <title>, then
+    og:title, then twitter:title (Spec 044 FR-001), plus the final resolved
+    URL after redirects. The resolved URL is captured even when the
+    destination request itself then fails (Spec 044 FR-014) — a 403 after a
+    successful redirect must not fall back to the original redirect-wrapper
+    URL for slug humanisation. Returns (None, url) on any failure — timeout,
+    connection error, no usable tag/meta anywhere — never raises.
     """
     try:
         response = httpx.get(
@@ -222,48 +301,170 @@ def _fetch_page_title(url: str) -> str | None:
             headers=_TITLE_FETCH_HEADERS,
         )
         response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        return None, str(exc.response.url)
     except Exception:
-        return None
-    match = _TITLE_TAG_RE.search(response.text)
-    if not match:
-        return None
-    title = " ".join(html.unescape(match.group(1)).split())
-    return title or None
+        return None, url
+    text = response.text
+    title = (
+        _extract_title_tag(text)
+        or _extract_meta_content(text, "property", "og:title")
+        or _extract_meta_content(text, "name", "twitter:title")
+    )
+    return title, str(response.url)
 
 
-def _enrich_source_titles_via_fetch(
-    sources: list[ResearchSource],
-) -> list[ResearchSource]:
-    """Rewrite each source's title to "{bare domain} - {page title}" when its
-    URL resolves to a page with a real <title> (Spec 043 FR-004, FR-005); any
-    source whose fetch fails is returned unchanged (already a bare domain).
-    Fetches run in parallel so total added latency stays low regardless of
-    source count (FR-003).
+def _normalize_for_comparison(text: str) -> str:
+    return _NON_ALNUM_RE.sub("", text.lower())
+
+
+def _is_descriptive_title(title: str | None, domain: str) -> bool:
+    """Spec 044 FR-002: a candidate title is non-descriptive when, once
+    normalised (case-folded, punctuation/whitespace stripped), it is empty,
+    or it equals either the source's own domain label (e.g. "Reddit" for
+    reddit.com) or the full domain restated (e.g. "reddit.com" itself — the
+    raw seed title Gemini/Grok extraction starts every source from).
+    Containing that label within a longer, real title is not disqualifying,
+    only being *only* the label or the domain is.
     """
-    if not sources:
-        return sources
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(sources)) as executor:
-        futures = [executor.submit(_fetch_page_title, source.url) for source in sources]
-        enriched: list[ResearchSource] = []
-        for source, future in zip(sources, futures):
-            try:
-                page_title = future.result(timeout=_TITLE_FETCH_TIMEOUT_SECONDS + 2)
-            except Exception as exc:
-                logger.debug(
-                    "linkedin_research: title fetch failed for %s — %s",
-                    source.url,
-                    exc,
-                )
-                page_title = None
-            if page_title:
-                enriched.append(
-                    ResearchSource(
-                        title=f"{source.title} - {page_title}", url=source.url
+    if not title:
+        return False
+    normalized_title = _normalize_for_comparison(title)
+    if not normalized_title:
+        return False
+    label = domain.split(".")[0] if domain else domain
+    non_descriptive = {
+        _normalize_for_comparison(label),
+        _normalize_for_comparison(domain),
+    }
+    return normalized_title not in non_descriptive
+
+
+def _humanize_slug(url: str) -> str | None:
+    """Spec 044 FR-003/FR-004: derives a title from the most specific
+    hyphen/underscore-delimited URL-path segment with at least
+    _MIN_SLUG_WORDS real (2+ letter) words, converting separators to spaces
+    and dropping purely-numeric tokens (e.g. a trailing ID). Segments below
+    the threshold — purely numeric/hex-like IDs included — are skipped in
+    favour of an earlier, more descriptive segment. Returns None when no
+    path segment qualifies.
+    """
+    path = urlparse(url).path
+    segments = [seg for seg in path.split("/") if seg]
+    for segment in reversed(segments):
+        words = [w for w in re.split(r"[-_]+", segment) if w]
+        real_words = [w for w in words if _SLUG_WORD_RE.search(w)]
+        if len(real_words) < _MIN_SLUG_WORDS:
+            continue
+        prose = " ".join(w for w in words if not w.isdigit())
+        if prose:
+            return prose[0].upper() + prose[1:]
+    return None
+
+
+def _split_source_titles_block(text: str) -> tuple[str, dict[str, str]]:
+    """Splits a provider's raw response into (summary_without_block,
+    url_to_title) — everything from _SOURCE_TITLES_MARKER onward is the
+    appended block (Spec 044 FR-007/FR-010) and is never part of the stored
+    summary. A missing or malformed block yields an empty mapping and the
+    summary is simply the whole (stripped) text — never raises.
+    """
+    idx = text.find(_SOURCE_TITLES_MARKER)
+    if idx == -1:
+        return text.strip(), {}
+    summary = text[:idx].strip()
+    block = text[idx + len(_SOURCE_TITLES_MARKER) :]
+    titles: dict[str, str] = {}
+    for line in block.splitlines():
+        line = line.strip()
+        if not line or "|" not in line:
+            continue
+        url, _, title = line.partition("|")
+        url = url.strip()
+        title = title.strip()
+        if url and title:
+            titles[url] = title
+    return summary, titles
+
+
+def _resolve_sources(
+    candidates: list[tuple[str, str, str]],
+    provider_titles: dict[str, str],
+    *,
+    do_fetch: bool,
+) -> list[ResearchSource]:
+    """Resolves every (raw_title, url, domain) candidate's published title
+    through the Spec 044 chain: its own raw candidate title, then (if
+    do_fetch) a live fetch's <title>/og:title/twitter:title, then a
+    humanised URL-path slug, then a title the source's own provider supplied
+    in the same research call — dropping any source for which nothing along
+    that chain is descriptive (FR-011), logged at DEBUG (FR-012), never
+    raising. Live fetches run in parallel so total added latency stays low
+    regardless of source count (unchanged from Spec 043 FR-003).
+    """
+    if not candidates:
+        return []
+    fetch_results: dict[str, tuple[str | None, str]] = {}
+    if do_fetch:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=len(candidates)
+        ) as executor:
+            futures = {
+                url: executor.submit(_fetch_page_title, url) for _, url, _ in candidates
+            }
+            for url, future in futures.items():
+                try:
+                    fetch_results[url] = future.result(
+                        timeout=_TITLE_FETCH_TIMEOUT_SECONDS + 2
                     )
+                except Exception as exc:
+                    logger.debug(
+                        "linkedin_research: title fetch failed for %s — %s", url, exc
+                    )
+                    fetch_results[url] = (None, url)
+    resolved: list[ResearchSource] = []
+    for raw_title, url, domain in candidates:
+        # Step 1: the candidate's own raw title (Claude's real citation title,
+        # or a provider's bare-domain seed which never passes this check).
+        if _is_descriptive_title(raw_title, domain):
+            resolved.append(ResearchSource(title=f"{domain} - {raw_title}", url=url))
+            continue
+        # Step 2: a live fetch's <title>/og:title/twitter:title, if this
+        # provider gets one (Claude already has a real citation title, so it
+        # never fetches — Spec 043 FR-006).
+        slug_url = url
+        if do_fetch:
+            fetched_title, slug_url = fetch_results.get(url, (None, url))
+            if _is_descriptive_title(fetched_title, domain):
+                resolved.append(
+                    ResearchSource(title=f"{domain} - {fetched_title}", url=url)
                 )
-            else:
-                enriched.append(source)
-    return enriched
+                continue
+        # Step 3: a humanised URL-path slug, on the fetch-resolved
+        # destination URL when one was reached (FR-014), else the original —
+        # skipped entirely when neither happened and the URL is still
+        # Gemini's own opaque redirect-wrapper path (never real content).
+        slug_title = (
+            None
+            if _is_unresolved_redirect_wrapper(url, slug_url)
+            else _humanize_slug(slug_url)
+        )
+        if _is_descriptive_title(slug_title, domain):
+            resolved.append(ResearchSource(title=f"{domain} - {slug_title}", url=url))
+            continue
+        # Step 4: the source's own originating provider's same-call title,
+        # matched strictly by URL (FR-008) — never introduces a new source.
+        provider_title = provider_titles.get(url)
+        if _is_descriptive_title(provider_title, domain):
+            resolved.append(
+                ResearchSource(title=f"{domain} - {provider_title}", url=url)
+            )
+            continue
+        # Step 5: nothing descriptive anywhere — drop the source (FR-011).
+        logger.debug(
+            "linkedin_research: dropping source with no descriptive title — %s", url
+        )
+    return resolved
 
 
 def _research_gemini(
@@ -284,13 +485,18 @@ def _research_gemini(
             "linkedin_research: gemini (%s) failed — %s", provider.model_id, exc
         )
         return None, None
-    summary = (response.text or "").strip()
+    raw_text = (response.text or "").strip()
+    summary, provider_titles = _split_source_titles_block(raw_text)
     if not summary:
         logger.warning(
             "linkedin_research: gemini (%s) returned no text", provider.model_id
         )
         return None, None
-    sources = _enrich_source_titles_via_fetch(_extract_gemini_sources(response))
+    raw_sources = _extract_gemini_sources(response)
+    candidates = [
+        (s.title, s.url, s.title or _domain_from_url(s.url)) for s in raw_sources
+    ]
+    sources = _resolve_sources(candidates, provider_titles, do_fetch=True)
     meta = getattr(response, "usage_metadata", None)
     in_tok = getattr(meta, "prompt_token_count", 0) or 0
     out_tok = getattr(meta, "candidates_token_count", 0) or 0
@@ -310,8 +516,10 @@ def _research_gemini(
 
 
 def _extract_claude_sources(response) -> list[ResearchSource]:
-    # Anthropic's citation API already gives a real title (unlike Gemini/Grok) —
-    # only a domain prefix is added, no fetch needed (Spec 043 FR-006).
+    # Anthropic's citation API already gives a real title (unlike Gemini/Grok)
+    # — the raw title is returned as-is, un-prefixed; the shared resolver
+    # (Spec 044 _resolve_sources) applies the domain prefix and the
+    # non-descriptive check uniformly across all three providers.
     sources: list[ResearchSource] = []
     seen: set[str] = set()
     for block in getattr(response, "content", None) or []:
@@ -321,10 +529,9 @@ def _extract_claude_sources(response) -> list[ResearchSource]:
             if not url or url in seen:
                 continue
             seen.add(url)
-            domain = _domain_from_url(url)
-            page_title = getattr(citation, "title", None)
-            title = f"{domain} - {page_title}" if page_title else domain
-            sources.append(ResearchSource(title=title, url=url))
+            sources.append(
+                ResearchSource(title=getattr(citation, "title", None) or "", url=url)
+            )
     return sources
 
 
@@ -351,13 +558,19 @@ def _research_claude(
         for block in (response.content or [])
         if getattr(block, "type", "") == "text"
     ]
-    summary = "\n".join(t for t in text_blocks if t).strip()
+    raw_text = "\n".join(t for t in text_blocks if t).strip()
+    summary, provider_titles = _split_source_titles_block(raw_text)
     if not summary:
         logger.warning(
             "linkedin_research: claude (%s) returned no text", provider.model_id
         )
         return None, None
-    sources = _extract_claude_sources(response)
+    raw_sources = _extract_claude_sources(response)
+    candidates = [(s.title, s.url, _domain_from_url(s.url)) for s in raw_sources]
+    # Claude never fetches (do_fetch=False) — its citation title is already
+    # real when present (Spec 043 FR-006); the resolver still walks the rest
+    # of the chain (slug, provider-supplied title) when it isn't.
+    sources = _resolve_sources(candidates, provider_titles, do_fetch=False)
     in_tok = getattr(response.usage, "input_tokens", 0) or 0
     out_tok = getattr(response.usage, "output_tokens", 0) or 0
     rates = _CLAUDE_COST_PER_M.get(provider.model_id, (0.0, 0.0))
@@ -416,13 +629,16 @@ def _research_grok(
             "linkedin_research: grok (%s) failed — %s", provider.model_id, exc
         )
         return None, None
-    summary = (getattr(response, "output_text", None) or "").strip()
+    raw_text = (getattr(response, "output_text", None) or "").strip()
+    summary, provider_titles = _split_source_titles_block(raw_text)
     if not summary:
         logger.warning(
             "linkedin_research: grok (%s) returned no text", provider.model_id
         )
         return None, None
-    sources = _enrich_source_titles_via_fetch(_extract_grok_sources(response))
+    raw_sources = _extract_grok_sources(response)
+    candidates = [(s.title, s.url, _domain_from_url(s.url)) for s in raw_sources]
+    sources = _resolve_sources(candidates, provider_titles, do_fetch=True)
     usage_obj = getattr(response, "usage", None)
     in_tok = getattr(usage_obj, "input_tokens", 0) or 0
     out_tok = getattr(usage_obj, "output_tokens", 0) or 0
