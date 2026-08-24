@@ -90,15 +90,14 @@ def test_extract_gemini_sources_handles_no_candidates():
 
 def test_extract_claude_sources_reads_citations_from_content_blocks():
     # Claude's citations are attached per content block — must be collected
-    # across all blocks, not just the first. FR-006: the domain is prefixed
-    # onto Claude's already-good title, no fetch needed.
+    # across all blocks, not just the first. Spec 044: the raw citation title
+    # is returned un-prefixed; the shared resolver (_resolve_sources) applies
+    # the domain prefix uniformly across all three providers.
     citation = MagicMock(url="https://example.com/b", title="B Source")
     block = MagicMock(citations=[citation])
     response = MagicMock(content=[block])
     sources = alp._extract_claude_sources(response)
-    assert sources == [
-        ResearchSource(title="example.com - B Source", url="https://example.com/b")
-    ]
+    assert sources == [ResearchSource(title="B Source", url="https://example.com/b")]
 
 
 def test_extract_claude_sources_handles_no_citations():
@@ -108,14 +107,15 @@ def test_extract_claude_sources_handles_no_citations():
     assert alp._extract_claude_sources(response) == []
 
 
-def test_extract_claude_sources_falls_back_to_domain_when_no_title():
-    # FR-006: a citation with no title at all must fall back to the bare
-    # domain, not a domain-less blank or "None" string.
+def test_extract_claude_sources_yields_empty_title_when_none():
+    # Spec 044: a citation with no title at all must yield an empty raw
+    # title (not a "None" string) — the shared resolver treats an empty
+    # title as non-descriptive and falls through to its other signals.
     citation = MagicMock(url="https://example.com/b", title=None)
     block = MagicMock(citations=[citation])
     response = MagicMock(content=[block])
     sources = alp._extract_claude_sources(response)
-    assert sources == [ResearchSource(title="example.com", url="https://example.com/b")]
+    assert sources == [ResearchSource(title="", url="https://example.com/b")]
 
 
 # -- _extract_grok_sources --
@@ -158,9 +158,9 @@ def test_extract_grok_sources_degrades_to_empty_on_unrecognised_shape():
 
 def test_research_gemini_success_returns_digest_and_usage():
     # A successful grounded call must produce a digest with real sources and a
-    # non-trivial usage record for cost tracking. Title enrichment is mocked to
-    # a no-op (None) so this test makes no real network call — that path is
-    # covered separately below.
+    # non-trivial usage record for cost tracking. The fetch is mocked to
+    # return a descriptive title directly so this test makes no real network
+    # call — the full resolution chain is covered separately below.
     provider = MagicMock(model_id="gemini-2.5-flash")
     web = MagicMock(title="G", uri="https://example.com/g")
     response = MagicMock(text="Findings here.")
@@ -171,10 +171,14 @@ def test_research_gemini_success_returns_digest_and_usage():
         prompt_token_count=100, candidates_token_count=200
     )
     provider.client.models.generate_content.return_value = response
-    with patch("agents.agent_linkedin_post._fetch_page_title", return_value=None):
+    with patch(
+        "agents.agent_linkedin_post._fetch_page_title",
+        return_value=("Real Page Title", "https://example.com/g"),
+    ):
         digest, usage = alp._research_gemini(provider, "Topic: X")
     assert digest.summary == "Findings here."
     assert digest.sources[0].url == "https://example.com/g"
+    assert digest.sources[0].title == "G - Real Page Title"
     assert usage.model == "gemini-2.5-flash"
 
 
@@ -196,19 +200,20 @@ def test_research_gemini_empty_text_returns_none():
     assert digest is None
 
 
-# -- _fetch_page_title (Spec 043) --
+# -- _fetch_page_title (Spec 043, extended by Spec 044 FR-001/FR-014) --
 
 
 def test_fetch_page_title_extracts_and_decodes_title():
     # SC-001: a real <title> tag must be extracted, HTML-entity-decoded, and
-    # whitespace-collapsed.
+    # whitespace-collapsed, alongside the resolved URL.
     html_body = (
         "<html><head><title>What is Vibe coding  &amp; Why</title></head></html>"
     )
     with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
-        mock_get.return_value = MagicMock(text=html_body)
-        title = alp._fetch_page_title("https://example.com/redirect")
+        mock_get.return_value = MagicMock(text=html_body, url="https://example.com/r")
+        title, resolved_url = alp._fetch_page_title("https://example.com/redirect")
     assert title == "What is Vibe coding & Why"
+    assert resolved_url == "https://example.com/r"
 
 
 def test_fetch_page_title_sends_a_user_agent_header():
@@ -217,46 +222,106 @@ def test_fetch_page_title_sends_a_user_agent_header():
     # title found" until traced back to the real cause — a browser-like UA
     # must be sent on every request.
     with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
-        mock_get.return_value = MagicMock(text="<title>T</title>")
+        mock_get.return_value = MagicMock(text="<title>T</title>", url="https://x")
         alp._fetch_page_title("https://example.com/redirect")
     assert "User-Agent" in mock_get.call_args.kwargs["headers"]
 
 
-def test_fetch_page_title_returns_none_on_request_exception():
-    # SC-002: a timeout/connection error must degrade to None, never raise.
+def test_fetch_page_title_returns_none_and_original_url_on_request_exception():
+    # SC-002: a timeout/connection error must degrade to (None, url), never
+    # raise — no redirect could have completed, so the original URL is all
+    # that's known.
     with patch(
         "agents.agent_linkedin_post.httpx.get", side_effect=httpx.TimeoutException("t")
     ):
-        assert alp._fetch_page_title("https://example.com/redirect") is None
+        title, resolved_url = alp._fetch_page_title("https://example.com/redirect")
+    assert title is None
+    assert resolved_url == "https://example.com/redirect"
 
 
-def test_fetch_page_title_returns_none_on_non_2xx_status():
-    # SC-002: a non-2xx status must degrade to None, never raise.
-    response = MagicMock()
+def test_fetch_page_title_returns_resolved_destination_url_on_non_2xx_status():
+    # Spec 044 FR-014/SC-013: a non-2xx status after a successful redirect
+    # must still surface the resolved destination URL (not the original
+    # redirect-wrapper URL) so slug humanisation can use it.
+    request = MagicMock()
+    bad_response = MagicMock(url="https://real-destination.com/article")
+    response = MagicMock(url="https://real-destination.com/article")
     response.raise_for_status.side_effect = httpx.HTTPStatusError(
-        "404", request=MagicMock(), response=MagicMock()
+        "403", request=request, response=bad_response
     )
     with patch("agents.agent_linkedin_post.httpx.get", return_value=response):
-        assert alp._fetch_page_title("https://example.com/redirect") is None
+        title, resolved_url = alp._fetch_page_title("https://redirect.example/r")
+    assert title is None
+    assert resolved_url == "https://real-destination.com/article"
 
 
-def test_fetch_page_title_returns_none_when_no_title_tag():
-    # SC-003: HTML with no <title> tag must degrade to None, not raise or
-    # return a garbage value.
+def test_fetch_page_title_returns_none_when_no_title_tag_or_meta():
+    # SC-003: HTML with no <title> tag and no og:title/twitter:title meta
+    # must degrade to None, not raise or return a garbage value.
     with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
         mock_get.return_value = MagicMock(
-            text="<html><body>no title here</body></html>"
+            text="<html><body>no title here</body></html>", url="https://x"
         )
-        assert alp._fetch_page_title("https://example.com/redirect") is None
+        title, _ = alp._fetch_page_title("https://example.com/redirect")
+    assert title is None
 
 
 def test_fetch_page_title_returns_none_for_empty_title_tag():
     # An empty <title></title> must not publish an empty string as a title.
     with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
         mock_get.return_value = MagicMock(
-            text="<html><head><title>   </title></head></html>"
+            text="<html><head><title>   </title></head></html>", url="https://x"
         )
-        assert alp._fetch_page_title("https://example.com/redirect") is None
+        title, _ = alp._fetch_page_title("https://example.com/redirect")
+    assert title is None
+
+
+def test_fetch_page_title_falls_back_to_og_title_when_title_tag_missing():
+    # Spec 044 FR-001: a site that renders og:title for link previews but has
+    # no <title> tag (common on bot-gated pages) must still yield a title.
+    html_body = (
+        '<html><head><meta property="og:title" content="Real Page Title"></head></html>'
+    )
+    with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
+        mock_get.return_value = MagicMock(text=html_body, url="https://x")
+        title, _ = alp._fetch_page_title("https://example.com/gated")
+    assert title == "Real Page Title"
+
+
+def test_fetch_page_title_falls_back_to_twitter_title_when_others_missing():
+    # Spec 044 FR-001: twitter:title is the last fetched-metadata signal
+    # tried, after <title> and og:title both come up empty.
+    html_body = (
+        '<html><head><meta name="twitter:title" content="Twitter Title Here">'
+        "</head></html>"
+    )
+    with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
+        mock_get.return_value = MagicMock(text=html_body, url="https://x")
+        title, _ = alp._fetch_page_title("https://example.com/gated")
+    assert title == "Twitter Title Here"
+
+
+def test_fetch_page_title_prefers_title_tag_over_og_title():
+    # <title> is tried first — a real og:title present alongside it must not
+    # override the page's own <title> tag.
+    html_body = (
+        "<title>Real Title</title>"
+        '<meta property="og:title" content="Different OG Title">'
+    )
+    with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
+        mock_get.return_value = MagicMock(text=html_body, url="https://x")
+        title, _ = alp._fetch_page_title("https://example.com/a")
+    assert title == "Real Title"
+
+
+def test_fetch_page_title_reads_og_title_regardless_of_attribute_order():
+    # Real-world meta tags don't always put `content` last — parsing must not
+    # depend on attribute order.
+    html_body = '<meta content="Order Independent Title" property="og:title">'
+    with patch("agents.agent_linkedin_post.httpx.get") as mock_get:
+        mock_get.return_value = MagicMock(text=html_body, url="https://x")
+        title, _ = alp._fetch_page_title("https://example.com/a")
+    assert title == "Order Independent Title"
 
 
 # -- _domain_from_url (Spec 043 FR-001) --
@@ -279,50 +344,279 @@ def test_domain_from_url_falls_back_to_raw_url_when_unparseable():
     assert alp._domain_from_url("not-a-url") == "not-a-url"
 
 
-# -- _enrich_source_titles_via_fetch (Spec 043) — shared by Gemini and Grok --
+# -- _is_descriptive_title (Spec 044 FR-002) --
 
 
-def test_enrich_source_titles_via_fetch_combines_domain_and_page_title():
-    # FR-004/FR-005: a successful fetch must produce "{bare domain} - {page title}".
-    sources = [ResearchSource(title="ibm.com", url="https://example.com/a")]
+def test_is_descriptive_title_rejects_bare_domain_label():
+    # "Reddit" for reddit.com is exactly the pattern this spec eliminates.
+    assert alp._is_descriptive_title("Reddit", "reddit.com") is False
+
+
+def test_is_descriptive_title_rejects_full_domain_restated():
+    # Gemini/Grok's raw seed titles are the full domain itself (e.g.
+    # "reddit.com") — this must be rejected too, not just the bare label.
+    assert alp._is_descriptive_title("reddit.com", "reddit.com") is False
+
+
+def test_is_descriptive_title_rejects_empty_or_none():
+    # An empty, None, or whitespace-only title must never be treated as a
+    # real candidate, regardless of the domain it's checked against.
+    assert alp._is_descriptive_title("", "reddit.com") is False
+    assert alp._is_descriptive_title(None, "reddit.com") is False
+    assert alp._is_descriptive_title("   ", "reddit.com") is False
+
+
+def test_is_descriptive_title_accepts_label_within_a_longer_title():
+    # Containing the domain label is not disqualifying — only the title
+    # being *only* the label is.
+    assert (
+        alp._is_descriptive_title("TechCrunch: AI slop is everywhere", "techcrunch.com")
+        is True
+    )
+
+
+def test_is_descriptive_title_accepts_short_substantive_title():
+    # Brevity alone must not be disqualifying.
+    assert alp._is_descriptive_title("AI Bubble", "fidelity.com") is True
+
+
+# -- _humanize_slug (Spec 044 FR-003/FR-004) --
+
+
+def test_humanize_slug_converts_descriptive_path_segment():
+    # A real Facebook-style slug (from the spec's own failing example) must
+    # turn into readable prose once separators become spaces.
+    url = "https://www.facebook.com/newshour/posts/slop-defined-as-digital-content-of-low-quality/1326081292720447/"
+    humanized = alp._humanize_slug(url)
+    assert humanized == "Slop defined as digital content of low quality"
+
+
+def test_humanize_slug_skips_trailing_numeric_id_for_earlier_segment():
+    # A trailing numeric ID segment (e.g. a Facebook post ID) must be
+    # skipped in favour of the earlier, descriptive segment.
+    url = "https://x.com/a/gen-z-workers-sabotage-ai-rollout-backlash/1234567890/"
+    humanized = alp._humanize_slug(url)
+    assert humanized is not None
+    assert "1234567890" not in humanized
+
+
+def test_humanize_slug_rejects_pure_numeric_or_hex_like_segment():
+    # SC: a ScienceDirect-style PII code has no real words at all.
+    assert (
+        alp._humanize_slug(
+            "https://sciencedirect.com/science/article/abs/pii/S2666799123000436"
+        )
+        is None
+    )
+
+
+def test_humanize_slug_rejects_segment_below_minimum_word_count():
+    # A short segment like "ai-bubble" (2 words) must not qualify on its own
+    # when nothing else in the path does either.
+    assert alp._humanize_slug("https://fidelity.com/ai-bubble") is None
+
+
+def test_humanize_slug_returns_none_for_path_with_no_segments():
+    # A bare-root URL (no path at all) has nothing to derive a slug from.
+    assert alp._humanize_slug("https://reddit.com") is None
+    assert alp._humanize_slug("https://reddit.com/") is None
+
+
+# -- _split_source_titles_block (Spec 044 FR-007/FR-008/FR-010) --
+
+
+def test_split_source_titles_block_extracts_url_title_pairs():
+    # The marker must cleanly separate real summary prose from the
+    # code-parseable url|title lines appended after it.
+    text = (
+        "Some real findings here.\n"
+        "===SOURCE_TITLES===\n"
+        "https://a.com/1 | A descriptive title for the first source\n"
+        "https://b.com/2 | Another descriptive title\n"
+    )
+    summary, titles = alp._split_source_titles_block(text)
+    assert summary == "Some real findings here."
+    assert titles == {
+        "https://a.com/1": "A descriptive title for the first source",
+        "https://b.com/2": "Another descriptive title",
+    }
+
+
+def test_split_source_titles_block_missing_marker_returns_whole_text_and_empty_map():
+    # FR: a missing block must not raise, and must leave the summary intact.
+    summary, titles = alp._split_source_titles_block("Just findings, no block.")
+    assert summary == "Just findings, no block."
+    assert titles == {}
+
+
+def test_split_source_titles_block_ignores_malformed_lines():
+    # A line with no "|" delimiter must be skipped, not raise or corrupt
+    # the parse of the well-formed lines around it.
+    text = (
+        "Findings.\n===SOURCE_TITLES===\nnot a valid line\n\n"
+        "https://a.com/1 | Good title"
+    )
+    summary, titles = alp._split_source_titles_block(text)
+    assert summary == "Findings."
+    assert titles == {"https://a.com/1": "Good title"}
+
+
+# -- _is_unresolved_redirect_wrapper (Spec 044 — live-confirmed fix) --
+
+
+def test_is_unresolved_redirect_wrapper_true_when_fetch_never_left_the_wrapper():
+    # Regression: confirmed live that when a fetch through Gemini's grounding
+    # redirect host fails before any redirect resolves, _fetch_page_title
+    # correctly returns the original wrapper URL unchanged (FR-014's "best
+    # effort" case) — this must be recognised so slug humanisation never
+    # runs on that URL's own opaque base64 path.
+    wrapper_url = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AB12"
+    assert alp._is_unresolved_redirect_wrapper(wrapper_url, wrapper_url) is True
+
+
+def test_is_unresolved_redirect_wrapper_false_once_a_redirect_resolved():
+    # Once the fetch actually followed the redirect to a real destination
+    # (even if that destination then failed), slug humanisation should run
+    # on the real destination — not be blocked by this check.
+    wrapper_url = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AB12"
+    real_destination = "https://real-site.com/a-real-article-title"
+    assert alp._is_unresolved_redirect_wrapper(wrapper_url, real_destination) is False
+
+
+def test_is_unresolved_redirect_wrapper_false_for_ordinary_direct_urls():
+    # Grok's URLs are direct, not redirects — an unresolved fetch on a
+    # direct URL must still be eligible for slug humanisation on that URL.
+    direct_url = "https://example.com/a-real-article-title"
+    assert alp._is_unresolved_redirect_wrapper(direct_url, direct_url) is False
+
+
+# -- _resolve_sources (Spec 044 — the shared title-resolution chain) --
+
+
+def test_resolve_sources_skips_slug_on_unresolved_redirect_wrapper():
+    # Regression (live-confirmed): a fetch failure that never escapes
+    # Gemini's grounding-redirect host must not publish that host's own
+    # opaque path as a "humanised" title — it must fall through to the
+    # provider-supplied title instead.
+    wrapper_url = (
+        "https://vertexaisearch.cloud.google.com/grounding-api-redirect/"
+        "AUZIYQGt-oxwjHMrxbxvz3sRpHLSjVkRPc1C5cuFhWBlpdPey6-real-long-token"
+    )
+    candidates = [("real-site.com", wrapper_url, "real-site.com")]
+    provider_titles = {wrapper_url: "A real descriptive title from the provider"}
     with patch(
         "agents.agent_linkedin_post._fetch_page_title",
-        return_value="What is Vibe coding ?",
+        return_value=(None, wrapper_url),
     ):
-        enriched = alp._enrich_source_titles_via_fetch(sources)
-    assert enriched[0].title == "ibm.com - What is Vibe coding ?"
-    assert enriched[0].url == "https://example.com/a"
-
-
-def test_enrich_source_titles_via_fetch_leaves_source_unchanged_on_failure():
-    # A failed fetch must leave the source exactly as it was (bare domain).
-    sources = [ResearchSource(title="ibm.com", url="https://example.com/a")]
-    with patch("agents.agent_linkedin_post._fetch_page_title", return_value=None):
-        enriched = alp._enrich_source_titles_via_fetch(sources)
-    assert enriched[0].title == "ibm.com"
-
-
-def test_enrich_source_titles_via_fetch_one_failure_does_not_affect_others():
-    # Sources are enriched independently — one failure must not affect any
-    # other source's result.
-    sources = [
-        ResearchSource(title="ibm.com", url="https://example.com/a"),
-        ResearchSource(title="github.com", url="https://example.com/b"),
+        resolved = alp._resolve_sources(candidates, provider_titles, do_fetch=True)
+    assert resolved == [
+        ResearchSource(
+            title="real-site.com - A real descriptive title from the provider",
+            url=wrapper_url,
+        )
     ]
 
-    def _side_effect(url):
-        return "Real Title" if url == "https://example.com/b" else None
 
+def test_resolve_sources_uses_descriptive_raw_candidate_without_fetching():
+    # Claude's already-good citation title must be used as-is, with no fetch.
+    candidates = [("A Real Title", "https://x.com/a", "x.com")]
+    with patch("agents.agent_linkedin_post._fetch_page_title") as mock_fetch:
+        resolved = alp._resolve_sources(candidates, {}, do_fetch=False)
+    mock_fetch.assert_not_called()
+    assert resolved == [
+        ResearchSource(title="x.com - A Real Title", url="https://x.com/a")
+    ]
+
+
+def test_resolve_sources_falls_through_to_fetch_when_raw_candidate_is_domain_only():
+    # A raw candidate that's just the bare domain (Gemini/Grok's seed) must
+    # be rejected at step 1 and rescued by a descriptive live fetch.
+    candidates = [("x.com", "https://x.com/a", "x.com")]
     with patch(
-        "agents.agent_linkedin_post._fetch_page_title", side_effect=_side_effect
+        "agents.agent_linkedin_post._fetch_page_title",
+        return_value=("Fetched Title", "https://x.com/a"),
     ):
-        enriched = alp._enrich_source_titles_via_fetch(sources)
-    assert enriched[0].title == "ibm.com"
-    assert enriched[1].title == "github.com - Real Title"
+        resolved = alp._resolve_sources(candidates, {}, do_fetch=True)
+    assert resolved == [
+        ResearchSource(title="x.com - Fetched Title", url="https://x.com/a")
+    ]
 
 
-def test_enrich_source_titles_via_fetch_empty_list_returns_empty_list():
-    assert alp._enrich_source_titles_via_fetch([]) == []
+def test_resolve_sources_falls_through_to_slug_when_fetch_fails():
+    # When the live fetch yields nothing, the chain must still recover a
+    # descriptive title from the URL's own path before giving up.
+    url = "https://x.com/a/gen-z-workers-sabotage-ai-rollout-backlash/"
+    candidates = [("x.com", url, "x.com")]
+    with patch(
+        "agents.agent_linkedin_post._fetch_page_title", return_value=(None, url)
+    ):
+        resolved = alp._resolve_sources(candidates, {}, do_fetch=True)
+    assert len(resolved) == 1
+    assert resolved[0].title.startswith("x.com - Gen z workers sabotage")
+
+
+def test_resolve_sources_falls_through_to_provider_title_when_slug_fails():
+    # A ScienceDirect-style PII-code URL has no rescuing slug — the
+    # provider's own same-call title must be the last real signal tried.
+    url = "https://sciencedirect.com/science/article/abs/pii/S2666799123000436"
+    candidates = [("sciencedirect.com", url, "sciencedirect.com")]
+    provider_titles = {url: "A peer-reviewed study on AI content detection"}
+    with patch(
+        "agents.agent_linkedin_post._fetch_page_title", return_value=(None, url)
+    ):
+        resolved = alp._resolve_sources(candidates, provider_titles, do_fetch=True)
+    assert resolved == [
+        ResearchSource(
+            title="sciencedirect.com - A peer-reviewed study on AI content detection",
+            url=url,
+        )
+    ]
+
+
+def test_resolve_sources_ignores_provider_title_for_unverified_url():
+    # Spec 044 FR-008: a provider-titles entry for a URL that isn't one of
+    # the candidates must never rescue a different source.
+    url = "https://sciencedirect.com/science/article/abs/pii/S2666799123000436"
+    candidates = [("sciencedirect.com", url, "sciencedirect.com")]
+    provider_titles = {"https://not-this-one.com/x": "Some title"}
+    with patch(
+        "agents.agent_linkedin_post._fetch_page_title", return_value=(None, url)
+    ):
+        resolved = alp._resolve_sources(candidates, provider_titles, do_fetch=True)
+    assert resolved == []
+
+
+def test_resolve_sources_drops_source_with_nothing_descriptive_anywhere():
+    # Spec 044 FR-011: a bare-root URL with no rescuing signal must be
+    # dropped, not published as a bare domain.
+    candidates = [("reddit.com", "https://reddit.com", "reddit.com")]
+    with patch(
+        "agents.agent_linkedin_post._fetch_page_title",
+        return_value=(None, "https://reddit.com"),
+    ):
+        resolved = alp._resolve_sources(candidates, {}, do_fetch=True)
+    assert resolved == []
+
+
+def test_resolve_sources_one_source_dropping_does_not_affect_others():
+    # Sources are resolved independently — one source having nothing
+    # descriptive must not affect another source's own resolution.
+    good_url = "https://x.com/a"
+    bad_url = "https://reddit.com"
+    candidates = [
+        ("Good Real Title", good_url, "x.com"),
+        ("reddit.com", bad_url, "reddit.com"),
+    ]
+    with patch(
+        "agents.agent_linkedin_post._fetch_page_title", return_value=(None, bad_url)
+    ):
+        resolved = alp._resolve_sources(candidates, {}, do_fetch=True)
+    assert resolved == [ResearchSource(title="x.com - Good Real Title", url=good_url)]
+
+
+def test_resolve_sources_empty_list_returns_empty_list():
+    # No candidates must not raise or spin up a thread pool for nothing.
+    assert alp._resolve_sources([], {}, do_fetch=True) == []
 
 
 def test_research_claude_success_returns_digest_and_usage():
@@ -350,9 +644,9 @@ def test_research_claude_exception_returns_none():
 
 def test_research_grok_success_returns_digest_and_usage():
     # A successful Grok Responses-API web_search call must extract text and
-    # citations via output_text / output annotations. Title enrichment is
-    # mocked to a no-op so this test makes no real network call — that path is
-    # covered separately above.
+    # citations via output_text / output annotations. The fetch is mocked to
+    # return a descriptive title directly so this test makes no real network
+    # call — the full resolution chain is covered separately above.
     provider = MagicMock(model_id="grok-4.3")
     annotation = MagicMock(url="https://example.com/e", title="E")
     content = MagicMock(annotations=[annotation])
@@ -360,11 +654,14 @@ def test_research_grok_success_returns_digest_and_usage():
     response = MagicMock(output=[item], output_text="Grok findings.")
     response.usage = MagicMock(input_tokens=40, output_tokens=60)
     provider.client.responses.create.return_value = response
-    with patch("agents.agent_linkedin_post._fetch_page_title", return_value=None):
+    with patch(
+        "agents.agent_linkedin_post._fetch_page_title",
+        return_value=("Real Page Title", "https://example.com/e"),
+    ):
         digest, usage = alp._research_grok(provider, "Topic: X")
     assert digest.summary == "Grok findings."
     assert digest.sources[0].url == "https://example.com/e"
-    assert digest.sources[0].title == "example.com"
+    assert digest.sources[0].title == "example.com - Real Page Title"
     assert usage.model == "grok-4.3"
 
 
