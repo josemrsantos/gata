@@ -1846,3 +1846,104 @@ def test_normal_mode_unchanged():
     ):
         run_pipeline("AI hype", _DIRECT_SEED, "out.png")
     mock_a0.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# target_size gating — Spec 045 LinkedIn feature image size correction
+# ---------------------------------------------------------------------------
+
+_LAYOUT_HORIZONTAL = CartoonLayout(panels=1, direction="horizontal")
+_LAYOUT_VERTICAL = CartoonLayout(panels=2, direction="vertical")
+
+
+def test_linkedin_post_horizontal_layout_pins_target_size():
+    # FR-006: a --linkedin-post run with a horizontal (or single-panel default)
+    # layout must pin the cartoon to LinkedIn's exact cover size, since that
+    # cartoon is the image actually pasted into LinkedIn today.
+    from core.runner import run_pipeline
+
+    with (
+        patch(
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
+        ),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, _LAYOUT_HORIZONTAL),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=(None, ""),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline("AI hype", _DIRECT_SEED, "out.png", generate_linkedin_post=True)
+    assert mock_gen.call_args.kwargs["target_size"] == (1200, 644)
+
+
+def test_linkedin_post_vertical_layout_leaves_target_size_none():
+    # A --linkedin-post run with a vertical multi-panel layout must NOT be forced
+    # to 1200x644 — cropping a vertical composition to landscape would mutilate it.
+    from core.runner import run_pipeline
+
+    with (
+        patch(
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
+        ),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, _LAYOUT_VERTICAL),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=(None, ""),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline("AI hype", _DIRECT_SEED, "out.png", generate_linkedin_post=True)
+    assert mock_gen.call_args.kwargs["target_size"] is None
+
+
+def test_no_linkedin_post_leaves_target_size_none():
+    # A run without --linkedin-post must never force the cartoon's resolution —
+    # this feature only corrects images that are actually headed to LinkedIn.
+    from core.runner import run_pipeline
+
+    with (
+        patch(
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
+        ),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(FAKE_CONCEPT, FAKE_BC_LOG, FAKE_BC_TEL, _LAYOUT_HORIZONTAL),
+        ),
+        patch(
+            "core.runner.agent_image_generator.generate",
+            return_value=("fake_image.png", FAKE_IMAGE_TEL),
+        ) as mock_gen,
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline("AI hype", _DIRECT_SEED, "out.png")
+    assert mock_gen.call_args.kwargs["target_size"] is None

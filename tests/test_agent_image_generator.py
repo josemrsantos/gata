@@ -19,11 +19,14 @@ def _capture_generate(out_path: str) -> tuple[MagicMock, dict]:
     """Patch ImageGeneration so calls are captured instead of hitting Gemini."""
     captured: dict = {}
 
-    def _fake_generate(prompt, output_path, title=None, show_title=True):
+    def _fake_generate(
+        prompt, output_path, title=None, show_title=True, target_size=None
+    ):
         captured["prompt"] = prompt
         captured["output_path"] = output_path
         captured["title"] = title
         captured["show_title"] = show_title
+        captured["target_size"] = target_size
         return out_path, _FAKE_TELEMETRY
 
     mock_cls = MagicMock()
@@ -187,3 +190,31 @@ def test_generate_multi_panel_beat_not_in_prompt(tmp_path):
         )
     prompt = captured["prompt"].upper()
     assert "BEAT:" not in prompt
+
+
+# ---------------------------------------------------------------------------
+# target_size pass-through — Spec 045 LinkedIn feature image size correction
+# ---------------------------------------------------------------------------
+
+
+def test_generate_passes_target_size_through_to_image_generation(tmp_path):
+    # FR-005: a caller-supplied target_size must reach ImageGeneration.generate()
+    # unchanged — core/runner.py relies on this to pin --linkedin-post cartoons
+    # to LinkedIn's cover size.
+    out_file = tmp_path / "single.png"
+    mock_cls, captured = _capture_generate(str(out_file))
+    with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
+        agent_image_generator.generate(
+            CONCEPT, output_path=str(out_file), target_size=(1200, 644)
+        )
+    assert captured["target_size"] == (1200, 644)
+
+
+def test_generate_defaults_target_size_to_none(tmp_path):
+    # FR-007 regression guard: omitting target_size must keep the default
+    # behaviour of every existing caller unchanged.
+    out_file = tmp_path / "single.png"
+    mock_cls, captured = _capture_generate(str(out_file))
+    with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
+        agent_image_generator.generate(CONCEPT, output_path=str(out_file))
+    assert captured["target_size"] is None

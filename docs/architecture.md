@@ -343,7 +343,9 @@ flowchart LR
     M3["gemini-3-pro-image-preview"]
     M4["gemini-3-pro-image"]
     M5["gemini-2.5-flash-image"]
+    TS1["target_size fit\n(Pillow centre-crop + resize)\nopt-in, skipped when None"]
     TL["title overlay\n(PIL, dark banner)"]
+    TS2["target_size re-fit\n(only if banner grew the canvas)"]
     OUT["PNG"]
 
     IN --> M1
@@ -351,18 +353,38 @@ flowchart LR
     M2 -->|"fail"| M3
     M3 -->|"fail"| M4
     M4 -->|"fail"| M5
-    M1 & M2 & M3 & M4 & M5 -->|"success"| TL
-    TL --> OUT
+    M1 & M2 & M3 & M4 & M5 -->|"success"| TS1
+    TS1 --> TL
+    TL --> TS2
+    TS2 --> OUT
 ```
 
 The image binary is written atomically using `tempfile + os.replace()` (constitution §2).
 The title overlay is suppressed when `--no-title` is set.
 
-The model fallback loop, atomic write, and title-overlay helper live in
-`core/image_generation.py`'s `ImageGeneration` class (Spec 041) — `agents/agent_image_generator.py`
-now only builds the prompt from the Satirist's concept and delegates rendering to it.
-The newsletter Engagement Image Concept step (see [Agents](#agents)) shares the exact
-same class, so both paths render through identical code.
+`ImageGeneration.generate()` takes an opt-in `target_size: tuple[int, int] | None`
+parameter (Spec 045). When supplied, the Gemini call also gets a best-effort
+`image_config.aspect_ratio` hint (whichever of Gemini's fixed presets — `1:1`,
+`2:3`, `3:2`, `3:4`, `4:3`, `9:16`, `16:9`, `21:9` — is numerically closest), but the
+actual guarantee comes from Pillow: the returned image is centre-cropped (never
+stretched) to `target_size`'s ratio, then resized to that exact resolution, before
+the atomic write. Because the title banner (when shown) is added *after* that write
+and grows the canvas height, a second check runs after the overlay too — re-fitting
+the file to `target_size` again if the banner pushed it off-size — so the guarantee
+holds for the file actually left on disk, not just the pre-banner intermediate.
+Two callers opt in with `target_size=(1200, 644)` (LinkedIn's Article/Newsletter
+cover size): the newsletter Engagement Image Concept step's `engagement_image.png`
+render (unconditional), and `core/runner.py`'s per-story cartoon render, but only
+when `--linkedin-post` is set and the chosen layout is single-panel or horizontal —
+a vertical multi-panel cartoon would be mutilated by a landscape crop, so that case
+keeps `target_size=None` and its normal resolution.
+
+The model fallback loop, atomic write, target_size correction, and title-overlay
+helper live in `core/image_generation.py`'s `ImageGeneration` class (Spec 041) —
+`agents/agent_image_generator.py` now only builds the prompt from the Satirist's
+concept and delegates rendering to it. The newsletter Engagement Image Concept step
+(see [Agents](#agents)) shares the exact same class, so both paths render through
+identical code.
 
 **Example**
 
@@ -669,9 +691,11 @@ visual style (greyscale background, Gata in Selective Color, 1970s newsroom sett
 
 The winning prompt is rendered by the same `core/image_generation.py` `ImageGeneration`
 class the per-story pipeline uses (see [Image Generator](#image-generator)) — no title
-banner is applied. Any failure (every panelist failing, or every image model failing)
-is a soft failure: a warning is logged, no `engagement_image.png` is written, and the
-merge-text step proceeds unaffected.
+banner is applied, and `target_size=(1200, 644)` is always passed (Spec 045) so the
+saved file exactly matches LinkedIn's Article/Newsletter cover spec regardless of what
+resolution Gemini actually returns. Any failure (every panelist failing, or every image
+model failing) is a soft failure: a warning is logged, no `engagement_image.png` is
+written, and the merge-text step proceeds unaffected.
 
 ---
 

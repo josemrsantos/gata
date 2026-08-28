@@ -1,3 +1,4 @@
+import io
 import logging
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -6,7 +7,12 @@ import pytest
 from google.genai.errors import ServerError
 from PIL import Image
 
-from core.image_generation import ImageGeneration, _overlay_title
+from core.image_generation import (
+    ImageGeneration,
+    _closest_gemini_aspect_ratio,
+    _fit_to_target_size,
+    _overlay_title,
+)
 from llm.gemini import compute_cost
 
 FAKE_PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 20
@@ -297,3 +303,143 @@ def test_generate_skips_overlay_when_title_is_none(tmp_path):
             show_title=True,
         )
     mock_overlay.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# target_size — Spec 045 LinkedIn feature image size correction
+# ---------------------------------------------------------------------------
+
+
+def _make_real_png_bytes(width: int, height: int) -> bytes:
+    # A real encodable/decodable PNG is required here (unlike FAKE_PNG) because
+    # the target_size path actually opens the bytes with Pillow to crop/resize.
+    buffer = io.BytesIO()
+    Image.new("RGB", (width, height), (120, 140, 160)).save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+def test_closest_gemini_aspect_ratio_picks_nearest_preset():
+    # 1200x644 (ratio 1.86) must map to Gemini's "16:9" preset (1.78) rather than
+    # any other supported preset — this is the closest available steering hint.
+    assert _closest_gemini_aspect_ratio((1200, 644)) == "16:9"
+
+
+def test_closest_gemini_aspect_ratio_exact_match():
+    # A perfectly square target must map to Gemini's own "1:1" preset exactly.
+    assert _closest_gemini_aspect_ratio((500, 500)) == "1:1"
+
+
+def test_fit_to_target_size_crops_wider_source_without_stretching():
+    # A source wider than the target ratio must be centre-cropped on width, never
+    # stretched, so the subject's proportions are preserved.
+    wide = Image.new("RGB", (1408, 768), (0, 0, 0))
+    fitted = _fit_to_target_size(wide, (1200, 644))
+    assert fitted.size == (1200, 644)
+
+
+def test_fit_to_target_size_crops_square_source_on_height():
+    # A square source is taller than a 1.91:1 target relative to its width, so it
+    # must be centre-cropped on height, then resized to the exact target size.
+    square = Image.new("RGB", (1000, 1000), (0, 0, 0))
+    fitted = _fit_to_target_size(square, (1200, 644))
+    assert fitted.size == (1200, 644)
+
+
+def test_fit_to_target_size_leaves_already_correct_source_unchanged():
+    # SC-001/Acceptance Scenario 3: a source already at the exact target size must
+    # not be redundantly cropped or resized — no drift when nothing needs fixing.
+    exact = Image.new("RGB", (1200, 644), (10, 20, 30))
+    fitted = _fit_to_target_size(exact, (1200, 644))
+    assert fitted is exact
+
+
+def test_generate_with_target_size_writes_exact_resolution(tmp_path):
+    # FR-003: regardless of what Gemini actually returns, the file saved to disk
+    # must be exactly target_size — this is the entire point of the feature.
+    out_file = tmp_path / "engagement_image.png"
+    response = _make_gemini_response(_make_real_png_bytes(1408, 768))
+
+    with patch("core.image_generation._gemini_client") as mock_client:
+        mock_client.models.generate_content.return_value = response
+        path, _tel = ImageGeneration().generate(
+            PROMPT, output_path=str(out_file), target_size=(1200, 644)
+        )
+
+    with Image.open(path) as saved:
+        assert saved.size == (1200, 644)
+
+
+def test_generate_with_target_size_passes_aspect_ratio_hint_to_gemini(tmp_path):
+    # FR-002: the closest supported preset must reach the actual Gemini call as a
+    # best-effort steering hint, not just be computed and discarded.
+    out_file = tmp_path / "engagement_image.png"
+    response = _make_gemini_response(_make_real_png_bytes(1408, 768))
+
+    with patch("core.image_generation._gemini_client") as mock_client:
+        mock_client.models.generate_content.return_value = response
+        ImageGeneration().generate(
+            PROMPT, output_path=str(out_file), target_size=(1200, 644)
+        )
+
+    _, kwargs = mock_client.models.generate_content.call_args
+    assert kwargs["config"].image_config.aspect_ratio == "16:9"
+
+
+def test_generate_without_target_size_keeps_default_behaviour_unchanged(tmp_path):
+    # RULE 12 / FR-005 regression guard: the per-story cartoon path's default
+    # target_size=None must still write Gemini's raw bytes byte-for-byte.
+    out_file = tmp_path / "cartoon_output.png"
+    response = _make_gemini_response(FAKE_PNG)
+
+    with patch("core.image_generation._gemini_client") as mock_client:
+        mock_client.models.generate_content.return_value = response
+        path, _tel = ImageGeneration().generate(PROMPT, output_path=str(out_file))
+
+    assert Path(path).read_bytes() == FAKE_PNG
+    _, kwargs = mock_client.models.generate_content.call_args
+    assert kwargs["config"] is None
+
+
+def test_generate_with_target_size_and_title_stays_exact_size_after_overlay(
+    tmp_path,
+):
+    # Regression: _overlay_title expands the canvas height to fit its banner,
+    # which previously left the on-disk file taller than target_size whenever a
+    # title was shown (the common case) — the file must still land on exactly
+    # target_size after the banner is added, not just before it.
+    out_file = tmp_path / "engagement_image.png"
+    response = _make_gemini_response(_make_real_png_bytes(1408, 768))
+
+    with patch("core.image_generation._gemini_client") as mock_client:
+        mock_client.models.generate_content.return_value = response
+        path, _tel = ImageGeneration().generate(
+            PROMPT,
+            output_path=str(out_file),
+            title="AI Circus Comes to Town",
+            show_title=True,
+            target_size=(1200, 644),
+        )
+
+    with Image.open(path) as saved:
+        assert saved.size == (1200, 644)
+
+
+def test_generate_with_target_size_and_title_still_shows_banner(tmp_path):
+    # The fix for the size regression above must not remove the banner itself —
+    # the top rows must still be the banner's dark background, not the photo.
+    out_file = tmp_path / "engagement_image.png"
+    response = _make_gemini_response(_make_real_png_bytes(1408, 768))
+
+    with patch("core.image_generation._gemini_client") as mock_client:
+        mock_client.models.generate_content.return_value = response
+        path, _tel = ImageGeneration().generate(
+            PROMPT,
+            output_path=str(out_file),
+            title="AI Circus Comes to Town",
+            show_title=True,
+            target_size=(1200, 644),
+        )
+
+    with Image.open(path) as saved:
+        top_row_pixel = saved.convert("RGB").getpixel((saved.width // 2, 2))
+    assert top_row_pixel != (120, 140, 160)  # not the source image's fill colour

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from agents import agent_engagement_image
 from agents.agent_newsletter_editor import generate_merged_post, parse_merge_response
-from core.image_generation import ImageGeneration
+from core.image_generation import LINKEDIN_FEATURE_IMAGE_SIZE, ImageGeneration
 from core.types import EditionMergeResult, ModelSpec, OrderedStory, ProvidersConfig
 from llm.base import LLMProvider
 from llm.claude import _COST_PER_M as _CLAUDE_COST_PER_M
@@ -202,7 +202,10 @@ def generate_engagement_image(
         )
         output_path = str(edition_dir / _ENGAGEMENT_IMAGE_FILENAME)
         image_path, image_tel = ImageGeneration().generate(
-            prompt, output_path, show_title=False
+            prompt,
+            output_path,
+            show_title=False,
+            target_size=LINKEDIN_FEATURE_IMAGE_SIZE,
         )
     except Exception as exc:
         logger.warning("newsletter_merge: engagement image step failed — %s", exc)

@@ -94,6 +94,7 @@ def generate(
     output_path: str,
     layout: CartoonLayout | None = None,
     show_title: bool = True,
+    target_size: tuple[int, int] | None = None,
 ) -> tuple[str, AgentTelemetry]:
     # Build the prompt: multi-panel composite when panels present, verbatim otherwise
     if concept.panels is not None and layout is not None:
@@ -109,5 +110,9 @@ def generate(
         logger.debug("image_prompt:\n%s", prompt)
     # Actual rendering is shared with the newsletter engagement-image path.
     return ImageGeneration().generate(
-        prompt, output_path, title=concept.title, show_title=show_title
+        prompt,
+        output_path,
+        title=concept.title,
+        show_title=show_title,
+        target_size=target_size,
     )
