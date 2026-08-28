@@ -64,7 +64,11 @@ working directory — one for the inferred audience and one for the UK public.
    cartoon concept; Grok-4.3 (Aggregator) picks the strongest concept
 4. **Image Generator** renders the approved concept into a PNG via a fallback chain of
    Gemini image models; overlays the Satirist-authored title as a dark banner at the top
-   (suppressed with `--no-title`)
+   (suppressed with `--no-title`). When `--linkedin-post` is set and the layout is
+   single-panel or horizontal, the saved file is corrected to exactly LinkedIn's
+   1200x644 Article-cover size — cropped/resized before the title banner, then
+   re-fitted afterward so the banner never pushes it off-size; a vertical multi-panel
+   cartoon is left untouched
 5. **Explainer** (opt-in via `--html`) — three Writers (Claude, Grok-build, Gemini)
    independently draft an HTML explanation page; Grok-4.3 (Editor) picks the best one;
    runs twice — once in the target language, once in English
@@ -78,11 +82,11 @@ working directory — one for the inferred audience and one for the UK public.
 | **Trend Scout** | — | Gemini | Fetches today's headlines from NewsAPI.org and picks the top 3 ranked by satirical potential for the community |
 | **Cultural Strategist** | Framer ×3, Resonator | Claude · Grok-build (grok-build-0.1) · Gemini (Framers) · Grok-4.3 (Resonator/aggregator) | Three Framers independently propose a cultural angle and audience references; Resonator picks the sharpest one |
 | **Satirist** | Panelist ×3, Aggregator | Claude · Grok-build (grok-build-0.1) · Gemini (panelists) · Grok-4.3 (aggregator) | Three panelists independently generate a cartoon concept; Aggregator picks the strongest |
-| **Image Generator** | — | Gemini image models | Renders the approved image prompt into a PNG; tries up to 5 models in order before failing |
+| **Image Generator** | — | Gemini image models | Renders the approved image prompt into a PNG; tries up to 5 models in order before failing; with `--linkedin-post` and a single-panel/horizontal layout, corrects the saved file to LinkedIn's exact 1200x644 cover size |
 | **Image Evaluator** | — | Gemini vision models | Checks for LLM rendering artifacts and rates comedy; triggers regeneration up to 2 times on rejection |
 | **Explainer** | Writer ×3, Editor | Claude · Grok-build (grok-build-0.1) · Gemini (writers) · Grok-4.3 (editor/aggregator) | Three Writers independently draft HTML explanation pages (in-language + English); Editor picks the best per run |
 | **LinkedIn Post** | Research (Gemini/Claude/Grok, independent) → Angle Planner ×3 + Managing Editor → Writer ×3 + Managing Editor | Same panelist/aggregator chains as Satirist | Each panelist researches the topic with its own real web search, three panelists independently propose article angles (an optional `--angle` steers this), then three panelists draft a serious, non-satirical article from the agreed angles; a code-built Sources list (every source URL always code-verified — never LLM-authored — with a genuinely descriptive title resolved from fetched page data, its own URL, or, as a last resort, that source's own provider; anything with nothing descriptive is dropped, never published bare) and an AI-authorship disclosure are appended (`--linkedin-post` only) |
-| **Engagement Image Concept** | Panelist ×N, Art Director | Same provider chains as Satirist panelists/aggregator (or `providers.yaml`) | Deliberates one image-generation prompt that visually unifies an entire newsletter edition from its stories' text only (never their rendered images); rendered via the shared `ImageGeneration` class. Runs before the Newsletter Editor call, on by default, skippable with `--no-image` |
+| **Engagement Image Concept** | Panelist ×N, Art Director | Same provider chains as Satirist panelists/aggregator (or `providers.yaml`) | Deliberates one image-generation prompt that visually unifies an entire newsletter edition from its stories' text only (never their rendered images); rendered via the shared `ImageGeneration` class and pinned to LinkedIn's exact 1200x644 Article/Newsletter cover size. Runs before the Newsletter Editor call, on by default, skippable with `--no-image` |
 | **Newsletter Editor** | — | Gemini text models (primary) · Grok · Claude (fallback only, cheapest-first) | Merges several stories' `linkedin_post.md` files into one newsletter-edition draft plus a network-facing notification teaser (`edition_notification.txt`), invoked via the standalone `newsletter_merge.py` script — not part of the `gata`/`pipeline.py` flow |
 
 ## `gata` command
@@ -296,3 +300,4 @@ communication protocol framework.
 | 42 | Researched LinkedIn article — `--linkedin-post` article is independently researched by Claude/Gemini/Grok (each with its own real web search), angle-planned and written via two `FairParallelPanel` stages, with a repeatable `--angle` flag and a code-built Sources list | ✅ |
 | 43 | Uniform source titles — every Sources-list entry reads as `domain - page title` regardless of provider; Gemini/Grok resolve it via a direct `httpx` fetch of the cited URL, Claude gets a domain prefix added to its own already-good title | ✅ |
 | 44 | Descriptive source titles — a 4-step chain (fetched `<title>`/`og:title`/`twitter:title` → humanised URL-path slug → the source's own provider's same-call title → drop) replaces the single-tier fetch, so no source is ever published as a bare domain or the site's own name restated | ✅ |
+| 45 | LinkedIn feature image size correction — `engagement_image.png` and, with `--linkedin-post` on a single-panel/horizontal cartoon, `cartoon.png` are corrected in Python (Gemini aspect-ratio hint + Pillow centre-crop/resize) to exactly LinkedIn's 1200x644 Article-cover size, so LinkedIn's own auto-crop never clips the image | ✅ |

@@ -10,6 +10,7 @@ from agents import (
     agent_satirist,
 )
 from core import bundle_writer
+from core.image_generation import LINKEDIN_FEATURE_IMAGE_SIZE
 from core.types import (
     CartoonLayout,
     ConversationLog,
@@ -127,12 +128,23 @@ def run_pipeline(
         telemetry.agents.append(bc_tel)
         print("  Image Generator...", flush=True)
         _MAX_IMAGE_RETRIES = 2
+        # A --linkedin-post cartoon becomes the LinkedIn cover, so it must be
+        # pinned to LinkedIn's exact size — but only when its layout is
+        # horizontal, since a vertical multi-panel crop would mutilate it.
+        _image_target_size = (
+            LINKEDIN_FEATURE_IMAGE_SIZE
+            if generate_linkedin_post
+            and chosen_layout is not None
+            and chosen_layout.direction == "horizontal"
+            else None
+        )
         for _attempt in range(_MAX_IMAGE_RETRIES + 1):
             _image_path, image_tel = agent_image_generator.generate(
                 concept,
                 output_path,
                 layout=chosen_layout,
                 show_title=show_title,
+                target_size=_image_target_size,
             )
             telemetry.agents.append(image_tel)
             print("  Image Evaluator...", flush=True)

@@ -383,6 +383,26 @@ def test_generate_engagement_image_writes_file_and_sums_cost(tmp_path):
     assert cost == pytest.approx(0.07)
 
 
+def test_generate_engagement_image_requests_linkedin_target_size(tmp_path):
+    # Spec 045 FR-004: the engagement image is the LinkedIn Article/Newsletter
+    # cover, so it must always ask ImageGeneration.generate() for the exact
+    # 1200x644 LinkedIn cover size, not whatever Gemini would return unprompted.
+    concept_tel = _fake_image_telemetry(0.02)
+    image_tel = _fake_image_telemetry(0.05)
+    with (
+        patch(
+            "core.newsletter_merge.agent_engagement_image.run",
+            return_value=("a vivid scene", concept_tel),
+        ),
+        patch(
+            "core.newsletter_merge.ImageGeneration.generate",
+            return_value=(str(tmp_path / "engagement_image.png"), image_tel),
+        ) as mock_generate,
+    ):
+        generate_engagement_image([], tmp_path)
+    assert mock_generate.call_args.kwargs["target_size"] == (1200, 644)
+
+
 def test_generate_engagement_image_soft_fails_when_concept_panel_raises(tmp_path):
     # FR-008: every panelist failing must not raise out of this function — the
     # caller (merge_edition) must still be able to write the merged article.
