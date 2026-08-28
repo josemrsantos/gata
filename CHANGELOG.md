@@ -1,6 +1,48 @@
 # CHANGELOG
 
 
+## v1.25.0 (2026-08-28)
+
+### Features
+
+* feat: spec 045 — LinkedIn feature image size correction
+
+engagement_image.png and, when --linkedin-post is set on a single-panel or
+horizontal-layout cartoon, the per-story cartoon.png too, were saved at
+whatever resolution Gemini happened to return (typically 1408x768), not
+LinkedIn's documented Article/Newsletter cover spec of 1200x644. LinkedIn's
+own auto-crop then clipped parts of the image on upload.
+
+ImageGeneration.generate() gains an opt-in target_size parameter. When set,
+the Gemini call gets a best-effort image_config.aspect_ratio hint (the
+closest of Gemini's fixed presets), but the real guarantee comes from
+Pillow: the returned image is centre-cropped (never stretched) to the
+target ratio, then resized to the exact target size, before the atomic
+write. core/newsletter_merge.py always passes target_size=(1200, 644) for
+engagement_image.png; core/runner.py passes it for the per-story cartoon
+only when generate_linkedin_post is True and the chosen layout is
+horizontal — a vertical multi-panel cartoon would be mutilated by a
+landscape crop, so that case is left untouched.
+
+Found and fixed during live end-to-end verification: the title banner is
+added *after* the size correction and grows the canvas height, so a
+titled cartoon was still landing off-size (1200x695, not 1200x644) even
+with the fix in place. generate() now re-checks and re-fits the file to
+target_size a second time, after the overlay, right before returning —
+confirmed live afterwards with a real --linkedin-post run producing an
+exact 1200x644 file with the banner intact.
+
+The initial plan (and initial implementation) wired target_size only into
+the engagement_image.png path, on the incorrect assumption that it was the
+image LinkedIn covers come from. A live pipeline.py --linkedin-post run
+(done for spec review) showed the per-story cartoon.png is the image
+actually in use; spec.md/plan.md were revised mid-implementation to add
+the second call site.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_017gnFjKirSKfCU2Kqa1mCSN ([`084ea4d`](https://github.com/josemrsantos/gata/commit/084ea4dd5f34f70ca0b8c30db1803ffab62e9703))
+
+
 ## v1.24.0 (2026-08-24)
 
 ### Documentation
