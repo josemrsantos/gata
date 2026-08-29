@@ -216,3 +216,84 @@ per-panelist system prompt it already has.
    grounding API responds, not a defect in this feature's extraction code — the
    links are still real and resolve to the actual source, just less
    human-readable than Claude's fully-titled citations in the same Sources list.
+
+## Amendment (2026-08-29): Executive Summary + reordered meta content
+
+**Living Spec amendment** (CLAUDE.md RULE 18) implementing `spec.md`'s
+"Amendment (2026-08-29)" section (FR-020–FR-023, SC-008–SC-011). Branch:
+`042-linkedin-article-structure` — a fresh branch per RULE 5 for this stage of
+work, distinct from the original `042-researched-linkedin-article` branch that
+already merged.
+
+### Source Code Changes (this amendment)
+
+```text
+agents/agent_linkedin_post.py   MODIFY:
+                                 - _WRITER_SYSTEM: insert a new
+                                   ===EXECUTIVE_SUMMARY=== marker between
+                                   ===TITLE=== and ===BODY=== (3-5 sentence
+                                   summary of the article's core finding);
+                                   drop "introduction plus" from the BODY
+                                   instruction — BODY becomes per-angle
+                                   sections only (FR-020, FR-021).
+                                 - _WRITER_AGGREGATOR_SYSTEM: add
+                                   ===EXECUTIVE_SUMMARY=== to the marker list
+                                   it requires the Managing Editor to preserve
+                                   (FR-021).
+                                 - _parse_sections: add
+                                   "===EXECUTIVE_SUMMARY===" to the markers
+                                   list.
+                                 - _assemble_article: pull
+                                   sections.get("EXECUTIVE_SUMMARY", ""); build
+                                   "## Executive Summary\n\n{summary}" as its
+                                   own part right after the title, omitted
+                                   entirely when empty (FR-020). Remove
+                                   _DISCLOSURE and the Pipeline Metrics line
+                                   from their current position (right after
+                                   title); append both, in that order, to the
+                                   end of the static _SECTION_4_BODY
+                                   ("Behind the Scenes") instead (FR-022). New
+                                   part order matches FR-023.
+
+tests/test_agent_linkedin_post.py   MODIFY — add coverage for: Executive
+                                     Summary heading placement (present vs.
+                                     omitted-when-empty), Pipeline
+                                     Metrics/disclosure now landing inside
+                                     Behind the Scenes rather than near the
+                                     top, and the overall part order via
+                                     string-index comparisons (SC-008–SC-010).
+                                     Existing presence-only tests
+                                     (`test_assemble_article_includes_disclosure_and_omits_empty_sources`,
+                                     `test_assemble_article_includes_sources_section_when_present`)
+                                     need no changes — they assert presence,
+                                     not position, and remain true after the
+                                     move.
+```
+
+**Structure Decision**: extend the existing five-marker parsing contract
+(`_parse_sections`) with a sixth marker rather than post-processing `BODY` text
+to guess where an intro paragraph ends — consistent with how `TITLE`/`COMMENT`/
+`NOTIFICATION` are already each their own explicit block, and avoids coupling
+correctness to markdown heading conventions the writer prompt encourages but
+doesn't strictly enforce. Considered and rejected: splitting `BODY` on its first
+`## ` heading in code (zero prompt/LLM-contract risk, but silently wrong for any
+panelist that doesn't emit a bare lead-in paragraph before its first heading).
+
+Because this changes the writing panel's `<verdict>` marker contract, it
+requires the same live re-verification discipline as when the format was first
+introduced (see "Issues found and fixed during implementation" above, item 1) —
+a real `--linkedin-post` run must be inspected before this is considered done,
+not just the mocked test suite.
+
+### Constitution Check (re-run for this amendment)
+
+| # | Principle | Status | Note |
+|---|-----------|--------|------|
+| 3 | XML and Output Contract | ✅ | The `<verdict>` wrapper and marker-block convention is extended (new `===EXECUTIVE_SUMMARY===`), not replaced — re-verified live per the discipline noted above. |
+| 9 | Testing Rules | ✅ | New tests use string-index ordering assertions (`article.index(...)`), all mocked; every new test carries a RULE-3 comment. |
+| 11 | Development Stages | ✅ | Branch `042-linkedin-article-structure` created off `main` before any file was written for this amendment. |
+| 12 | Code Quality | ✅ | `ruff check --no-cache` / `ruff format --check --no-cache` clean on every changed file. |
+| 13 | Logging | ✅ N/A | No new logging behaviour — same call sites, same telemetry. |
+
+All other Constitution Check rows from the original plan are unaffected by this
+amendment.
