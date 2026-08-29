@@ -1,6 +1,60 @@
 # CHANGELOG
 
 
+## v1.26.0 (2026-08-29)
+
+### Documentation
+
+* docs: CLAUDE.md — add RULE 18, default to spec-kit's Living Spec model
+
+Prior practice (specs 043/044/045) followed spec-kit's "Flow-Forward" model —
+a new spec number per incremental change, preserving each prior spec's exact
+historical record. Going forward, an evolution of an already-shipped, still-
+active spec defaults to spec-kit's other documented model, "Living Spec":
+amend that spec's own spec.md/plan.md in place instead. A new spec number is
+reserved for genuinely new capability or an explicit ask to preserve history
+for a specific change. Forward-looking only — specs 043/044/045 are not being
+retroactively folded back into 041/042.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_017gnFjKirSKfCU2Kqa1mCSN ([`22c6aa2`](https://github.com/josemrsantos/gata/commit/22c6aa2b8f0137b780f04fb3f3684c4b6fa76773))
+
+* docs: mark specs 043, 044, 045 complete in CLAUDE.md
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_017gnFjKirSKfCU2Kqa1mCSN ([`16596f4`](https://github.com/josemrsantos/gata/commit/16596f4925e6ed5fa9aebd21366f0fcd0e37aae8))
+
+### Features
+
+* feat: spec 042 amendment — Executive Summary + reordered meta content
+
+linkedin_post.md required a fixed manual cleanup pass before every publish:
+moving the Pipeline Metrics line and the AI-authorship disclosure from right
+after the title down to the bottom of the article, and adding an "Executive
+Summary" heading above the unlabeled lead paragraph. This amends spec 042 in
+place (CLAUDE.md RULE 18 — Living Spec, since this evolves an already-shipped
+feature rather than adding new capability) so the generated file already
+matches what actually gets published.
+
+The writer panel's <verdict> contract gains a fifth marker,
+===EXECUTIVE_SUMMARY===, parsed the same way as the existing four — chosen
+over a code-side heuristic split of BODY on its first heading, which would
+have silently depended on markdown structure the prompt encourages but never
+guarantees. _assemble_article no longer prepends the disclosure to the body;
+both it and the Pipeline Metrics line are now appended to the end of the
+static "Behind the Scenes" section instead. New order: title -> Executive
+Summary -> body/closing -> Sources -> Behind the Scenes (ending with metrics
++ disclosure).
+
+Verified live end-to-end (real Claude/Gemini/Grok calls, required since the
+marker contract changed): confirmed the generated linkedin_post.md matches
+the new order exactly, with the Executive Summary reading as a genuine
+standalone paragraph and the banner/disclosure intact at the bottom.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_017gnFjKirSKfCU2Kqa1mCSN ([`33e119f`](https://github.com/josemrsantos/gata/commit/33e119f3df7e12b3e473319e68176005bf9b2866))
+
+
 ## v1.25.0 (2026-08-28)
 
 ### Features
