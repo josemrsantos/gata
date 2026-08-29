@@ -1,6 +1,53 @@
 # CHANGELOG
 
 
+## v1.27.0 (2026-08-29)
+
+### Features
+
+* feat: spec 042 amendment 2 — curated, paywall-free, numbered references
+
+Sources previously published were the full deduplicated union of every
+panelist's own research, regardless of paywall status, outlet quality, or
+whether the final article actually referenced them. This amends spec 042
+in place (CLAUDE.md RULE 18 — Living Spec, evolving the same Sources feature
+043/044/045-adjacent work already built on) to:
+
+- Steer research queries toward academic/reputable sources up front.
+- Classify every newly-seen source domain (paywalled?, reliability
+  high/low) via a dedicated FairParallelPanel — a panel decision, not a
+  single model's call, cross-checked and cached indefinitely in a new
+  gitignored source_domains.duckdb (never fully loaded into memory).
+  Filtering happens immediately after research, before angle-planning or
+  writing ever sees a bad domain's sources — the earliest point possible,
+  since each provider's own search tool is a server-side black box with no
+  earlier hook to gate against.
+- Give the writing panel a shared numbered candidate list and have it cite
+  inline as [N], for real footnote-style credibility. FairParallelPanel
+  gains an optional round_validator hook (None for every other caller —
+  Cultural Strategist, Satirist, Explainer, Engagement Image Concept, and
+  this feature's own research/angle-planning stages are unaffected) that
+  nudges a panelist mid-deliberation if any section over-cites.
+- After writing, code determines which numbers were actually cited, drops
+  invalid/hallucinated indices, caps at 15 distinct sources, renumbers
+  sequentially, and rewrites the text and Sources list to match exactly.
+
+Found and fixed during live verification: the classification panel's own
+real cost (a full 3-panelist, 3-iteration deliberation) was being silently
+dropped from telemetry — confirmed live where a ~$0.02/29s panel run never
+appeared in the cost summary. Fixed by threading its AgentTelemetry through
+_classify_domains_panel's return value instead of discarding it.
+
+Re-verified live afterward: a real --linkedin-post run produced a
+linkedin_post.md with 8 real academic/institutional sources (Stanford HAI,
+WEF, arXiv, Microsoft Research, MIT, Morgan Stanley), zero sketchy domains,
+in-text [1]-[8] footnotes matching the Sources list exactly, and the
+Domain Classification panel's real cost correctly appearing in the total.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_017gnFjKirSKfCU2Kqa1mCSN ([`e7c52a8`](https://github.com/josemrsantos/gata/commit/e7c52a8f5139934c726e055c427b7abef3f70ce6))
+
+
 ## v1.26.0 (2026-08-29)
 
 ### Documentation
