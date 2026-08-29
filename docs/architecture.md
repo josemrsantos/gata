@@ -1,4 +1,4 @@
-# Gata — Architecture
+e# Gata — Architecture
 
 Gata turns a plain-text topic into satirical cartoons tailored per audience, using a
 chain of specialised AI agents. Every agent is independently testable and wired together
@@ -580,6 +580,36 @@ configured for the Satirist:**
    entirely. True pre-fetch gating (classifying a URL before any provider's
    own search tool reads it) isn't possible — each provider's search is a
    server-side black box; this is the earliest point the pipeline can act.
+
+   ```mermaid
+   flowchart TD
+       IN["3 research digests\n(each with its own sources)"]
+       COLLECT["Collect every source domain"]
+       CACHE{"Already in\nsource_domains.duckdb?"}
+       P1["Panelist — Claude\nclaude-sonnet-4-6"]
+       P2["Panelist — Grok\ngrok-build-0.1"]
+       P3["Panelist — Gemini\ngemini-2.5-flash"]
+       AGG["Source Classifier — Grok-4.3\npaywalled? reliability high/low?"]
+       SAVE["Save new verdicts\nto source_domains.duckdb"]
+       VERDICTS["Verdict per domain\n(paywalled, reliability)"]
+       FILTER["Strip sources whose domain is\npaywalled or reliability = low"]
+       OUT["Filtered digests\n→ Angle Planning / Writing"]
+
+       IN --> COLLECT --> CACHE
+       CACHE -->|"yes"| VERDICTS
+       CACHE -->|"no"| P1 & P2 & P3
+       P1 --> AGG
+       P2 --> AGG
+       P3 --> AGG
+       AGG --> SAVE --> VERDICTS
+       VERDICTS --> FILTER --> OUT
+   ```
+
+   A domain's classification, once cached, is trusted indefinitely — the
+   `CACHE` branch above only runs the panel for domains this pipeline hasn't
+   seen before, so repeat domains across runs (and across stories) skip
+   straight to `FILTER`.
+
 3. **Angle planning** — a `FairParallelPanel` run (panelists named by `model_id`,
    aggregator named **Managing Editor**, default 60s timeout) where each panelist
    proposes 2–4 distinct angles from its *own* (already-filtered) research. Any
