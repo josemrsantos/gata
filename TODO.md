@@ -1,5 +1,92 @@
 # TODO
 
+## Curated, paywall-free references — *amends Spec 042*
+
+**Goal:** Trim the Sources list to only references still relevant to the article's final
+published state, exclude any URL behind a paywall, and target 5–9 total references from
+academically credible or highly reliable sources rather than minor online outlets.
+
+**Reason:** Today's Sources list can carry outdated leftover links, paywalled URLs a reader
+can't actually open, and low-quality outlets — undermining the credibility a "researched,
+non-satirical" article is meant to have.
+
+**Confirmed approach:**
+- The writer panel cites sources inline (a new marker/format tied to the Sources list), so
+  code can verify which sources the final published text actually references and drop the
+  rest — not an LLM judgment call after the fact.
+- Paywall/reliability filtering is a hybrid: an LLM classifies a domain the first time it's
+  seen (paywalled? how reliable/academic?), and that verdict is cached in a persistent,
+  version-controlled file — suggested `source_domains.yaml` at the repo root, matching the
+  existing `providers.yaml`/`humor.yaml`/`communities.yaml` pattern — so repeat domains skip
+  the LLM check entirely.
+
+**Things to figure out:**
+- Exact `source_domains.yaml` schema (separate paywalled/reliable/unreliable lists, or a
+  per-domain rating?) and whether a cached verdict ever expires/gets re-checked.
+- Exact inline-citation-marker mechanics and how they interact with `_parse_sections`/
+  `_assemble_article`.
+- What happens if the final body cites more than 9 sources — ask the writer to trim, or
+  truncate in code?
+
+---
+
+## Research-only mode (no image) — *new Spec 046*
+
+**Goal:** Add a mode that skips the entire satirical pipeline (Cultural Strategist,
+Satirist, Image Generator, Image Evaluator) and goes straight from topic to the researched-
+article path, so the tool can be used purely for research/reporting rather than a satirical
+post.
+
+**Reason:** Every run currently generates a satirical image and concept regardless; the
+operator wants a genuine research-only mode, not just a suppressed image with wasted
+concept-generation cost behind it.
+
+**Confirmed:** skips the full satirical pipeline, not just image rendering.
+
+**Things to figure out:**
+- Exact flag shape, and its relationship to existing flags (e.g. `--direct`, spec 035).
+- Whether this requires `--linkedin-post` to be set, since without it there would be no
+  output at all.
+- Output bundle naming/location — today's bundle directory is derived from the cartoon's
+  own `output_path`.
+- Whether Gata's branding/byline stays on a pure research report, or this becomes a fully
+  neutral output.
+
+---
+
+## Lightweight webserver front-end — *new Spec 047*
+
+**Goal:** Stand up a lightweight webserver that can trigger the `gata` CLI (e.g. "generate a
+report on X") over HTTP instead of only via terminal.
+
+**Reason:** Enables using the tool without direct CLI access — a simple request-a-report
+workflow.
+
+**Things to figure out:**
+- Sync vs. async job model — a report takes roughly 5–10 minutes.
+- Auth/access control, since each request triggers real paid API calls.
+- Framework choice (stdlib `http.server` vs. FastAPI/Flask).
+- Whether this depends on Spec 046 (research-only mode) landing first.
+
+---
+
+## Move generation to AWS (cost-conscious) — *new Spec 048*
+
+**Goal:** Investigate moving the generation workload to AWS, using free-tier or otherwise
+minimal-cost resources where possible.
+
+**Reason:** Currently runs locally only; AWS hosting would enable remote/scheduled use
+cases, kept as cheap/free as this side project needs.
+
+**Confirmed:** standalone from Spec 047 — not necessarily tied to hosting the webserver.
+
+**Things to figure out:**
+- Which free/cheap AWS services to evaluate (Lambda, Fargate Spot, EC2 free tier, etc.).
+- Secrets management for API keys.
+- Whether this is for scheduled/batch runs, webserver hosting (Spec 047), or both.
+
+---
+
 ## Voting system — funny / not funny
 
 Allow people to rate each cartoon. Votes feed back into the pipeline to improve future
@@ -39,47 +126,3 @@ generated image.
 **Success criteria:** A concept containing a verifiable factual error is caught, returned
 with a `FACT:` tag, and corrected before the image prompt is finalised. A concept with no
 factual errors passes through without triggering the tag.
-
----
-
-## Curated, paywall-free references
-
-**Goal:** Trim the Sources list to only references still relevant to the article's final
-published state (drop stale ones left over from earlier drafts), exclude any URL behind a
-paywall, and target 5–9 total references from academically credible or highly reliable
-sources rather than minor online outlets.
-
-**Reason:** Today's Sources list can carry outdated leftover links, paywalled URLs a reader
-can't actually open, and low-quality outlets — undermining the credibility a "researched,
-non-satirical" article is meant to have.
-
----
-
-## Optional image-free mode
-
-**Goal:** Add a flag to skip cartoon/image generation entirely, so the pipeline can produce
-just the researched article/report.
-
-**Reason:** Every run currently generates a satirical image regardless; the operator wants
-to use the researched-article path as a standalone research tool without the cost/latency
-of image generation.
-
----
-
-## Lightweight webserver front-end
-
-**Goal:** Stand up a lightweight webserver that can trigger the `gata` CLI (e.g. "generate a
-report on X") over HTTP instead of only via terminal.
-
-**Reason:** Enables using the tool without direct CLI access — a simple request-a-report
-workflow.
-
----
-
-## Move generation to AWS (cost-conscious)
-
-**Goal:** Investigate moving the generation workload to AWS, using free-tier or otherwise
-minimal-cost resources where possible.
-
-**Reason:** Currently runs locally only; AWS hosting would enable the webserver idea and
-other remote-access use cases, kept as cheap/free as this side project needs.
