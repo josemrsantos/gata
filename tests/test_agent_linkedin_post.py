@@ -50,7 +50,15 @@ def test_build_research_query_includes_angles_as_bullets():
 def test_build_research_query_without_angles_is_just_the_topic():
     # No angle supplied must not inject an empty/garbled angles section.
     query = alp._build_research_query("Vibe coding", None)
-    assert query == "Topic: Vibe coding"
+    assert query.startswith("Topic: Vibe coding")
+    assert "angles" not in query.lower()
+
+
+def test_build_research_query_steers_toward_reputable_sources():
+    # Spec 042 amendment 2 FR-024: every research query nudges toward
+    # academic/reputable sources, regardless of whether angles were supplied.
+    query = alp._build_research_query("Vibe coding", None)
+    assert "academic" in query.lower() or "reputable" in query.lower()
 
 
 # -- _extract_gemini_sources --
@@ -742,7 +750,9 @@ def test_research_all_panelists_runs_every_slot():
         "agents.agent_linkedin_post._research_for_provider",
         return_value=(ResearchDigest(summary="s", sources=[]), None, 1.5),
     ) as mock_research:
-        digests, telemetries = alp.research_all_panelists(providers, "Topic", None)
+        digests, telemetries = alp.research_all_panelists(
+            providers, "Topic", None, [_provider("agg")]
+        )
     assert mock_research.call_count == 3
     assert len(digests) == 3
     assert all(d is not None for d in digests)
@@ -762,10 +772,132 @@ def test_research_all_panelists_one_failure_yields_none_for_that_slot():
     with patch(
         "agents.agent_linkedin_post._research_for_provider", side_effect=_side_effect
     ):
-        digests, _ = alp.research_all_panelists(providers, "Topic", None)
+        digests, _ = alp.research_all_panelists(
+            providers, "Topic", None, [_provider("agg")]
+        )
     assert digests[0] is not None
     assert digests[1] is None
     assert digests[2] is not None
+
+
+def test_research_all_panelists_filters_paywalled_source():
+    # Spec 042 amendment 2 FR-026: a source whose domain is already cached as
+    # paywalled must be stripped from its digest before the function returns.
+    providers = _panelist_providers()
+    digest = ResearchDigest(
+        summary="s", sources=[ResearchSource(title="T", url="https://paywalled.com/a")]
+    )
+    with (
+        patch(
+            "agents.agent_linkedin_post._research_for_provider",
+            return_value=(digest, None, 1.0),
+        ),
+        patch(
+            "agents.agent_linkedin_post._load_cached_domains",
+            return_value={"paywalled.com": {"paywalled": True, "reliability": "high"}},
+        ),
+        patch("agents.agent_linkedin_post._classify_domains_panel") as mock_classify,
+    ):
+        digests, _ = alp.research_all_panelists(
+            providers, "Topic", None, [_provider("agg")]
+        )
+    mock_classify.assert_not_called()
+    assert all(d.sources == [] for d in digests)
+
+
+def test_research_all_panelists_classifies_and_caches_unknown_domain():
+    # An unclassified domain must go through the classification panel, get
+    # saved to the cache, and be excluded this run if classified low-quality.
+    providers = _panelist_providers()
+    digest = ResearchDigest(
+        summary="s",
+        sources=[ResearchSource(title="T", url="https://sketchy.example/a")],
+    )
+    with (
+        patch(
+            "agents.agent_linkedin_post._research_for_provider",
+            return_value=(digest, None, 1.0),
+        ),
+        patch("agents.agent_linkedin_post._load_cached_domains", return_value={}),
+        patch(
+            "agents.agent_linkedin_post._classify_domains_panel",
+            return_value=(
+                {"sketchy.example": {"paywalled": False, "reliability": "low"}},
+                AgentTelemetry(
+                    agent_name="Domain Classification",
+                    duration_seconds=1.0,
+                    iterations=1,
+                ),
+            ),
+        ) as mock_classify,
+        patch("agents.agent_linkedin_post._save_classified_domains") as mock_save,
+    ):
+        digests, _ = alp.research_all_panelists(
+            providers, "Topic", None, [_provider("agg")]
+        )
+    mock_classify.assert_called_once()
+    assert mock_classify.call_args.args[0] == ["sketchy.example"]
+    mock_save.assert_called_once_with(
+        {"sketchy.example": {"paywalled": False, "reliability": "low"}}
+    )
+    assert all(d.sources == [] for d in digests)
+
+
+def test_research_all_panelists_includes_classification_cost_in_telemetry():
+    # Regression: the domain-classification panel's own real cost was being
+    # silently dropped — confirmed live, where a genuine ~90s/$0.02 panel run
+    # never appeared in the run's cost summary. Its telemetry must be
+    # included in the returned list, not just the per-provider research ones.
+    providers = _panelist_providers()
+    digest = ResearchDigest(
+        summary="s",
+        sources=[ResearchSource(title="T", url="https://sketchy.example/a")],
+    )
+    classification_tel = AgentTelemetry(
+        agent_name="Domain Classification", duration_seconds=42.0, iterations=3
+    )
+    with (
+        patch(
+            "agents.agent_linkedin_post._research_for_provider",
+            return_value=(digest, None, 1.0),
+        ),
+        patch("agents.agent_linkedin_post._load_cached_domains", return_value={}),
+        patch(
+            "agents.agent_linkedin_post._classify_domains_panel",
+            return_value=(
+                {"sketchy.example": {"paywalled": False, "reliability": "low"}},
+                classification_tel,
+            ),
+        ),
+        patch("agents.agent_linkedin_post._save_classified_domains"),
+    ):
+        _, telemetries = alp.research_all_panelists(
+            providers, "Topic", None, [_provider("agg")]
+        )
+    assert classification_tel in telemetries
+
+
+def test_research_all_panelists_keeps_eligible_source():
+    # A domain classified as neither paywalled nor low-reliability must survive.
+    providers = _panelist_providers()
+    source = ResearchSource(title="T", url="https://good.example/a")
+    digest = ResearchDigest(summary="s", sources=[source])
+    with (
+        patch(
+            "agents.agent_linkedin_post._research_for_provider",
+            return_value=(digest, None, 1.0),
+        ),
+        patch(
+            "agents.agent_linkedin_post._load_cached_domains",
+            return_value={"good.example": {"paywalled": False, "reliability": "high"}},
+        ),
+        patch("agents.agent_linkedin_post._classify_domains_panel") as mock_classify,
+    ):
+        digests, _ = alp.research_all_panelists(
+            providers, "Topic", None, [_provider("agg")]
+        )
+    mock_classify.assert_not_called()
+    assert digests[0].sources == [source]
 
 
 # -- _panelist_research_context --
@@ -861,9 +993,31 @@ def test_write_article_uses_120s_panelist_timeout():
             BRIEF,
             providers,
             [_provider("agg")],
+            [],
         )
     _, kwargs = mock_cls.call_args
     assert kwargs["panelist_timeout"] == 120
+
+
+def test_write_article_passes_round_validator():
+    # Spec 042 amendment 2 FR-028: the writing panel must be constructed with
+    # the citation round_validator, not left to enforce nothing mid-round.
+    providers = _panelist_providers()
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.return_value = _fake_loop_output(
+            "===TITLE===\nT\n===BODY===\nB\n===COMMENT===\nC?\n===NOTIFICATION===\nN"
+        )
+        alp._write_article(
+            "Topic",
+            [None, None, None],
+            "ANGLE: A",
+            BRIEF,
+            providers,
+            [_provider("agg")],
+            [],
+        )
+    _, kwargs = mock_cls.call_args
+    assert kwargs["round_validator"] is alp._citation_round_validator
 
 
 def test_write_article_panel_failure_returns_none():
@@ -877,6 +1031,7 @@ def test_write_article_panel_failure_returns_none():
             BRIEF,
             providers,
             [_provider("agg")],
+            [],
         )
     assert sections is None
     assert telemetry.agent_name == "LinkedIn Article Writing"
@@ -910,6 +1065,261 @@ def test_build_sources_section_lists_every_source_as_markdown_link():
     sources = [ResearchSource(title="A", url="https://x.com/1")]
     section = alp._build_sources_section(sources)
     assert "[A](https://x.com/1)" in section
+
+
+def test_build_sources_section_numbers_match_list_order():
+    # Spec 042 amendment 2 FR-029.4: the visible numbering must match the
+    # candidates' order exactly, so it lines up with in-text [N] markers.
+    sources = [
+        ResearchSource(title="First", url="https://x.com/1"),
+        ResearchSource(title="Second", url="https://x.com/2"),
+    ]
+    section = alp._build_sources_section(sources)
+    assert section.splitlines()[2].startswith("1. ")
+    assert section.splitlines()[3].startswith("2. ")
+
+
+# -- _build_citable_sources_block / _count_citations_per_section --
+
+
+def test_build_citable_sources_block_empty_list_returns_empty_string():
+    # No candidates at all must produce no block — nothing for the writer to
+    # cite, so the prompt shouldn't imply otherwise.
+    assert alp._build_citable_sources_block([]) == ""
+
+
+def test_build_citable_sources_block_numbers_from_one():
+    # FR-027: the citable list must be 1-based and stable, matching the
+    # numbering the writer is told to cite against.
+    sources = [
+        ResearchSource(title="First", url="https://x.com/1"),
+        ResearchSource(title="Second", url="https://x.com/2"),
+    ]
+    block = alp._build_citable_sources_block(sources)
+    assert "[1] First (https://x.com/1)" in block
+    assert "[2] Second (https://x.com/2)" in block
+
+
+def test_count_citations_per_section_splits_on_h2_headings():
+    # Each markdown H2 section is counted independently, so a validator can
+    # tell a compliant section from one that over-cites.
+    text = "## First\nCites [1] and [2] here.\n\n## Second\nCites [3] only."
+    assert alp._count_citations_per_section(text) == [0, 2, 1]
+
+
+# -- _citation_round_validator (Spec 042 amendment 2 FR-028) --
+
+
+def test_citation_round_validator_flags_section_over_limit():
+    # FR-028: a body section citing more than the per-section limit must
+    # produce feedback for that panelist, naming the limit so it can comply.
+    verdict = (
+        "===TITLE===\nT\n===EXECUTIVE_SUMMARY===\nS\n===BODY===\n"
+        "## Angle One\nCites [1], [2], and [3] — too many.\n"
+        "===COMMENT===\nC?\n===NOTIFICATION===\nN"
+    )
+    feedback = alp._citation_round_validator({"pa": verdict})
+    assert "pa" in feedback
+    assert "2" in feedback["pa"]
+
+
+def test_citation_round_validator_silent_when_within_limit():
+    # A compliant panelist must get no feedback at all — the validator should
+    # never nag a panelist that's already within the per-section limit.
+    verdict = (
+        "===TITLE===\nT\n===EXECUTIVE_SUMMARY===\nS\n===BODY===\n"
+        "## Angle One\nCites [1] and [2] only.\n"
+        "===COMMENT===\nC?\n===NOTIFICATION===\nN"
+    )
+    assert alp._citation_round_validator({"pa": verdict}) == {}
+
+
+# -- _extract_and_renumber_citations (Spec 042 amendment 2 FR-029) --
+
+_FIVE_CANDIDATES = [
+    ResearchSource(title=f"S{i}", url=f"https://x.com/{i}") for i in range(1, 6)
+]
+
+
+def test_extract_and_renumber_citations_basic_renumbering():
+    # SC-014: citing [2] then [5] (skipping [1]) must renumber to [1] then [2]
+    # in the final text, matching the Sources list built from the same order.
+    body = "First claim [2]. Second claim [5]."
+    new_summary, new_body, sources = alp._extract_and_renumber_citations(
+        "", body, _FIVE_CANDIDATES
+    )
+    assert "[1]" in new_body and "[2]" in new_body
+    assert "[5]" not in new_body
+    assert [s.url for s in sources] == ["https://x.com/2", "https://x.com/5"]
+
+
+def test_extract_and_renumber_citations_strips_invalid_index():
+    # SC-014: a citation number outside the candidate range must be stripped
+    # entirely from the text, not left dangling or crash the pipeline.
+    body = "Valid claim [2]. Bogus claim [99]."
+    _, new_body, sources = alp._extract_and_renumber_citations(
+        "", body, _FIVE_CANDIDATES
+    )
+    assert "[99]" not in new_body
+    assert "[1]" in new_body
+    assert len(sources) == 1
+
+
+def test_extract_and_renumber_citations_caps_at_max_total():
+    # SC-015: more than _MAX_TOTAL_CITATIONS distinct valid citations must be
+    # truncated to the first N by first-appearance order.
+    many_candidates = [
+        ResearchSource(title=f"S{i}", url=f"https://x.com/{i}") for i in range(1, 20)
+    ]
+    body = " ".join(f"Claim [{i}]." for i in range(1, 18))
+    _, new_body, sources = alp._extract_and_renumber_citations(
+        "", body, many_candidates
+    )
+    assert len(sources) == alp._MAX_TOTAL_CITATIONS
+    assert f"[{alp._MAX_TOTAL_CITATIONS}]" in new_body
+    assert f"[{alp._MAX_TOTAL_CITATIONS + 1}]" not in new_body
+
+
+def test_extract_and_renumber_citations_considers_summary_before_body():
+    # A citation appearing first in the summary must be numbered [1], even if
+    # the same source is cited again later in the body.
+    summary = "Overview references [3] directly."
+    body = "Body also cites [3] and introduces [1]."
+    new_summary, new_body, sources = alp._extract_and_renumber_citations(
+        summary, body, _FIVE_CANDIDATES
+    )
+    assert "[1]" in new_summary
+    assert sources[0].url == "https://x.com/3"
+
+
+def test_extract_and_renumber_citations_no_citations_yields_empty_sources():
+    # No [N] markers anywhere must produce an empty Sources list, not an
+    # error or a spurious entry.
+    _, _, sources = alp._extract_and_renumber_citations("", "No citations here.", [])
+    assert sources == []
+
+
+# -- DuckDB domain cache (Spec 042 amendment 2 FR-025) --
+
+
+def test_domain_cache_round_trip(tmp_path, monkeypatch):
+    # A saved classification must be loadable afterward, from a fresh
+    # connection, exactly as written.
+    monkeypatch.setattr(alp, "_DOMAIN_CACHE_PATH", str(tmp_path / "cache.duckdb"))
+    alp._save_classified_domains(
+        {"nytimes.com": {"paywalled": True, "reliability": "high"}}
+    )
+    loaded = alp._load_cached_domains({"nytimes.com", "unknown.com"})
+    assert loaded == {"nytimes.com": {"paywalled": True, "reliability": "high"}}
+
+
+def test_load_cached_domains_empty_set_returns_empty_dict():
+    # An empty query set must short-circuit rather than open a DB connection.
+    assert alp._load_cached_domains(set()) == {}
+
+
+def test_save_classified_domains_empty_dict_is_a_noop(tmp_path, monkeypatch):
+    # Saving nothing must not even create the cache file — avoids an empty
+    # DuckDB file appearing on disk for runs with no new domains to classify.
+    monkeypatch.setattr(alp, "_DOMAIN_CACHE_PATH", str(tmp_path / "cache.duckdb"))
+    alp._save_classified_domains({})
+    assert not (tmp_path / "cache.duckdb").exists()
+
+
+# -- _classify_domains_panel (Spec 042 amendment 2 FR-026.2) --
+
+
+def test_classify_domains_panel_empty_list_returns_empty_dict():
+    # No domains to classify must skip the panel entirely, not run an empty
+    # deliberation.
+    result, telemetry = alp._classify_domains_panel(
+        [], _panelist_providers(), [_provider("agg")]
+    )
+    assert result == {}
+    assert telemetry.agent_name == "Domain Classification"
+
+
+def test_classify_domains_panel_uses_panel_timeout_and_iterations():
+    # FR-026.2: the classification panel must use its own dedicated timeout
+    # and iteration count, not whatever FairParallelPanel defaults to.
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.return_value = _fake_loop_output(
+            '{"a.com": {"paywalled": false, "reliability": "high"}}'
+        )
+        alp._classify_domains_panel(
+            ["a.com"], _panelist_providers(), [_provider("agg")]
+        )
+    _, kwargs = mock_cls.call_args
+    assert kwargs["panelist_timeout"] == 90
+    assert kwargs["iterations"] == 3
+
+
+def test_classify_domains_panel_parses_verdict_json():
+    # A well-formed verdict must translate directly into the classification
+    # dict callers rely on for filtering.
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.return_value = _fake_loop_output(
+            '{"a.com": {"paywalled": true, "reliability": "low"}}'
+        )
+        result, _ = alp._classify_domains_panel(
+            ["a.com"], _panelist_providers(), [_provider("agg")]
+        )
+    assert result == {"a.com": {"paywalled": True, "reliability": "low"}}
+
+
+def test_classify_domains_panel_returns_real_telemetry_on_success():
+    # Regression: the panel's own AgentTelemetry (and its real cost) must be
+    # returned, not discarded — this was silently dropped before being caught
+    # live (a real ~90s/$0.02 panel run never appeared in the cost summary).
+    real_tel = AgentTelemetry(
+        agent_name="Domain Classification", duration_seconds=42.0, iterations=3
+    )
+    loop_output = LoopOutput(
+        verdict='{"a.com": {"paywalled": true, "reliability": "low"}}',
+        log=ConversationLog(loop_name="x"),
+        telemetry=real_tel,
+    )
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.return_value = loop_output
+        _, telemetry = alp._classify_domains_panel(
+            ["a.com"], _panelist_providers(), [_provider("agg")]
+        )
+    assert telemetry is real_tel
+
+
+def test_classify_domains_panel_fails_open_on_panel_exception():
+    # SC-013: total panel failure must return {} (fail open), never raise —
+    # the run must still be able to proceed with unclassified domains.
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.side_effect = RuntimeError("all panelists failed")
+        result, telemetry = alp._classify_domains_panel(
+            ["a.com"], _panelist_providers(), [_provider("agg")]
+        )
+    assert result == {}
+    assert telemetry.agent_name == "Domain Classification"
+
+
+def test_classify_domains_panel_fails_open_on_invalid_json():
+    # A verdict that isn't valid JSON must also fail open, not crash the run.
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.return_value = _fake_loop_output("not json at all")
+        result, _ = alp._classify_domains_panel(
+            ["a.com"], _panelist_providers(), [_provider("agg")]
+        )
+    assert result == {}
+
+
+def test_classify_domains_panel_skips_entries_with_bad_reliability_value():
+    # A reliability value other than "high"/"low" must be rejected per-domain
+    # rather than silently accepted or crashing the whole parse.
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.return_value = _fake_loop_output(
+            '{"a.com": {"paywalled": false, "reliability": "medium"}}'
+        )
+        result, _ = alp._classify_domains_panel(
+            ["a.com"], _panelist_providers(), [_provider("agg")]
+        )
+    assert result == {}
 
 
 # -- _assemble_article --
@@ -1074,7 +1484,7 @@ def test_generate_linkedin_post_full_success_assembles_article():
     )
     sections = {
         "TITLE": "A Real Title",
-        "BODY": "Real body.",
+        "BODY": "Real body citing [1] a source.",
         "COMMENT": "Question?",
         "NOTIFICATION": "Read this.",
     }

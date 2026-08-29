@@ -1,10 +1,12 @@
 import concurrent.futures
 import html
+import json
 import logging
 import re
 import time
 from urllib.parse import urlparse
 
+import duckdb
 import httpx
 from google.genai import types as genai_types
 
@@ -32,6 +34,25 @@ logger = logging.getLogger(__name__)
 # writing FairParallelPanel's per-round budget (FR-009) — both set to 120s.
 _RESEARCH_TIMEOUT_SECONDS = 120.0
 _WRITING_PANEL_TIMEOUT_SECONDS = 120.0
+
+# Domain classification panel (Spec 042 amendment 2): a full FairParallelPanel
+# deliberation, not a single model call, per the operator's explicit request
+# for cross-checked judgment. iterations=3 (one more than the class default)
+# since early runs with a small/empty cache are expected to disagree more
+# before converging.
+_DOMAIN_CLASSIFICATION_TIMEOUT_SECONDS = 90.0
+_DOMAIN_CLASSIFICATION_ITERATIONS = 3
+
+# Local, gitignored, regenerating cache — not a hand-edited config (Spec 042
+# amendment 2 FR-025). A domain already present is trusted indefinitely.
+_DOMAIN_CACHE_PATH = "source_domains.duckdb"
+
+# Citation enforcement (Spec 042 amendment 2 FR-027/FR-029/FR-030): a
+# mid-round nudge targets ~2 citations per body section; the hard code-level
+# backstop caps the final published article at 15 distinct citations total.
+_MAX_CITATIONS_PER_SECTION = 2
+_MAX_TOTAL_CITATIONS = 15
+_CITATION_RE = re.compile(r" ?\[(\d+)\]")
 
 # Per-URL budget for the source-title enrichment fetch, shared by Gemini and
 # Grok (Spec 043 FR-002/FR-003) — short enough that even a full set of
@@ -126,12 +147,17 @@ _WRITER_SYSTEM = (
     " introduction is its own separate section (see ===EXECUTIVE_SUMMARY==="
     " below), not part of the body. Target roughly 500-800 words total across"
     " the summary and body combined.\n\n"
-    "You may reference facts from your own research findings in your prose, but"
-    " you MUST NOT cite, link, or invent any URL or source — a Sources list is"
-    " appended separately from verified data; do not write one yourself. If you"
-    " had no research findings available, do not present any specific claim as"
-    " researched fact — rely only on general knowledge and say so if it matters"
-    " to your angle.\n\n"
+    "You may reference facts from your own research findings in your prose. You"
+    " will also be given a numbered list of sources you may cite — when a"
+    " specific claim comes from one of them, cite it inline immediately as"
+    " [N] matching its number in that list. Never invent a number not in the"
+    " list, never write a URL yourself, and never fabricate a source outside"
+    " it — a Sources list is appended separately, built only from your cited"
+    " numbers; do not write one yourself. Aim for roughly 2 citations per body"
+    " section; do not exceed 15 distinct citations in the whole article. If"
+    " you had no research findings available, do not present any specific"
+    " claim as researched fact — rely only on general knowledge and say so if"
+    " that matters to your angle.\n\n"
     "Wrap your entire output in <verdict>...</verdict> tags. Inside, produce five"
     " marked sections, in this exact order, with no text before, between, or"
     " after them other than the markers themselves:\n\n"
@@ -215,6 +241,14 @@ def _build_research_query(topic: str, angles: list[str] | None) -> str:
     if angles:
         bullet_list = "\n".join(f"- {a}" for a in angles)
         query += f"\nPay particular attention to these angles:\n{bullet_list}"
+    # Best-effort steer toward citable domains (Spec 042 amendment 2 FR-024) —
+    # the actual enforcement is the post-research classification/filter step,
+    # not this instruction alone.
+    query += (
+        "\nWhen searching, prefer academic, government, or otherwise"
+        " highly-reputable and established sources over minor outlets, blogs,"
+        " or content farms."
+    )
     return query
 
 
@@ -689,14 +723,165 @@ def _research_for_provider(
     return digest, usage, time.monotonic() - start
 
 
+def _open_domain_cache() -> duckdb.DuckDBPyConnection:
+    con = duckdb.connect(_DOMAIN_CACHE_PATH)
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS domains ("
+        "domain TEXT PRIMARY KEY, paywalled BOOLEAN, reliability TEXT,"
+        " classified_at TIMESTAMP)"
+    )
+    return con
+
+
+def _load_cached_domains(domains: set[str]) -> dict[str, dict]:
+    """Domains already classified — trusted indefinitely (Spec 042 amendment 2
+    FR-025); an empty result for any domain not yet seen, never an error.
+    """
+    if not domains:
+        return {}
+    con = _open_domain_cache()
+    try:
+        placeholders = ",".join("?" for _ in domains)
+        rows = con.execute(
+            f"SELECT domain, paywalled, reliability FROM domains"
+            f" WHERE domain IN ({placeholders})",
+            list(domains),
+        ).fetchall()
+    finally:
+        con.close()
+    return {
+        domain: {"paywalled": bool(paywalled), "reliability": reliability}
+        for domain, paywalled, reliability in rows
+    }
+
+
+def _save_classified_domains(classifications: dict[str, dict]) -> None:
+    if not classifications:
+        return
+    con = _open_domain_cache()
+    try:
+        for domain, verdict in classifications.items():
+            con.execute(
+                "INSERT OR REPLACE INTO domains (domain, paywalled, reliability,"
+                " classified_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+                [domain, verdict["paywalled"], verdict["reliability"]],
+            )
+    finally:
+        con.close()
+
+
+_DOMAIN_CLASSIFIER_SYSTEM = (
+    "You are assessing web domains for use as citations in a professional,"
+    " researched LinkedIn article.\n"
+    "For each domain listed, judge: (1) is it typically paywalled for readers"
+    " (a paid subscription is required to read full articles)? (2) is it a"
+    " highly reliable source — academic, government, or a well-established,"
+    " editorially rigorous outlet — versus a minor/low-quality outlet, blog,"
+    " or content farm?\n"
+    "Wrap your entire output in <verdict>...</verdict> tags containing ONLY a"
+    " JSON object, no other text, mapping each domain to its verdict, e.g.:\n"
+    '{"nytimes.com": {"paywalled": true, "reliability": "high"},'
+    ' "some-blog.com": {"paywalled": false, "reliability": "low"}}\n'
+    'reliability must be exactly "high" or "low". Include every domain you'
+    " were given, and no others."
+)
+
+_DOMAIN_CLASSIFIER_AGGREGATOR_SYSTEM = (
+    "You are the Managing Editor reconciling several panelists' domain"
+    " classifications.\n"
+    "Synthesise the most accurate final verdict per domain (majority view, or"
+    " your own best judgment on disagreement).\n"
+    "Output a PICK: N line (N = the proposal number you selected as primary),"
+    " then the final JSON wrapped in <verdict>...</verdict>, using the exact"
+    " same format as the proposals. Do not add preamble outside PICK/verdict."
+)
+
+
+def _classify_domains_panel(
+    domains: list[str],
+    panelist_providers: list[list[LLMProvider]],
+    aggregator_providers: list[LLMProvider],
+) -> tuple[dict[str, dict], AgentTelemetry]:
+    """Classify each domain's paywall/reliability status via a FairParallelPanel
+    deliberation (Spec 042 amendment 2 FR-026.2) — a panel decision, not a
+    single model's call, since this is a judgment call worth cross-checking.
+    Fails open: returns ({}, telemetry) on total panel failure or unparseable
+    output, so callers treat every domain as unclassified rather than aborting
+    the run — the telemetry (and its real cost) is still returned either way,
+    so this panel's spend is never silently missing from the run's totals.
+    """
+    fallback_tel = AgentTelemetry(
+        agent_name="Domain Classification", duration_seconds=0.0, iterations=0
+    )
+    if not domains:
+        return {}, fallback_tel
+    panelists = [
+        PersonaConfig(
+            name=slot[0].model_id,
+            providers=slot,
+            system_prompt=_DOMAIN_CLASSIFIER_SYSTEM,
+            max_tokens=1000,
+        )
+        for slot in panelist_providers
+    ]
+    aggregator = PersonaConfig(
+        name="Source Classifier",
+        providers=aggregator_providers,
+        system_prompt=_DOMAIN_CLASSIFIER_AGGREGATOR_SYSTEM,
+        max_tokens=1000,
+    )
+    panel = FairParallelPanel(
+        panelists=panelists,
+        aggregator=aggregator,
+        panel_name="Domain Classification",
+        iterations=_DOMAIN_CLASSIFICATION_ITERATIONS,
+        panelist_timeout=_DOMAIN_CLASSIFICATION_TIMEOUT_SECONDS,
+    )
+    domain_list = "\n".join(f"- {d}" for d in domains)
+    try:
+        loop_output = panel.run(f"Domains to classify:\n{domain_list}")
+    except Exception as exc:
+        logger.warning("source_classification: panel failed — %s", exc)
+        return {}, fallback_tel
+    telemetry = loop_output.telemetry or fallback_tel
+    raw = loop_output.verdict.strip()
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+    try:
+        parsed = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        logger.warning("source_classification: panel returned invalid JSON")
+        return {}, telemetry
+    if not isinstance(parsed, dict):
+        logger.warning("source_classification: panel JSON was not an object")
+        return {}, telemetry
+    result: dict[str, dict] = {}
+    for domain, verdict in parsed.items():
+        if not isinstance(verdict, dict):
+            continue
+        reliability = str(verdict.get("reliability", "")).lower()
+        if reliability not in ("high", "low"):
+            continue
+        result[domain] = {
+            "paywalled": bool(verdict.get("paywalled", False)),
+            "reliability": reliability,
+        }
+    return result, telemetry
+
+
 def research_all_panelists(
     panelist_providers: list[list[LLMProvider]],
     topic: str,
     angles: list[str] | None,
+    aggregator_providers: list[LLMProvider],
 ) -> tuple[list[ResearchDigest | None], list[AgentTelemetry]]:
     """Run every panelist's own research call in parallel, each bounded by
     _RESEARCH_TIMEOUT_SECONDS (Spec 042 FR-001). A single provider's failure or
-    timeout yields None for that slot (FR-005) rather than raising.
+    timeout yields None for that slot (FR-005) rather than raising. Before
+    returning, classifies and filters out any paywalled/low-reliability
+    domain from every digest (Spec 042 amendment 2 FR-026) — the earliest
+    point this pipeline can act, since each provider's own search tool is a
+    server-side black box we can't gate before its own fetch.
     """
     primaries = [slot[0] for slot in panelist_providers]
     digests: list[ResearchDigest | None] = [None] * len(primaries)
@@ -727,6 +912,44 @@ def research_all_panelists(
                     calls=[usage] if usage else [],
                 )
             )
+    # Every research call is in; classify and filter before anyone downstream
+    # (angle-planning, writing) ever sees a bad domain's sources.
+    all_domains = {
+        _domain_from_url(source.url)
+        for digest in digests
+        if digest is not None
+        for source in digest.sources
+    }
+    cache = _load_cached_domains(all_domains)
+    unclassified = sorted(all_domains - cache.keys())
+    if unclassified:
+        new_verdicts, classification_tel = _classify_domains_panel(
+            unclassified, panelist_providers, aggregator_providers
+        )
+        telemetries.append(classification_tel)
+        _save_classified_domains(new_verdicts)
+        cache.update(new_verdicts)
+    for digest in digests:
+        if digest is None:
+            continue
+        kept: list[ResearchSource] = []
+        for source in digest.sources:
+            domain = _domain_from_url(source.url)
+            verdict = cache.get(domain)
+            if verdict is not None and (
+                verdict["paywalled"] or verdict["reliability"] == "low"
+            ):
+                logger.warning(
+                    "source_classification: excluding %s (%s) —"
+                    " paywalled=%s reliability=%s",
+                    source.url,
+                    domain,
+                    verdict["paywalled"],
+                    verdict["reliability"],
+                )
+                continue
+            kept.append(source)
+        digest.sources = kept
     return digests, telemetries
 
 
@@ -793,6 +1016,86 @@ def _plan_angles(
     return result, telemetry
 
 
+def _build_citable_sources_block(candidates: list[ResearchSource]) -> str:
+    if not candidates:
+        return ""
+    lines = [
+        "\n\nSOURCES YOU MAY CITE (cite inline as [N] against this exact"
+        " numbering; never invent a number not listed; do not fabricate a"
+        " source outside it):",
+        "",
+    ]
+    lines.extend(
+        f"[{i}] {source.title} ({source.url})" for i, source in enumerate(candidates, 1)
+    )
+    return "\n".join(lines)
+
+
+def _count_citations_per_section(text: str) -> list[int]:
+    """Splits on markdown H2 headings; returns a citation count per resulting
+    chunk (the text before the first heading counts as its own chunk).
+    """
+    sections = re.split(r"(?m)^##\s+.*$", text)
+    return [len(_CITATION_RE.findall(section)) for section in sections]
+
+
+def _citation_round_validator(verdicts: dict[str, str]) -> dict[str, str]:
+    """FairParallelPanel round_validator (Spec 042 amendment 2 FR-028): flags
+    any panelist whose BODY has a section citing more than
+    _MAX_CITATIONS_PER_SECTION sources, so it gets a chance to trim before the
+    next round. Best-effort only — _extract_and_renumber_citations is the
+    actual hard backstop regardless of whether a panelist complies.
+    """
+    feedback: dict[str, str] = {}
+    for name, raw_verdict in verdicts.items():
+        body = _parse_sections(raw_verdict).get("BODY", "")
+        if any(
+            count > _MAX_CITATIONS_PER_SECTION
+            for count in _count_citations_per_section(body)
+        ):
+            feedback[name] = (
+                "VALIDATION WARNING: one or more of your body sections cites"
+                f" more than {_MAX_CITATIONS_PER_SECTION} sources. Please"
+                f" revise so each section cites at most"
+                f" {_MAX_CITATIONS_PER_SECTION} sources."
+            )
+    return feedback
+
+
+def _rewrite_citations(text: str, renumber_map: dict[int, int]) -> str:
+    def _sub(match: re.Match) -> str:
+        old_index = int(match.group(1))
+        new_index = renumber_map.get(old_index)
+        if new_index is None:
+            return ""
+        prefix = " " if match.group(0).startswith(" ") else ""
+        return f"{prefix}[{new_index}]"
+
+    return _CITATION_RE.sub(_sub, text)
+
+
+def _extract_and_renumber_citations(
+    summary: str, body: str, candidates: list[ResearchSource]
+) -> tuple[str, str, list[ResearchSource]]:
+    """Spec 042 amendment 2 FR-029: determines which candidates were actually
+    cited (first-appearance order across summary+body), drops invalid/out-of-
+    range indices, caps at _MAX_TOTAL_CITATIONS distinct sources, renumbers
+    the survivors sequentially, and rewrites every [N] marker to match.
+    """
+    combined = summary + "\n\n" + body
+    order: list[int] = []
+    for match in _CITATION_RE.finditer(combined):
+        old_index = int(match.group(1))
+        if 1 <= old_index <= len(candidates) and old_index not in order:
+            order.append(old_index)
+    kept = order[:_MAX_TOTAL_CITATIONS]
+    renumber_map = {old: new for new, old in enumerate(kept, 1)}
+    new_summary = _rewrite_citations(summary, renumber_map)
+    new_body = _rewrite_citations(body, renumber_map)
+    final_sources = [candidates[old_index - 1] for old_index in kept]
+    return new_summary, new_body, final_sources
+
+
 def _write_article(
     topic: str,
     digests: list[ResearchDigest | None],
@@ -800,12 +1103,16 @@ def _write_article(
     brief: EnrichedBrief,
     panelist_providers: list[list[LLMProvider]],
     aggregator_providers: list[LLMProvider],
+    candidates: list[ResearchSource],
 ) -> tuple[dict[str, str] | None, AgentTelemetry]:
+    citable_block = _build_citable_sources_block(candidates)
     panelists = [
         PersonaConfig(
             name=slot[0].model_id,
             providers=slot,
-            system_prompt=_WRITER_SYSTEM + _panelist_research_context(digest),
+            system_prompt=(
+                _WRITER_SYSTEM + _panelist_research_context(digest) + citable_block
+            ),
             max_tokens=3000,
         )
         for slot, digest in zip(panelist_providers, digests)
@@ -821,6 +1128,7 @@ def _write_article(
         aggregator=aggregator,
         panel_name="LinkedIn Article Writing",
         panelist_timeout=_WRITING_PANEL_TIMEOUT_SECONDS,
+        round_validator=_citation_round_validator,
     )
     initial_input = (
         f"Topic: {topic}\nOutput language: {brief.output_language}\n\n"
@@ -871,8 +1179,10 @@ def _parse_sections(raw: str) -> dict[str, str]:
 
 
 def _merge_sources(digests: list[ResearchDigest | None]) -> list[ResearchSource]:
-    # Deduplicated union across every panelist's own real sources (Spec 042
-    # FR-011) — the only path published sources ever come from.
+    # Deduplicated union across every panelist's own real, already-filtered
+    # sources (Spec 042 FR-011; paywalled/low-reliability domains already
+    # removed by research_all_panelists, amendment 2 FR-026) — the only path
+    # citable candidates ever come from.
     merged: list[ResearchSource] = []
     seen: set[str] = set()
     for digest in digests:
@@ -890,7 +1200,9 @@ def _build_sources_section(sources: list[ResearchSource]) -> str:
     if not sources:
         return ""
     lines = ["## Sources", ""]
-    lines.extend(f"- [{source.title}]({source.url})" for source in sources)
+    lines.extend(
+        f"{i}. [{source.title}]({source.url})" for i, source in enumerate(sources, 1)
+    )
     return "\n".join(lines)
 
 
@@ -951,12 +1263,17 @@ def generate_linkedin_post(
     clean_angles = [a.strip() for a in (angles or []) if a and a.strip()] or None
 
     digests, research_tels = research_all_panelists(
-        panelist_providers, topic, clean_angles
+        panelist_providers, topic, clean_angles, aggregator_providers
     )
     telemetry.agents.extend(research_tels)
     if all(digest is None for digest in digests):
         logger.warning("linkedin_post: every provider's research failed — no article")
         return "", ""
+
+    # Merged here (not after writing, as before Spec 042 amendment 2) — the
+    # writing panel needs a stable, numbered candidate list to cite from.
+    # Filtering already happened inside research_all_panelists.
+    candidates = _merge_sources(digests)
 
     angle_text, planning_tel = _plan_angles(
         topic, digests, clean_angles, panelist_providers, aggregator_providers
@@ -966,13 +1283,23 @@ def generate_linkedin_post(
         return "", ""
 
     sections, writing_tel = _write_article(
-        topic, digests, angle_text, brief, panelist_providers, aggregator_providers
+        topic,
+        digests,
+        angle_text,
+        brief,
+        panelist_providers,
+        aggregator_providers,
+        candidates,
     )
     telemetry.agents.append(writing_tel)
     if sections is None:
         return "", ""
 
-    merged_sources = _merge_sources(digests)
-    article_md = _assemble_article(sections, merged_sources, telemetry)
+    new_summary, new_body, final_sources = _extract_and_renumber_citations(
+        sections.get("EXECUTIVE_SUMMARY", ""), sections.get("BODY", ""), candidates
+    )
+    sections["EXECUTIVE_SUMMARY"] = new_summary
+    sections["BODY"] = new_body
+    article_md = _assemble_article(sections, final_sources, telemetry)
     notification_txt = sections.get("NOTIFICATION", "")
     return article_md, notification_txt
