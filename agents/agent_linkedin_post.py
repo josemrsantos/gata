@@ -121,22 +121,27 @@ _WRITER_SYSTEM = (
     "You are an editorial panelist writing a professional LinkedIn article.\n"
     "You are given a topic, your own web research findings, and an agreed set of"
     " angles. Write the article: professional, analytical register — no jokes,"
-    " no feline metaphors, no dry wit, no satire. Organise it as one section per"
-    " agreed angle (a short markdown heading per section), with a brief"
-    " introduction before the sections. Target roughly 500-800 words total.\n\n"
+    " no feline metaphors, no dry wit, no satire. Organise the body as one"
+    " section per agreed angle (a short markdown heading per section) — the"
+    " introduction is its own separate section (see ===EXECUTIVE_SUMMARY==="
+    " below), not part of the body. Target roughly 500-800 words total across"
+    " the summary and body combined.\n\n"
     "You may reference facts from your own research findings in your prose, but"
     " you MUST NOT cite, link, or invent any URL or source — a Sources list is"
     " appended separately from verified data; do not write one yourself. If you"
     " had no research findings available, do not present any specific claim as"
     " researched fact — rely only on general knowledge and say so if it matters"
     " to your angle.\n\n"
-    "Wrap your entire output in <verdict>...</verdict> tags. Inside, produce four"
+    "Wrap your entire output in <verdict>...</verdict> tags. Inside, produce five"
     " marked sections, in this exact order, with no text before, between, or"
     " after them other than the markers themselves:\n\n"
     "===TITLE===\n"
     "One punchy, professional article title. No leading # symbol.\n\n"
+    "===EXECUTIVE_SUMMARY===\n"
+    "A 3-5 sentence summary of the article's core finding or argument, for a"
+    " reader who won't read further. No heading — just the paragraph.\n\n"
     "===BODY===\n"
-    "The article body: introduction plus one section per agreed angle.\n\n"
+    "The article body: one section per agreed angle, no separate introduction.\n\n"
     "===COMMENT===\n"
     "One serious, substantive question inviting readers to share their own"
     " experience or view on the topic. One sentence, ending with a question"
@@ -155,8 +160,9 @@ _WRITER_AGGREGATOR_SYSTEM = (
     " targeting roughly 500-800 words.\n"
     "Output a PICK: N line (N = the proposal number you selected as primary),"
     " then the final article wrapped in <verdict>...</verdict>, using the exact"
-    " same ===TITLE===/===BODY===/===COMMENT===/===NOTIFICATION=== marker format"
-    " as the proposals. Do not add preamble outside PICK/verdict."
+    " same ===TITLE===/===EXECUTIVE_SUMMARY===/===BODY===/===COMMENT===/"
+    "===NOTIFICATION=== marker format as the proposals. Do not add preamble"
+    " outside PICK/verdict."
 )
 
 # Code-inserted, never LLM-authored — guarantees the disclosure is always present
@@ -838,7 +844,13 @@ def _write_article(
 
 def _parse_sections(raw: str) -> dict[str, str]:
     # Split on section markers; each marker starts a new keyed block.
-    markers = ["===TITLE===", "===BODY===", "===COMMENT===", "===NOTIFICATION==="]
+    markers = [
+        "===TITLE===",
+        "===EXECUTIVE_SUMMARY===",
+        "===BODY===",
+        "===COMMENT===",
+        "===NOTIFICATION===",
+    ]
     sections: dict[str, str] = {}
     current_key: str | None = None
     current_lines: list[str] = []
@@ -886,26 +898,35 @@ def _assemble_article(
     sections: dict[str, str], sources: list[ResearchSource], telemetry: RunTelemetry
 ) -> str:
     title = sections.get("TITLE", "Gata's Panel Weighs In")
+    summary = sections.get("EXECUTIVE_SUMMARY", "").strip()
     body = sections.get("BODY", "")
     comment = sections.get("COMMENT", "")
-    # Section 1: article title as H1.
+    # Title as H1.
     s1 = f"# {title}"
-    # Section 2: telemetry caption from real run metrics — no LLM involvement.
+    # Executive Summary, code-inserted heading around the writer panel's own
+    # summary text — omitted entirely when absent so nothing blank is published.
+    summary_section = f"## Executive Summary\n\n{summary}" if summary else ""
+    # Article body + static closing block (no disclosure/metrics prepended here
+    # anymore — both moved to the bottom, inside Behind the Scenes, below).
+    closing = _CLOSING_BLOCK.format(comment=comment) if comment else ""
+    s3 = f"{body}\n\n{closing}".strip() if closing else body.strip()
+    # Sources (optional): code-built list, omitted entirely when empty.
+    sources_section = _build_sources_section(sources)
+    # Behind the Scenes: static tech-stack body, plus the telemetry caption (real
+    # run metrics, no LLM involvement) and the mandatory disclosure, both moved
+    # here from the top so they read as closing/meta information, not a lead-in.
     duration = telemetry.total_duration_seconds
     cost = telemetry.total_cost_usd
-    s2 = (
+    metrics_line = (
         f"*Pipeline Execution Metrics - Total Time: {duration:.1f}s"
         f" | Total Cost: ${cost:.4f}*"
     )
-    # Section 3: mandatory disclosure + article body + static closing block.
-    disclosed_body = f"{_DISCLOSURE}\n\n{body}".strip()
-    closing = _CLOSING_BLOCK.format(comment=comment) if comment else ""
-    s3 = f"{disclosed_body}\n\n{closing}".strip() if closing else disclosed_body
-    # Section 4 (optional): code-built Sources list, omitted entirely when empty.
-    sources_section = _build_sources_section(sources)
-    # Section 5: static tech-stack body, unaffected by this article's tone.
-    s5 = _SECTION_4_BODY.rstrip()
-    parts = [s1, s2, s3]
+    s5 = f"{_SECTION_4_BODY.rstrip()}\n\n{metrics_line}\n\n{_DISCLOSURE}"
+    parts = [s1]
+    if summary_section:
+        parts.append(summary_section)
+    if s3:
+        parts.append(s3)
     if sources_section:
         parts.append(sources_section)
     parts.append(s5)

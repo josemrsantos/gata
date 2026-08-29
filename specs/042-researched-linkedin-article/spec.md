@@ -349,3 +349,66 @@ python -m pytest tests/test_agent_linkedin_post.py -k research_failure -v
   review before publishing, like every other artifact in this project.
 - Target article length (500–800 words) is a prompt instruction, not a hard
   validation — LLM output length is approximate by nature.
+
+## Amendment (2026-08-29): Executive Summary + reordered meta content
+
+**Living Spec amendment** (per CLAUDE.md RULE 18) — this section revises this
+spec's own requirements in place rather than creating a new spec number, since
+this is an evolution of `linkedin_post.md`'s already-shipped assembly, not new
+capability.
+
+**Motivation**: the operator manually edits every generated `linkedin_post.md`
+before publishing — moving the Pipeline Metrics line and the AI-authorship
+disclosure (FR-013) from immediately after the title down to the bottom of the
+article, and adding an "Executive Summary" heading above the previously-unlabeled
+lead paragraph. This amendment makes the generated file match what's actually
+published, removing that manual step.
+
+**Supersedes**: `specs/038-linkedin-post/spec.md`'s requirement that
+`linkedin_post.md` contain its five sections "in order" (Title → Metrics → Body →
+Behind the Scenes → Notification). That fixed ordering no longer applies; this
+amendment is the current source of truth for section order.
+
+### New Functional Requirements
+
+- **FR-020**: The assembled article MUST include a distinct Executive Summary —
+  a `## Executive Summary` heading followed by a short (3–5 sentence) paragraph —
+  placed immediately after the title (H1) and before the per-angle body sections.
+  This text MUST come from the writing panel as its own explicitly marked block
+  (a new `===EXECUTIVE_SUMMARY===` section, parsed the same way as
+  `===TITLE===`/`===BODY===`/`===COMMENT===`/`===NOTIFICATION===`), never
+  inferred by code splitting the body text on its first heading — that would
+  depend on markdown structure the writer prompt encourages but doesn't
+  guarantee. When absent or empty, the heading is omitted entirely rather than
+  published blank (same pattern as the existing conditional Sources section).
+- **FR-021**: The `===BODY===` instruction in `_WRITER_SYSTEM` no longer asks
+  for an introduction — that role transfers entirely to FR-020's
+  `===EXECUTIVE_SUMMARY===`. `_WRITER_AGGREGATOR_SYSTEM` MUST also require the
+  synthesized/selected article to use the same five-marker format (adding
+  `===EXECUTIVE_SUMMARY===` to the four it already requires).
+- **FR-022**: The Pipeline Metrics line (code-built from `RunTelemetry`, no LLM
+  involvement) and the AI-authorship disclosure (FR-013) MUST both move to the
+  bottom of the article, appended after the existing static "Behind the Scenes:
+  The Tech Stack" content, in that order (metrics line, then disclosure) — no
+  longer placed immediately after the title. The static "Behind the Scenes" text
+  itself is unchanged.
+- **FR-023**: New article section order:  Title → Executive Summary (FR-020) →
+  per-angle body sections → closing block → Sources (FR-011, when non-empty) →
+  Behind the Scenes (ending with Pipeline Metrics + disclosure, per FR-022).
+  `linkedin_notification.txt` is unaffected — it remains the writing panel's own
+  independent `===NOTIFICATION===` block, unrelated to this reordering.
+
+### New Success Criteria
+
+- **SC-008**: Given an assembled-article test with `EXECUTIVE_SUMMARY` set in
+  `sections`, `## Executive Summary` appears in the output at a lower string
+  index than the per-angle body content, and at a higher index than the title.
+- **SC-009**: Given `EXECUTIVE_SUMMARY` absent or empty, the assembled article
+  contains no `## Executive Summary` heading at all.
+- **SC-010**: In the assembled article, both the Pipeline Metrics line and the
+  disclosure sentence appear at a string index higher than `## Sources` (or, if
+  Sources is empty/omitted, higher than the closing block) — i.e. genuinely at
+  the bottom, inside the Behind the Scenes section.
+- **SC-011**: A real, manually-run end-to-end `--linkedin-post` invocation
+  produces a `linkedin_post.md` matching the FR-023 order exactly (manual
+  verification during implementation, same discipline as SC-005).

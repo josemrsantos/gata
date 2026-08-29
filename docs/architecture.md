@@ -570,20 +570,28 @@ configured for the Satirist:**
    not `FairParallelPanel`'s shared input, which stays the same for everyone
    (topic + operator angles only) — so the protocol class itself needed no
    changes.
-4. **Assembly** — four `===MARKER===`-delimited sections come back from the
+4. **Assembly** — five `===MARKER===`-delimited sections come back from the
    writing panel:
 
 | Marker | Content |
 |--------|---------|
 | `TITLE` | Article H1 — professional, punchy |
-| `BODY` | Introduction + one section per agreed angle |
+| `EXECUTIVE_SUMMARY` | 3–5 sentence summary of the article's core finding, its own section (Spec 042 amendment 2026-08-29) |
+| `BODY` | One section per agreed angle — no separate introduction, that role belongs to `EXECUTIVE_SUMMARY` |
 | `COMMENT` | One serious, substantive discussion question |
 | `NOTIFICATION` | 2–3 sentence serious LinkedIn teaser |
 
-The final Markdown is assembled as: title, a real-metrics telemetry caption, a
-**code-inserted** AI-authorship disclosure (never LLM-authored) + the article
-body + the static closing block (repost ask, comment question, subscribe link),
-then a **Sources** section, then the static tech-stack body. The Sources list is
+The final Markdown is assembled as: title, a code-inserted **Executive Summary**
+heading wrapping the panel's own summary text (omitted entirely if empty) + the
+article body + the static closing block (repost ask, comment question, subscribe
+link), then a **Sources** section, then the static tech-stack "Behind the Scenes"
+body — now ending with a real-metrics telemetry caption and the **code-inserted**
+AI-authorship disclosure (never LLM-authored). Both of those used to sit
+immediately after the title; a 2026-08-29 amendment to Spec 042 (Living Spec —
+CLAUDE.md RULE 18) moved them to the bottom, as closing/meta information rather
+than a lead-in, and gave the lead paragraph its own labelled Executive Summary
+section — matching the manual cleanup pass the operator was doing to every
+generated article before publishing it. The Sources list is
 built entirely in code from the deduplicated union of every panelist's own real
 sources — a source's **URL** is never parsed from or trusted to LLM output, so
 no citation's link can be fabricated; a source's **title**, as a last resort,

@@ -126,3 +126,10 @@ RULE 17 — Before a spec PR is merged, three documents must be updated as hard 
 2. README.md — reflect any new CLI flags, config files, or agent behaviour; update the status table.
 3. docs/architecture.md — update protocol names, add new flags, update any diagrams or examples that reference changed components.
 If any of these is stale, do not merge until it is fixed.
+
+RULE 18 — Before creating a new spec number for a feature/change request, check whether it is an evolution of an
+already-shipped, still-active spec. If so, default to spec-kit's "Living Spec" model: amend that spec's existing
+spec.md/plan.md in place (regenerating plan.md/tasks.md as needed) rather than creating a new spec folder. Reserve a
+new spec number ("Flow-Forward") for genuinely new capability, or when the developer explicitly wants a preserved
+historical record for this specific change. State which model applies, and to which existing spec, before
+proceeding — get the developer's confirmation before creating a new spec folder.

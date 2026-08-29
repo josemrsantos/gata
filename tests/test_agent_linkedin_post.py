@@ -930,6 +930,90 @@ def test_assemble_article_includes_sources_section_when_present():
     assert "https://x.com/1" in article
 
 
+def test_assemble_article_places_executive_summary_after_title_before_body():
+    # FR-020/SC-008: when the writer panel supplies EXECUTIVE_SUMMARY, it must
+    # appear as its own heading right after the title and before the body.
+    sections = {
+        "TITLE": "T",
+        "EXECUTIVE_SUMMARY": "The short version of the whole argument.",
+        "BODY": "Body text.",
+        "COMMENT": "Question?",
+    }
+    article = alp._assemble_article(sections, [], RunTelemetry())
+    assert article.index("## Executive Summary") > article.index("# T")
+    assert article.index("The short version") > article.index("## Executive Summary")
+    assert article.index("Body text.") > article.index("The short version")
+
+
+def test_assemble_article_omits_executive_summary_heading_when_absent():
+    # SC-009: no EXECUTIVE_SUMMARY key at all must not publish a blank heading.
+    sections = {"TITLE": "T", "BODY": "Body text.", "COMMENT": "Question?"}
+    article = alp._assemble_article(sections, [], RunTelemetry())
+    assert "## Executive Summary" not in article
+
+
+def test_assemble_article_omits_executive_summary_heading_when_blank():
+    # SC-009: a present-but-empty/whitespace EXECUTIVE_SUMMARY is treated the
+    # same as absent — never publish a heading with nothing under it.
+    sections = {
+        "TITLE": "T",
+        "EXECUTIVE_SUMMARY": "   ",
+        "BODY": "Body text.",
+        "COMMENT": "Question?",
+    }
+    article = alp._assemble_article(sections, [], RunTelemetry())
+    assert "## Executive Summary" not in article
+
+
+def test_assemble_article_moves_metrics_and_disclosure_to_behind_the_scenes():
+    # FR-022/SC-010: Pipeline Metrics and the disclosure must land inside the
+    # Behind the Scenes section, at the bottom, not near the top of the article.
+    sections = {"TITLE": "T", "BODY": "Body text.", "COMMENT": "Question?"}
+    telemetry = RunTelemetry()
+    article = alp._assemble_article(sections, [], telemetry)
+    behind_scenes_index = article.index("Behind the Scenes")
+    assert article.index("Pipeline Execution Metrics") > behind_scenes_index
+    assert article.index("independently researched") > behind_scenes_index
+
+
+def test_assemble_article_metrics_and_disclosure_no_longer_lead_the_article():
+    # Regression guard for the specific bug being fixed: these two lines used to
+    # sit immediately after the title — confirm they no longer come before the
+    # body/Executive Summary content.
+    sections = {
+        "TITLE": "T",
+        "EXECUTIVE_SUMMARY": "Summary text.",
+        "BODY": "Body text.",
+        "COMMENT": "Question?",
+    }
+    article = alp._assemble_article(sections, [], RunTelemetry())
+    assert article.index("Summary text.") < article.index("Pipeline Execution Metrics")
+    assert article.index("Body text.") < article.index("independently researched")
+
+
+def test_assemble_article_full_section_order():
+    # FR-023: end-to-end ordering — title, summary, body/closing, sources,
+    # behind-the-scenes (metrics + disclosure last) — exactly in that order.
+    sections = {
+        "TITLE": "T",
+        "EXECUTIVE_SUMMARY": "Summary text.",
+        "BODY": "Body text.",
+        "COMMENT": "Question?",
+    }
+    sources = [ResearchSource(title="A", url="https://x.com/1")]
+    article = alp._assemble_article(sections, sources, RunTelemetry())
+    indices = [
+        article.index("# T"),
+        article.index("## Executive Summary"),
+        article.index("Body text."),
+        article.index("## Sources"),
+        article.index("Behind the Scenes"),
+        article.index("Pipeline Execution Metrics"),
+        article.index("independently researched"),
+    ]
+    assert indices == sorted(indices)
+
+
 # -- generate_linkedin_post: end-to-end soft-failure chaining --
 
 
