@@ -545,7 +545,7 @@ Gata's sardonic voice — professional, analytical register, no jokes, no feline
 metaphors — on the premise that the cartoon already carries the joke, so the text
 should carry something the image can't (Spec 042).
 
-**Four stages, each using the same panelist/aggregator providers already
+**Five stages, each using the same panelist/aggregator providers already
 configured for the Satirist:**
 
 1. **Independent research** — each of the three panelist providers performs its
@@ -557,20 +557,54 @@ configured for the Satirist:**
    parallel, bounded by a 120-second timeout; one provider's failure only affects
    that provider — it proceeds ungrounded, explicitly instructed not to present
    unverified claims as fact, rather than aborting the whole run. Only if *all
-   three* fail does the feature soft-fail entirely.
-2. **Angle planning** — a `FairParallelPanel` run (panelists named by `model_id`,
+   three* fail does the feature soft-fail entirely. The shared research query
+   (Spec 042 amendment 2, 2026-08-29) also steers every provider toward
+   academic, government, or otherwise highly-reputable sources — a best-effort
+   nudge; stage 2 below is the actual enforcement.
+2. **Domain classification & filtering** (Spec 042 amendment 2) — immediately
+   after all three research calls return, every source domain not already in
+   the local `source_domains.duckdb` cache (gitignored — a regenerating cache,
+   not a hand-edited config; grows on disk, never fully loaded into memory) is
+   classified by a dedicated `FairParallelPanel` (panelists named by
+   `model_id`, aggregator named **Source Classifier**, `panelist_timeout=90`,
+   `iterations=3` — one more than the class default, since a small/empty cache
+   is expected to disagree more before converging). Each domain is judged on
+   two independent axes: paywalled (bool) and reliability (`high`/`low`). Any
+   source whose domain comes back paywalled or low-reliability is stripped
+   from that digest's sources — logged at WARNING, naming the domain and why —
+   **before** angle-planning or writing ever sees it. A domain with no
+   classification at all (cache miss and the panel itself failed) is treated
+   as eligible: filtering only ever excludes a *positively classified* bad
+   domain, never an unknown one, so a total classification failure degrades to
+   the pre-amendment unfiltered behaviour rather than zeroing out research
+   entirely. True pre-fetch gating (classifying a URL before any provider's
+   own search tool reads it) isn't possible — each provider's search is a
+   server-side black box; this is the earliest point the pipeline can act.
+3. **Angle planning** — a `FairParallelPanel` run (panelists named by `model_id`,
    aggregator named **Managing Editor**, default 60s timeout) where each panelist
-   proposes 2–4 distinct angles from its *own* research. Any operator-supplied
-   `--angle` values (repeatable flag) are mandatory inclusions in the final set.
-3. **Writing** — a second `FairParallelPanel` run (same panelists/aggregator,
+   proposes 2–4 distinct angles from its *own* (already-filtered) research. Any
+   operator-supplied `--angle` values (repeatable flag) are mandatory inclusions
+   in the final set.
+4. **Writing** — a second `FairParallelPanel` run (same panelists/aggregator,
    `panelist_timeout=120` — longer than the 60s default because its prompt
    embeds a full research digest and its output targets 500–800 words) drafts
    the article from the agreed angles, one section per angle. Each panelist's
    *own* research digest is embedded into that panelist's own system prompt —
    not `FairParallelPanel`'s shared input, which stays the same for everyone
    (topic + operator angles only) — so the protocol class itself needed no
-   changes.
-4. **Assembly** — five `===MARKER===`-delimited sections come back from the
+   changes. Every panelist is also given the same numbered list of filtered,
+   merged candidate sources and told to cite inline as `[N]` against it,
+   aiming for roughly 2 citations per body section (Spec 042 amendment 2).
+   `FairParallelPanel` itself gained one new capability for this: an optional
+   `round_validator` hook (`None` for every other caller — Cultural Strategist,
+   Satirist, Explainer, Engagement Image Concept, and this feature's own
+   research/angle-planning stages are all unaffected), called after each
+   non-final round with that round's survivors' verdicts; here it flags any
+   panelist whose body has a section citing more than 2 sources, and its
+   returned feedback text is folded into that panelist's next-round prompt —
+   a best-effort mid-deliberation nudge, not the actual enforcement (see
+   Assembly below).
+5. **Assembly** — five `===MARKER===`-delimited sections come back from the
    writing panel:
 
 | Marker | Content |
@@ -591,13 +625,22 @@ immediately after the title; a 2026-08-29 amendment to Spec 042 (Living Spec —
 CLAUDE.md RULE 18) moved them to the bottom, as closing/meta information rather
 than a lead-in, and gave the lead paragraph its own labelled Executive Summary
 section — matching the manual cleanup pass the operator was doing to every
-generated article before publishing it. The Sources list is
-built entirely in code from the deduplicated union of every panelist's own real
-sources — a source's **URL** is never parsed from or trusted to LLM output, so
-no citation's link can be fabricated; a source's **title**, as a last resort,
-may be text the source's own provider supplied (see below), but only for a URL
-already independently verified via that provider's own citation/grounding
-metadata.
+generated article before publishing it.
+
+The Sources section itself was further amended the same day (Spec 042
+amendment 2): rather than publishing the full deduplicated union of every
+panelist's sources regardless of whether the article actually used them, code
+now determines exactly which numbered candidates were cited (scanning the
+summary and body for `[N]` markers, in first-appearance order), drops any
+invalid/hallucinated index, keeps at most 15 distinct citations (stripping any
+beyond that from the text), and renumbers the survivors sequentially so the
+visible `1.`, `2.`, ... list matches the in-text `[N]` markers exactly. A
+source's **URL** is still never parsed from or trusted to LLM output, so no
+citation's link can be fabricated — the writer only ever selects *which*
+code-supplied candidate to cite by number; a source's **title**, as a last
+resort, may be text the source's own provider supplied (see below), but only
+for a URL already independently verified via that provider's own
+citation/grounding metadata.
 
 Spec 043 unified every source in the list to `"{domain} - {page title}"`,
 regardless of provider — the three started out inconsistent. Gemini's Google
@@ -795,11 +838,12 @@ audit), and `telemetry` (timing + token counts).
 Defined in `llm/fair_parallel_panel.py`. The active protocol for Cultural Strategist,
 Satirist, and Explainer (replaces `ParallelPanel` as of Spec 034), reused as-is by
 the newsletter Engagement Image Concept step (Spec 041), and by the LinkedIn Post
-agent's two sequential stages — angle planning and writing (Spec 042). Each new use
-is a single deliberation producing one text output (an image prompt, an angle set,
-or an article), rather than a new bespoke protocol — including cases needing
-per-panelist-distinct context (each LinkedIn Post panelist's own research), met by
-varying each `PersonaConfig.system_prompt` rather than modifying this class.
+agent's three sequential panel stages — domain classification, angle planning, and
+writing (Spec 042). Each new use is a single deliberation producing one text output
+(an image prompt, a domain-verdict JSON object, an angle set, or an article),
+rather than a new bespoke protocol — including cases needing per-panelist-distinct
+context (each LinkedIn Post panelist's own research), met by varying each
+`PersonaConfig.system_prompt` rather than modifying this class.
 
 **How it works:**
 
@@ -826,6 +870,13 @@ initial_input
 - Per-provider timeout (Spec 036): each provider in a fallback chain can have its own
   `timeout` field in `providers.yaml`; if it stalls, the next provider starts fresh
 - Aggregator always runs with Grok-4.3
+- Optional `round_validator` hook (Spec 042 amendment 2, 2026-08-29): a
+  `Callable[[dict[str, str]], dict[str, str]]` called after each non-final
+  round with that round's survivors' verdicts; any entry in its returned dict
+  is appended to that panelist's next-round prompt as extra guidance,
+  alongside the peer verdicts. Defaults to `None`, so every caller above except
+  LinkedIn Article Writing (which uses it to nudge a panelist that's over-
+  citing one section) is unaffected.
 
 ### ParallelPanel (legacy)
 

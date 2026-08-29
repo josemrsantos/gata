@@ -412,3 +412,164 @@ amendment is the current source of truth for section order.
 - **SC-011**: A real, manually-run end-to-end `--linkedin-post` invocation
   produces a `linkedin_post.md` matching the FR-023 order exactly (manual
   verification during implementation, same discipline as SC-005).
+
+## Amendment (2026-08-29, part 2): Curated, paywall-free, numbered references
+
+**Living Spec amendment** (CLAUDE.md RULE 18) — a second amendment to this spec
+on the same day, further evolving the Sources feature (FR-011) rather than
+adding new capability. Superseded twice during discussion before this final
+form (a single-model classifier and a `.yaml` cache were both replaced by a
+panel-based classifier and a DuckDB cache — see rationale inline).
+
+**Motivation**: today's Sources list is the deduplicated union of every
+panelist's *own* research sources (FR-011) — every source anyone happened to
+find, whether or not the final published article actually references it, with
+no check for paywalls or outlet quality. The operator wants: (1) domains
+actively steered toward academic/highly-reputable sources during research
+itself, (2) any paywalled or low-reliability domain excluded from influencing
+the article at all — not just from the final citation list — as early as it's
+technically possible to act on that, (3) visible numbered footnotes (`[1]`,
+`[2]`, ...) in the article body matching the Sources list, for credibility,
+and (4) roughly 2 citations per body section, capped at 15 total.
+
+**Technical constraint, confirmed with the operator**: Gemini's grounding,
+Claude's `web_search`, and Grok's Agent Tools search are provider-native,
+server-side tools — a fetch happens inside the provider's own black-box tool
+loop, and we only see the result (findings + the sources actually used) after
+the whole research call finishes. There is no hook to classify a URL *before*
+the provider's own tool fetches it. The earliest point this pipeline can act is
+immediately after each provider's research call returns, before that digest's
+sources reach any further prompt (angle planning or writing).
+
+### New Functional Requirements
+
+- **FR-024**: `_build_research_query` (shared by all three providers' research
+  calls) MUST add an instruction steering each provider's own search toward
+  academic, government, or otherwise highly-reputable sources, to reduce how
+  many low-quality domains appear at all — a best-effort nudge, not a
+  guarantee; FR-026 remains the actual enforcement point.
+- **FR-025**: A new DuckDB database file (`source_domains.duckdb`, repo root,
+  **gitignored** — a regenerating local cache, not a hand-edited config; each
+  clone/machine builds its own over time) caches a paywall/reliability verdict
+  per domain in a `domains` table: `domain TEXT PRIMARY KEY, paywalled
+  BOOLEAN, reliability TEXT ('high'|'low'), classified_at TIMESTAMP`. An
+  existing entry is trusted indefinitely (no automatic expiry); the operator
+  may delete a row (or the whole file) at any time to force re-classification.
+- **FR-026**: Immediately after `research_all_panelists` collects all three
+  providers' digests (still in parallel, per FR-001), before any digest is used
+  in `_panelist_research_context` (which feeds both angle-planning and
+  writing) or in the merged candidate list:
+  1. Collect every domain across all three digests' sources not already in the
+     DuckDB cache (FR-025).
+  2. Classify all of them in a single `FairParallelPanel` deliberation (the
+     same panelist/aggregator providers already threaded through this
+     feature — a panel decision, not a single model's call, since this is a
+     judgment call worth cross-checking), with `panelist_timeout=90` and
+     `iterations=3` (one more than the class default, since early runs with an
+     empty/small cache are expected to disagree more before converging).
+     Verdicts are persisted to the cache (FR-025) — if this panel fails
+     entirely, the run proceeds without failing; those domains are treated as
+     unclassified this run (step 3) and are **not** cached, so they're
+     retried on a future run.
+  3. Any domain now classified `paywalled: true` OR `reliability: low` has
+     every one of its `ResearchSource` entries stripped from that digest's
+     `sources` list. A domain with no classification at all (cache miss and
+     the panel failed) is treated as eligible — filtering only ever excludes a
+     *positively classified* bad domain, never an unknown one, so a
+     classification failure degrades to today's unfiltered behaviour rather
+     than zeroing out the Sources feature.
+  4. Each excluded source is logged at WARNING, naming the domain and why
+     (paywalled, low reliability, or both) — visible, not silent.
+- **FR-027**: The (now-filtered) merged candidate list — `_merge_sources`
+  applied to the filtered digests — is assigned stable numbers (1-based, merge
+  order) and embedded, identically, into every writing-panelist's system
+  prompt as a citable numbered list. Panelists MUST cite a specific claim
+  inline as `[N]` against that shared numbering, MUST NOT invent a number not
+  in the list, and MUST NOT fabricate a source outside it. The prompt
+  instructs panelists to cite roughly 2 sources per body section (scaling
+  naturally with however many angle sections exist), with an outer cap of 15
+  distinct citations total.
+- **FR-028**: The writing `FairParallelPanel` (`_write_article`) checks, after
+  each round, each surviving panelist's own draft for any body section citing
+  more than 2 distinct sources; any panelist over the limit receives that
+  finding as extra feedback text for its next round (in addition to the
+  existing peer-verdict context), asking it to trim to ≤2 per section. This
+  requires a new optional hook on `FairParallelPanel` (e.g. a post-round
+  validator callback), added so it defaults to `None`/inert for every other
+  caller of that shared class (Cultural Strategist, Satirist, Explainer,
+  Engagement Image Concept, LinkedIn Angle Planning) — backward compatible,
+  opt-in only for this call site. This is a best-effort nudge during
+  deliberation, not the final enforcement — FR-030 remains the hard backstop
+  regardless of whether every panelist complied.
+- **FR-029**: After the writing panel produces its final `EXECUTIVE_SUMMARY`
+  and `BODY` text, code MUST:
+  1. Extract every `[N]` citation marker across both, in order of first
+     appearance; drop (strip from the text) any marker whose `N` does not
+     correspond to a real candidate from FR-027 (a hallucinated index).
+  2. Keep only the first 15 *distinct* validly-cited candidates, by
+     first-appearance order (FR-030); strip any citation marker referencing a
+     16th-or-later distinct source entirely from the text.
+  3. Renumber the kept candidates sequentially (1..K, K ≤ 15) in
+     first-appearance order, and rewrite every surviving `[old]` marker in the
+     text to `[new]`.
+  4. Build the final Sources section from the kept, renumbered candidates, in
+     that same order (replacing FR-011's plain deduplicated-union list with
+     this filtered/numbered/capped one) — an ordered markdown list
+     (`1. [title](url)`, `2. ...`) so the visible numbering matches the
+     in-text `[N]` markers exactly.
+  If zero sources end up cited, the Sources section is omitted entirely,
+  exactly as today's empty-list case.
+- **FR-030**: The 15-source cap (FR-029.2) is a hard code-level backstop, on
+  top of FR-027's prompt-level ~2-per-section guidance and FR-028's mid-round
+  nudge — neither of those is itself enforced; only the outer bound of 15 is.
+
+### New Success Criteria
+
+- **SC-012**: Given a digest containing a source whose domain is classified
+  `paywalled: true`, that source is absent from the digest by the time
+  `research_all_panelists` returns — not merely absent from the final
+  citations, but absent from what angle-planning/writing ever see.
+- **SC-013**: Given a domain not present in the DuckDB cache and a mocked
+  classification-panel failure, that domain's source is still treated as
+  eligible (fails open, per FR-026.3), and no row is written to the cache for
+  it.
+- **SC-014**: Given a final article body citing candidates `[2]`, `[5]`, and an
+  invalid `[9]` (out of range), the assembled article contains renumbered
+  citations `[1]` and `[2]` only (matching the original `[2]` and `[5]` in
+  first-appearance order), the `[9]` marker is stripped entirely, and the
+  Sources section lists exactly those two sources in that order.
+- **SC-015**: Given a final article body citing 17 distinct valid candidates,
+  only the first 15 (by first-appearance order) survive renumbering and appear
+  in the Sources section; citation markers for the remaining 2 are stripped.
+- **SC-016**: Given a mocked writing-panel round-1 draft citing 3 sources in
+  one body section, the round-2 input built for that panelist includes an
+  explicit note to trim that section to at most 2 citations.
+- **SC-017**: A real, manually-run end-to-end `--linkedin-post` invocation
+  produces a `linkedin_post.md` whose in-text `[N]` markers match the Sources
+  list's own numbering exactly, contains no domain classified paywalled/low in
+  the DuckDB cache (manually cross-checked), and lists no more than 15 sources
+  total, with excluded-domain warnings visible in the run's log output.
+
+## What does NOT change (Amendment 2)
+
+- `linkedin_notification.txt` is unaffected.
+- Angle planning (`_plan_angles`) receives the *filtered* digests (FR-026) but
+  not the numbered candidate list itself — only the writing panel needs to
+  cite sources by number.
+- A source's **URL** is still never parsed from or trusted to LLM output
+  (FR-011's original guarantee) — the writing panel only ever selects *which*
+  of the code-supplied candidates to cite by number; it cannot introduce a new
+  URL.
+- Every other `FairParallelPanel` caller (Cultural Strategist, Satirist,
+  Explainer, Engagement Image Concept, LinkedIn Angle Planning) is unaffected
+  by FR-028's new hook — it's optional and unused by them.
+
+## Assumptions (Amendment 2)
+
+- True pre-fetch URL gating (classifying a domain before any provider's own
+  search tool reads it) is not achievable without replacing each provider's
+  native search tool with a fully custom search step — out of scope; this
+  amendment classifies as early as the current architecture allows
+  (immediately after each research call returns).
+- `duckdb` is a new project dependency (Python package, no external service —
+  single embedded file, no server process).

@@ -4,6 +4,7 @@ import concurrent.futures
 import logging
 import re
 import time
+from typing import Callable
 
 from core.types import (
     AgentTelemetry,
@@ -36,12 +37,19 @@ class FairParallelPanel(ConversationProtocol):
         panel_name: str = "",
         iterations: int = 2,
         panelist_timeout: float = 60.0,
+        round_validator: Callable[[dict[str, str]], dict[str, str]] | None = None,
     ) -> None:
         self._panelists = panelists
         self._aggregator = aggregator
         self._panel_name = panel_name
         self._iterations = iterations
         self._panelist_timeout = panelist_timeout
+        # Opt-in only (Spec 042 amendment) — None for every caller that doesn't
+        # pass it, so existing panels (Cultural Strategist, Satirist, etc.) are
+        # provably unaffected. Called after each non-final round with
+        # {panelist_name: verdict_content}; any entry in its returned dict is
+        # appended as extra guidance to that panelist's next-round prompt.
+        self._round_validator = round_validator
 
     def _call_persona(
         self,
@@ -86,6 +94,7 @@ class FairParallelPanel(ConversationProtocol):
         initial_input: str,
         my_previous_response: str,
         peers: list[tuple[str, str]],
+        extra_feedback: str | None = None,
     ) -> str:
         lines = [
             "Original request:",
@@ -100,6 +109,9 @@ class FairParallelPanel(ConversationProtocol):
         for name, verdict_content in peers:
             lines.append(f"--- Panelist: {name} ---")
             lines.append(verdict_content)
+            lines.append("")
+        if extra_feedback:
+            lines.append(extra_feedback)
             lines.append("")
         lines.append(
             "Given the perspectives above, please revise your proposal or confirm"
@@ -122,6 +134,9 @@ class FairParallelPanel(ConversationProtocol):
         # successful (verdict_content, raw_response, usage) for aggregation.
         active: list[PersonaConfig] = list(self._panelists)
         final_results: dict[str, tuple[str, str, TokenUsage]] = {}
+        # Populated by round_validator (if set) after each non-final round —
+        # {panelist_name: extra_feedback} folded into that panelist's next prompt.
+        round_feedback: dict[str, str] = {}
         for round_num in range(1, self._iterations + 1):
             if not active:
                 # All panelists dropped; stop iterating but still aggregate survivors.
@@ -146,10 +161,15 @@ class FairParallelPanel(ConversationProtocol):
                         for other in active
                         if other.name != panelist.name
                     ]
+                    extra_feedback = round_feedback.get(panelist.name)
                     if peers:
                         prompt = self._build_peer_prompt(
-                            initial_input, my_prev_raw, peers
+                            initial_input, my_prev_raw, peers, extra_feedback
                         )
+                    elif extra_feedback:
+                        # Single survivor — no peers; re-state the original
+                        # request plus the validator's feedback.
+                        prompt = f"{initial_input}\n\n{extra_feedback}"
                     else:
                         # Single survivor — no peers; re-state the original request.
                         prompt = initial_input
@@ -206,6 +226,12 @@ class FairParallelPanel(ConversationProtocol):
                             exc,
                         )
             active = new_active
+            # Run the validator (if any) after every non-final round, so its
+            # feedback is ready before the next round's prompts are built.
+            if self._round_validator is not None and round_num < self._iterations:
+                round_feedback = self._round_validator(
+                    {p.name: final_results[p.name][0] for p in active}
+                )
         if not final_results:
             raise RuntimeError(f"{self._panel_name}: all panelists failed")
         # Aggregate: build numbered concept list from each panelist's last response.

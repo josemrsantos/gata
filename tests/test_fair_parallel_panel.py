@@ -131,6 +131,88 @@ def test_second_round_uses_peer_responses():
     assert "a-r1-unique" in r2_prompt_pb
 
 
+def test_round_validator_feedback_reaches_next_round_prompt():
+    # Spec 042 amendment: a round_validator's returned feedback for a panelist
+    # must appear in that panelist's next-round prompt, alongside peer context.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [
+                (_verdict("a-r1-unique"), _make_usage()),
+                (_verdict("a-r2"), _make_usage()),
+            ],
+            "pb": [
+                (_verdict("b-r1-unique"), _make_usage()),
+                (_verdict("b-r2"), _make_usage()),
+            ],
+            "agg": [(_pick(1, "picked"), _make_usage())],
+        }
+    )
+
+    def validator(verdicts):
+        assert verdicts == {"pa": "a-r1-unique", "pb": "b-r1-unique"}
+        return {"pa": "TRIM_WARNING: too many citations in section 2"}
+
+    panel = FairParallelPanel(
+        _make_panelists(["pa", "pb"]),
+        _make_aggregator(),
+        "P",
+        iterations=2,
+        round_validator=validator,
+    )
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        panel.run("topic")
+    pa_round2_prompt = [c for c in mock.calls if c[0] == "pa"][1][1][0]["content"]
+    pb_round2_prompt = [c for c in mock.calls if c[0] == "pb"][1][1][0]["content"]
+    assert "TRIM_WARNING" in pa_round2_prompt
+    assert "TRIM_WARNING" not in pb_round2_prompt
+
+
+def test_round_validator_not_called_when_omitted():
+    # Backward compatibility: every existing caller omits round_validator, and
+    # must see no behaviour change — no crash, prompts unaffected.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [
+                (_verdict("a-r1"), _make_usage()),
+                (_verdict("a-r2"), _make_usage()),
+            ],
+            "agg": [(_pick(1, "picked"), _make_usage())],
+        }
+    )
+    panel = FairParallelPanel(_make_panelists(["pa"]), _make_aggregator(), iterations=2)
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        panel.run("topic")
+    pa_round2_prompt = [c for c in mock.calls if c[0] == "pa"][1][1][0]["content"]
+    assert pa_round2_prompt == "topic"
+
+
+def test_round_validator_never_called_on_final_round():
+    # The validator only informs a *next* round's prompt — it must not be
+    # invoked after the last round, since there is no further round to affect.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [(_verdict("a-r1"), _make_usage())],
+            "agg": [(_pick(1, "picked"), _make_usage())],
+        }
+    )
+    calls: list[dict] = []
+    panel = FairParallelPanel(
+        _make_panelists(["pa"]),
+        _make_aggregator(),
+        iterations=1,
+        round_validator=lambda verdicts: calls.append(verdicts) or {},
+    )
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        panel.run("topic")
+    assert calls == []
+
+
 def test_timed_out_panelist_skipped():
     # A panelist whose future raises TimeoutError must be skipped and the run must
     # still complete with the remaining panelists, satisfying the fault-tolerance goal.

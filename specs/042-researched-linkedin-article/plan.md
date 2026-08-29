@@ -297,3 +297,181 @@ not just the mocked test suite.
 
 All other Constitution Check rows from the original plan are unaffected by this
 amendment.
+
+## Amendment (2026-08-29, part 2): Curated, paywall-free, numbered references
+
+Implements `spec.md`'s "Amendment (2026-08-29, part 2)" (FR-024–FR-030,
+SC-012–SC-017). Branch: `042-curated-references`. Design finalized after three
+rounds of discussion — superseded drafts (single-model classifier + YAML
+cache) are not implemented; this section reflects only the final form.
+
+### Source Code Changes (this amendment)
+
+```text
+pyproject.toml                  MODIFY — add `duckdb` as a new dependency.
+
+.gitignore                      MODIFY — add `source_domains.duckdb` (a
+                                 regenerating local cache, not checked in).
+
+llm/fair_parallel_panel.py      MODIFY — FairParallelPanel gains an optional
+                                 `round_validator:
+                                 Callable[[dict[str, str]], dict[str, str]]
+                                 | None = None` constructor parameter. After
+                                 each non-final round, if set, it's called
+                                 with {panelist_name: verdict_content} for
+                                 that round's survivors and returns
+                                 {panelist_name: extra_feedback_text} for any
+                                 panelist that needs it; that text is appended
+                                 to the next round's peer-prompt (or to
+                                 initial_input, in the single-survivor no-
+                                 peers case). Defaults to None — every
+                                 existing caller (Cultural Strategist,
+                                 Satirist, Explainer, Engagement Image
+                                 Concept, LinkedIn Angle Planning, LinkedIn
+                                 Article Writing itself for every other
+                                 concern) is unaffected unless it opts in
+                                 (FR-028).
+
+agents/agent_linkedin_post.py   MODIFY:
+                                 - _build_research_query: adds the
+                                   academic/highly-reputable-sources steer
+                                   (FR-024).
+                                 - _domain_cache module: thin DuckDB
+                                   open/read/write helpers against
+                                   source_domains.duckdb — one `domains`
+                                   table (FR-025).
+                                 - _classify_domains_panel: builds a
+                                   FairParallelPanel (same panelist/
+                                   aggregator providers already threaded
+                                   through this feature), panelist_timeout=90,
+                                   iterations=3, asking for a strict JSON
+                                   verdict per unclassified domain; persists
+                                   results to the DuckDB cache; fails open
+                                   (no write, domain stays eligible) on total
+                                   panel failure (FR-026.2).
+                                 - research_all_panelists: after collecting
+                                   all three digests, runs the cache-lookup +
+                                   _classify_domains_panel step, strips
+                                   sources for any now-excluded domain from
+                                   each digest, and logs a WARNING per
+                                   excluded source (FR-026.3/4) — before
+                                   returning digests to its caller.
+                                 - _build_citable_sources_block: renders the
+                                   filtered, numbered candidate list embedded
+                                   in each writing panelist's system prompt
+                                   (FR-027).
+                                 - _WRITER_SYSTEM: instruct panelists to cite
+                                   inline via [N] against the supplied list,
+                                   ~2 distinct citations per body section,
+                                   outer cap 15, never inventing a number
+                                   (FR-027).
+                                 - _citation_round_validator: the
+                                   round_validator passed to the writing
+                                   FairParallelPanel — parses each survivor's
+                                   BODY into sections, counts [N] occurrences
+                                   per section, and for any section over 2,
+                                   returns feedback text asking that panelist
+                                   to trim it before the next round (FR-028).
+                                 - _extract_and_renumber_citations: parses
+                                   [N] markers from EXECUTIVE_SUMMARY+BODY in
+                                   first-appearance order, drops invalid
+                                   indices, caps at 15 distinct, renumbers
+                                   sequentially, rewrites markers in the
+                                   text, returns (rewritten_summary,
+                                   rewritten_body, final_ordered_sources)
+                                   (FR-029, FR-030).
+                                 - _build_sources_section: rewritten to emit
+                                   an ordered markdown list (`1. ...`, `2.
+                                   ...`) instead of a bullet list, matching
+                                   the new numbering.
+                                 - _write_article: takes the numbered
+                                   candidate list, embeds
+                                   _build_citable_sources_block's text into
+                                   each panelist's system prompt, and passes
+                                   _citation_round_validator to the
+                                   FairParallelPanel constructor.
+                                 - generate_linkedin_post: sequences the new
+                                   classify/filter/number step right after
+                                   research_all_panelists returns (before
+                                   _plan_angles), passes the numbered
+                                   candidates into _write_article, and runs
+                                   _extract_and_renumber_citations on the
+                                   returned EXECUTIVE_SUMMARY/BODY before
+                                   _assemble_article.
+
+tests/test_fair_parallel_panel.py   MODIFY — add coverage for the new
+                                     round_validator hook: called with the
+                                     right survivor verdicts after each
+                                     non-final round, its feedback reaching
+                                     the next round's prompt, and every
+                                     existing test still passing unchanged
+                                     with the parameter omitted (backward
+                                     compatibility).
+
+tests/test_agent_linkedin_post.py   MODIFY — add coverage for: DuckDB cache
+                                     read/write round-trip, classification
+                                     panel construction (panelist_timeout=90,
+                                     iterations=3) and fail-open behaviour
+                                     (SC-013), paywalled/low-reliability
+                                     exclusion happening on the digest before
+                                     angle-planning ever sees it (SC-012),
+                                     the per-section round_validator logic,
+                                     citation extraction + invalid-index
+                                     stripping + renumbering (SC-014), the
+                                     15-source cap (SC-015), and the
+                                     reordered generate_linkedin_post call
+                                     sequence.
+```
+
+**Structure Decision**: filter immediately inside `research_all_panelists`,
+not later in `generate_linkedin_post` — confirmed with the operator that this
+is the earliest point this pipeline can act, since each provider's own search
+tool is a server-side black box (no earlier hook exists to classify a URL
+before that provider's tool fetches it; see spec.md's Assumptions). Domain
+classification is a full `FairParallelPanel` deliberation, not a single-model
+call — a deliberate reversal of this amendment's first draft, per the
+developer's explicit ask for cross-checked judgment over a single model's
+opinion, accepting the added latency (mitigated over time by the persistent
+cache). `round_validator` is added to the shared `FairParallelPanel` class
+(rather than duplicating the round loop in `agent_linkedin_post.py`) so the
+per-section citation check can see and influence panelist rounds using the
+class's own existing peer-prompt machinery — but strictly opt-in, so it can
+never change behaviour for the four other agents already depending on this
+class.
+
+Rejected alternative, discussed and ruled out with the operator: true pre-
+fetch gating (classify a URL before any provider's tool reads it). Not
+implementable without replacing provider-native search tools (Gemini
+grounding, Claude `web_search`, Grok Agent Tools) with a fully custom search
+step — a much larger, different change than this amendment; recorded as an
+Assumption in spec.md rather than attempted.
+
+Rejected alternative for the citation cap: silently letting the writer's own
+per-section instruction be the only enforcement (simpler, but the developer
+explicitly asked for both a mid-round nudge and a hard code-level backstop,
+consistent with this project's general stance that LLM instruction-following
+on hard numeric limits isn't reliable enough to trust alone).
+
+Because this again changes what the writing panel receives and produces (a
+new citable-sources block in its prompt, round-to-round validator feedback, a
+stricter output contract on citation markers) and adds a wholly new panel
+stage (domain classification) between research and angle-planning, it
+requires the same live re-verification discipline as the Executive Summary
+amendment — a real `--linkedin-post` run must be inspected (in-text `[N]`
+markers matching the Sources list, no paywalled/low-reliability domain
+present, ≤15 sources, excluded-domain warnings visible in the log) before
+this is considered done.
+
+### Constitution Check (re-run for this amendment)
+
+| # | Principle | Status | Note |
+|---|-----------|--------|------|
+| 1 | SDK and Model Rules | ✅ | Domain classification reuses the existing panelist/aggregator provider chains and `FairParallelPanel`; `duckdb` is a new dependency (embedded, no server) — justified in spec.md's Assumptions. |
+| 6 | Verdict JSON Schema and Iteration Rules | ✅ N/A | The classification panel's verdict is a plain JSON object keyed by domain, not the Satirist's schema — same precedent as Engagement Image Concept and LinkedIn Angle Planning's freeform verdicts. |
+| 9 | Testing Rules | ✅ | New tests cover DuckDB round-trip, fail-open classification, filtering-before-angle-planning, the `round_validator` hook (both in `fair_parallel_panel.py` and this feature's own validator function), citation extraction/renumbering/capping, all mocked; every new test carries a RULE-3 comment. |
+| 11 | Development Stages | ✅ | Branch `042-curated-references` created off `main` before any file was written for this amendment. |
+| 12 | Code Quality | ✅ | `ruff check --no-cache` / `ruff format --check --no-cache` clean on every changed file. |
+| 13 | Logging | ✅ | Each excluded source (domain + reason), classification panel success/failure, and citation counts kept/stripped/capped are all logged via the existing `logger`. |
+
+All other Constitution Check rows from the original plan and the first
+amendment are unaffected.
