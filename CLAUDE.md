@@ -133,3 +133,6 @@ spec.md/plan.md in place (regenerating plan.md/tasks.md as needed) rather than c
 new spec number ("Flow-Forward") for genuinely new capability, or when the developer explicitly wants a preserved
 historical record for this specific change. State which model applies, and to which existing spec, before
 proceeding — get the developer's confirmation before creating a new spec folder.
+
+RULE 19 — When a TODO.md item is being implemented as a spec, remove that item from TODO.md as part of the same
+PR — not a separate follow-up cleanup.

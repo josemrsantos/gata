@@ -1,35 +1,5 @@
 # TODO
 
-## Curated, paywall-free references — *amends Spec 042*
-
-**Goal:** Trim the Sources list to only references still relevant to the article's final
-published state, exclude any URL behind a paywall, and target 5–9 total references from
-academically credible or highly reliable sources rather than minor online outlets.
-
-**Reason:** Today's Sources list can carry outdated leftover links, paywalled URLs a reader
-can't actually open, and low-quality outlets — undermining the credibility a "researched,
-non-satirical" article is meant to have.
-
-**Confirmed approach:**
-- The writer panel cites sources inline (a new marker/format tied to the Sources list), so
-  code can verify which sources the final published text actually references and drop the
-  rest — not an LLM judgment call after the fact.
-- Paywall/reliability filtering is a hybrid: an LLM classifies a domain the first time it's
-  seen (paywalled? how reliable/academic?), and that verdict is cached in a persistent,
-  version-controlled file — suggested `source_domains.yaml` at the repo root, matching the
-  existing `providers.yaml`/`humor.yaml`/`communities.yaml` pattern — so repeat domains skip
-  the LLM check entirely.
-
-**Things to figure out:**
-- Exact `source_domains.yaml` schema (separate paywalled/reliable/unreliable lists, or a
-  per-domain rating?) and whether a cached verdict ever expires/gets re-checked.
-- Exact inline-citation-marker mechanics and how they interact with `_parse_sections`/
-  `_assemble_article`.
-- What happens if the final body cites more than 9 sources — ask the writer to trim, or
-  truncate in code?
-
----
-
 ## Research-only mode (no image) — *new Spec 046*
 
 **Goal:** Add a mode that skips the entire satirical pipeline (Cultural Strategist,
