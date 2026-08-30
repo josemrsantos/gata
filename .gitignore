@@ -11,5 +11,6 @@ __pycache__/
 evaluate/
 gata.egg-info/
 gata/
+.aider*
 source_domains.duckdb
 source_domains.duckdb.wal
