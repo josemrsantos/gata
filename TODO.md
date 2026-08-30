@@ -1,5 +1,37 @@
 # TODO
 
+## Quieter default terminal output — *new Spec 050*
+
+**Goal:** Reduce default terminal output so a run's important signal (final
+output location, total cost/time, and any real failures) isn't buried under
+per-agent/per-model cost breakdowns and routine log noise. Move the full
+per-agent/per-model token/cost breakdown out of the default terminal view
+(it already duplicates summary.txt in the bundle) down to a single TOTAL
+line; add a --verbose/-v flag that restores today's full on-screen detail.
+
+**Reason:** A real --research-only run's terminal output is dominated by
+~20+ WARNING lines (SDK nags, panelist retries, excluded-source
+classifications) and a full per-agent/per-model breakdown, making it hard to
+see at a glance whether the run succeeded and where the output landed.
+
+**Confirmed:** WARNING-level lines already go to stderr (verified via
+logging.basicConfig's default stream) — `2>/dev/null` already hides them
+today. The per-agent/per-model cost breakdown is print()-based (stdout),
+the same stream as the final "Report saved to..." line, so it can't
+currently be hidden independently.
+
+**Things to figure out:**
+- Exact default-quiet format: progress markers + TOTAL line + output path
+  only, or leaner still?
+- Whether --verbose restores today's exact output or a new intermediate
+  level is warranted.
+- Whether any WARNING-level messages are worth surfacing by default (e.g.
+  "every provider's research failed") vs. purely diagnostic ones.
+- Whether this applies to both pipeline.py and gata, or just the
+  interactive gata CLI.
+
+---
+
 ## Lightweight webserver front-end — *new Spec 047*
 
 **Goal:** Stand up a lightweight webserver that can trigger the `gata` CLI (e.g. "generate a
