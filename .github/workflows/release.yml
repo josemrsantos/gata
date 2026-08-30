@@ -30,6 +30,13 @@ jobs:
         uses: python-semantic-release/python-semantic-release@v9.12.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Version (pyproject.toml/__version__.py) and CHANGELOG.md are hand-written
+          # per PR and reviewed before merge (CLAUDE.md RULE 15/17) — semantic-release
+          # still computes the version and tags/releases/publishes from it, but must
+          # not commit its own file rewrites back to the repo or add a second,
+          # auto-generated CHANGELOG entry alongside the hand-written one.
+          commit: "false"
+          changelog: "false"
 
       # Build only after semantic-release has written the new version into
       # pyproject.toml and __version__.py, so the dist carries the correct version.
