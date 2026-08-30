@@ -593,6 +593,57 @@ def test_write_bundle_summary_txt_matches_format_summary(tmp_path):
     assert content == format_summary(telemetry)
 
 
+# -- write_bundle: research_report (Spec 046) --
+
+
+def test_write_bundle_creates_research_report_when_supplied(tmp_path):
+    # Spec 046 FR-007: research_report must be written as research_report.md,
+    # independent of the existing linkedin_post param.
+    from core.bundle_writer import write_bundle
+
+    output_path = str(tmp_path / "report.md")
+    write_bundle(
+        output_path,
+        None,
+        None,
+        None,
+        None,
+        research_report="# A neutral report\n\nBody text.",
+    )
+    content = (tmp_path / "report" / "research_report.md").read_text()
+    assert content == "# A neutral report\n\nBody text."
+
+
+def test_write_bundle_skips_research_report_when_none(tmp_path):
+    # Omitting research_report (default None) must not create the file at all —
+    # no empty/placeholder artifact in bundles that don't use this mode.
+    from core.bundle_writer import write_bundle
+
+    output_path = str(tmp_path / "report.md")
+    write_bundle(output_path, None, None, None, None)
+    assert not (tmp_path / "report" / "research_report.md").exists()
+
+
+def test_write_bundle_research_report_independent_of_linkedin_post(tmp_path):
+    # research_report and linkedin_post must not interfere with each other —
+    # each is written from its own parameter, regardless of the other's value.
+    from core.bundle_writer import write_bundle
+
+    output_path = str(tmp_path / "report.md")
+    write_bundle(
+        output_path,
+        None,
+        None,
+        None,
+        None,
+        research_report="neutral content",
+        linkedin_post=("branded content", "notification"),
+    )
+    bundle_dir = tmp_path / "report"
+    assert (bundle_dir / "research_report.md").read_text() == "neutral content"
+    assert (bundle_dir / "linkedin_post.md").read_text() == "branded content"
+
+
 # -- format_summary: per-model breakdown (Spec 033) --
 
 

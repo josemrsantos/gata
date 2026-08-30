@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -33,6 +34,13 @@ def _find_providers_config() -> str | None:
     if user.exists():
         return str(user)
     return None
+
+
+def _research_output_path(topic: str) -> str:
+    # FR-008: a bundle-directory-naming key only — no image is ever written
+    # at this path in research-only mode.
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"output/research/{sanitize_path_segment(topic)}_{timestamp}.md"
 
 
 def _panel_filename_prefix(layout: CartoonLayout | None) -> str:
@@ -111,9 +119,24 @@ def main() -> None:
             " --linkedin-post."
         ),
     )
+    parser.add_argument(
+        "--research-only",
+        action="store_true",
+        help=(
+            "skip the entire satirical pipeline (Cultural Strategist, Satirist,"
+            " Image Generator, Image Evaluator) and produce only a researched"
+            " report — research_report.md by default, or the branded"
+            " linkedin_post.md when combined with --linkedin-post"
+        ),
+    )
     args = parser.parse_args()
     if args.angle and not args.linkedin_post:
         logger.info("--angle has no effect without --linkedin-post")
+    if args.direct and args.research_only:
+        logger.info(
+            "--direct has no additional effect under --research-only"
+            " (Cultural Strategist is already skipped)"
+        )
     # Reject an empty --community immediately — blank string is not a valid description
     if args.community is not None and not args.community.strip():
         logger.error("--community must not be empty")
@@ -218,6 +241,8 @@ def main() -> None:
             f"output/manual/{prefix}{sanitize_path_segment(args.language)}"
             f"_{sanitize_path_segment(topic)}.png"
         )
+        if args.research_only:
+            output_path = _research_output_path(topic)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         logger.info("manual mode: topic=%r, output=%r", topic, output_path)
         try:
@@ -233,6 +258,7 @@ def main() -> None:
                 skip_cultural_strategist=args.direct,
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
+                research_only=args.research_only,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -263,6 +289,8 @@ def main() -> None:
             f"/{prefix}{sanitize_path_segment(seed_brief.output_language)}"
             f"_{sanitize_path_segment(topic)}.png"
         )
+        if args.research_only:
+            output_path = _research_output_path(topic)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         logger.info(
             "community-topic mode: community=%r topic=%r output=%r",
@@ -283,6 +311,7 @@ def main() -> None:
                 skip_cultural_strategist=args.direct,
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
+                research_only=args.research_only,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -327,6 +356,8 @@ def main() -> None:
                 f"/{prefix}{sanitize_path_segment(community.output_language)}"
                 f"_{sanitize_path_segment(topic)}.png"
             )
+            if args.research_only:
+                output_path = _research_output_path(topic)
         else:
             # No exact match → treat description as free-text; infer brief via Gemini
             logger.info(
@@ -355,6 +386,8 @@ def main() -> None:
                 f"/{prefix}{sanitize_path_segment(seed_brief.output_language)}"
                 f"_{sanitize_path_segment(topic)}.png"
             )
+            if args.research_only:
+                output_path = _research_output_path(topic)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         logger.info(
             "community=%r, topic=%r, output=%r", args.community, topic, output_path
@@ -373,6 +406,7 @@ def main() -> None:
                 skip_cultural_strategist=args.direct,
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
+                research_only=args.research_only,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -405,6 +439,8 @@ def main() -> None:
             f"/{prefix}{sanitize_path_segment(community.output_language)}"
             f"_{sanitize_path_segment(topic)}.png"
         )
+        if args.research_only:
+            output_path = _research_output_path(topic)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         logger.info(
             "community=%r, topic=%r, output=%r",
@@ -426,6 +462,7 @@ def main() -> None:
                 skip_cultural_strategist=args.direct,
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
+                research_only=args.research_only,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)

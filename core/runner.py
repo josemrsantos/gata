@@ -28,6 +28,22 @@ from llm.base import LLMProvider
 logger = logging.getLogger(__name__)
 
 
+def _minimal_brief(topic: str, seed_brief: StrategyBrief) -> EnrichedBrief:
+    """Build an EnrichedBrief straight from the topic/seed, no Cultural Strategist.
+
+    Shared by --direct (skip_cultural_strategist) and --research-only — both
+    need the Satirist/LinkedIn post generator to have audience/language/tone
+    context without paying for cultural enrichment.
+    """
+    return EnrichedBrief(
+        target_audience=seed_brief.target_audience,
+        output_language=seed_brief.output_language,
+        tone=seed_brief.tone,
+        cultural_angle=topic,
+        culturally_loaded_references=[],
+    )
+
+
 def _build_provider(spec: ModelSpec) -> LLMProvider:
     """Instantiate the correct LLMProvider from a ModelSpec."""
     if spec.provider == "claude":
@@ -72,6 +88,7 @@ def run_pipeline(
     skip_cultural_strategist: bool = False,
     generate_linkedin_post: bool = False,
     angles: list[str] | None = None,
+    research_only: bool = False,
 ) -> RunTelemetry:
     """Run the full pipeline for a single topic and write the output image."""
     # Build provider lists from config when supplied; otherwise wrap hardcoded defaults
@@ -93,18 +110,26 @@ def run_pipeline(
     concept = None
     telemetry = RunTelemetry()
     try:
-        if skip_cultural_strategist:
+        if research_only:
+            # Research-only mode: skip the entire satirical pipeline — Cultural
+            # Strategist, Satirist, Image Generator, Image Evaluator — and let
+            # the `finally` block's report generation run against a minimal brief.
+            print(
+                "  Research-only mode — skipping Cultural Strategist, Satirist,"
+                " Image Generator, Image Evaluator",
+                flush=True,
+            )
+            logger.info(
+                "run_pipeline: research-only mode — Cultural Strategist, Satirist,"
+                " Image Generator, Image Evaluator all skipped"
+            )
+            enriched_brief = _minimal_brief(topic, seed_brief)
+        elif skip_cultural_strategist:
             # Direct mode: build a minimal brief from the seed so the Satirist has
             # audience/language/tone context without paying Cultural Strategist cost.
             print("  Direct mode — skipping Cultural Strategist", flush=True)
             logger.info("run_pipeline: direct mode — Cultural Strategist skipped")
-            enriched_brief = EnrichedBrief(
-                target_audience=seed_brief.target_audience,
-                output_language=seed_brief.output_language,
-                tone=seed_brief.tone,
-                cultural_angle=topic,
-                culturally_loaded_references=[],
-            )
+            enriched_brief = _minimal_brief(topic, seed_brief)
         else:
             print("  Cultural Strategist...", flush=True)
             enriched_brief, agent0_log, agent0_tel = agent_cultural_strategist.run(
@@ -116,62 +141,64 @@ def run_pipeline(
                 humor=humor,
             )
             telemetry.agents.append(agent0_tel)
-        print("  Satirist/Co-Satirist...", flush=True)
-        concept, bc_log, bc_tel, chosen_layout = agent_satirist.run(
-            topic,
-            enriched_brief,
-            panelist_providers=panelist_providers,
-            aggregator_providers=aggregator_providers,
-            humor=humor,
-            layout_override=layout,
-        )
-        telemetry.agents.append(bc_tel)
-        print("  Image Generator...", flush=True)
-        _MAX_IMAGE_RETRIES = 2
-        # A --linkedin-post cartoon becomes the LinkedIn cover, so it must be
-        # pinned to LinkedIn's exact size — but only when its layout is
-        # horizontal, since a vertical multi-panel crop would mutilate it.
-        _image_target_size = (
-            LINKEDIN_FEATURE_IMAGE_SIZE
-            if generate_linkedin_post
-            and chosen_layout is not None
-            and chosen_layout.direction == "horizontal"
-            else None
-        )
-        for _attempt in range(_MAX_IMAGE_RETRIES + 1):
-            _image_path, image_tel = agent_image_generator.generate(
-                concept,
-                output_path,
-                layout=chosen_layout,
-                show_title=show_title,
-                target_size=_image_target_size,
-            )
-            telemetry.agents.append(image_tel)
-            print("  Image Evaluator...", flush=True)
-            _eval_result, eval_tel = agent_image_evaluator.evaluate(
-                _image_path,
-                concept,
+        if not research_only:
+            print("  Satirist/Co-Satirist...", flush=True)
+            concept, bc_log, bc_tel, chosen_layout = agent_satirist.run(
+                topic,
                 enriched_brief,
-                evaluator_providers=_GEMINI_EVAL_CHAIN,
-                layout=chosen_layout,
+                panelist_providers=panelist_providers,
+                aggregator_providers=aggregator_providers,
+                humor=humor,
+                layout_override=layout,
             )
-            telemetry.agents.append(eval_tel)
-            if _eval_result.verdict == "APPROVED":
-                break
-            if _attempt < _MAX_IMAGE_RETRIES:
-                logger.warning(
-                    "image evaluator: REJECTED (attempt %d/%d)"
-                    " artifacts=%r funny=%s — regenerating",
-                    _attempt + 1,
-                    _MAX_IMAGE_RETRIES + 1,
-                    _eval_result.artifacts,
-                    _eval_result.is_funny,
+            telemetry.agents.append(bc_tel)
+            print("  Image Generator...", flush=True)
+            _MAX_IMAGE_RETRIES = 2
+            # A --linkedin-post cartoon becomes the LinkedIn cover, so it must be
+            # pinned to LinkedIn's exact size — but only when its layout is
+            # horizontal, since a vertical multi-panel crop would mutilate it.
+            _image_target_size = (
+                LINKEDIN_FEATURE_IMAGE_SIZE
+                if generate_linkedin_post
+                and chosen_layout is not None
+                and chosen_layout.direction == "horizontal"
+                else None
+            )
+            for _attempt in range(_MAX_IMAGE_RETRIES + 1):
+                _image_path, image_tel = agent_image_generator.generate(
+                    concept,
+                    output_path,
+                    layout=chosen_layout,
+                    show_title=show_title,
+                    target_size=_image_target_size,
                 )
-            else:
-                logger.warning(
-                    "image evaluator: REJECTED after %d attempt(s) — using last image",
-                    _MAX_IMAGE_RETRIES + 1,
+                telemetry.agents.append(image_tel)
+                print("  Image Evaluator...", flush=True)
+                _eval_result, eval_tel = agent_image_evaluator.evaluate(
+                    _image_path,
+                    concept,
+                    enriched_brief,
+                    evaluator_providers=_GEMINI_EVAL_CHAIN,
+                    layout=chosen_layout,
                 )
+                telemetry.agents.append(eval_tel)
+                if _eval_result.verdict == "APPROVED":
+                    break
+                if _attempt < _MAX_IMAGE_RETRIES:
+                    logger.warning(
+                        "image evaluator: REJECTED (attempt %d/%d)"
+                        " artifacts=%r funny=%s — regenerating",
+                        _attempt + 1,
+                        _MAX_IMAGE_RETRIES + 1,
+                        _eval_result.artifacts,
+                        _eval_result.is_funny,
+                    )
+                else:
+                    logger.warning(
+                        "image evaluator: REJECTED after %d attempt(s)"
+                        " — using last image",
+                        _MAX_IMAGE_RETRIES + 1,
+                    )
     except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
         logger.error("pipeline failed: %s", exc)
         raise
@@ -182,14 +209,19 @@ def run_pipeline(
         else:
             image_prompt = None
         linkedin_post: tuple[str, str] | None = None
-        # Generate LinkedIn post only when requested and the pipeline produced a brief.
-        _can_generate_post = (
+        research_report: str | None = None
+        # research_only always generates a report (branded per generate_linkedin_post's
+        # own value); otherwise, unchanged: only when requested and a concept exists.
+        _can_generate_post = research_only or (
             generate_linkedin_post
             and enriched_brief is not None
             and image_prompt is not None
         )
         if _can_generate_post:
-            print("  LinkedIn Post...", flush=True)
+            _branded = generate_linkedin_post if research_only else True
+            print(
+                "  LinkedIn Post..." if _branded else "  Research Report...", flush=True
+            )
             article_md, notification_txt = agent_linkedin_post.generate_linkedin_post(
                 enriched_brief,
                 topic,
@@ -197,9 +229,13 @@ def run_pipeline(
                 panelist_providers,
                 aggregator_providers,
                 angles=angles,
+                branded=_branded,
             )
             if article_md:
-                linkedin_post = (article_md, notification_txt)
+                if _branded:
+                    linkedin_post = (article_md, notification_txt)
+                else:
+                    research_report = article_md
             else:
                 logger.warning("linkedin_post: generation failed — files not written")
         bundle_writer.write_bundle(
@@ -213,6 +249,7 @@ def run_pipeline(
             panelist_providers=panelist_providers,
             aggregator_providers=aggregator_providers,
             linkedin_post=linkedin_post,
+            research_report=research_report,
         )
         print(bundle_writer.format_summary(telemetry))
     return telemetry

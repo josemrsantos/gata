@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -30,6 +31,13 @@ def _ensure_uk(profiles: list[AudienceProfile]) -> list[AudienceProfile]:
         if any(term in combined for term in _uk_terms):
             return profiles
     return profiles + [_UK_AUDIENCE]
+
+
+def _research_output_path(topic: str) -> str:
+    # FR-008: a bundle-directory-naming key only — no image is ever written
+    # at this path in research-only mode.
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"output/research/{sanitize_path_segment(topic)}_{timestamp}.md"
 
 
 def _format_grand_total(audience_telemetry: list[tuple[str, RunTelemetry]]) -> str:
@@ -90,6 +98,17 @@ def main() -> None:
             " --linkedin-post."
         ),
     )
+    parser.add_argument(
+        "--research-only",
+        action="store_true",
+        help=(
+            "skip the entire satirical pipeline (Cultural Strategist, Satirist,"
+            " Image Generator, Image Evaluator) and produce only a researched"
+            " report — research_report.md by default, or the branded"
+            " linkedin_post.md when combined with --linkedin-post. Runs once,"
+            " not once per inferred audience."
+        ),
+    )
     args = parser.parse_args()
     if not args.topic.strip():
         print("error: topic must not be empty", file=sys.stderr)
@@ -108,6 +127,11 @@ def main() -> None:
         sys.exit(1)
     if args.angle and not args.linkedin_post:
         logger.info("--angle has no effect without --linkedin-post")
+    if args.direct and args.research_only:
+        logger.info(
+            "--direct has no additional effect under --research-only"
+            " (Cultural Strategist is already skipped)"
+        )
     humor = None
     if os.path.exists("humor.yaml"):
         try:
@@ -117,6 +141,33 @@ def main() -> None:
         except ValueError as exc:
             logger.error("humor config error: %s", exc)
             sys.exit(1)
+    if args.research_only:
+        # US3: a single neutral/branded report has no per-audience image
+        # variants — run once, using only the most relevant inferred audience
+        # (no _ensure_uk, no loop).
+        audience = infer_audiences(args.topic)[0]
+        seed_brief = StrategyBrief(
+            target_audience=audience.audience,
+            output_language=audience.language,
+            tone=audience.tone,
+        )
+        output_path = _research_output_path(args.topic)
+        try:
+            run_pipeline(
+                args.topic,
+                seed_brief,
+                output_path,
+                humor=humor,
+                research_only=True,
+                generate_linkedin_post=args.linkedin_post,
+                angles=args.angle,
+            )
+        except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
+            logger.error("research-only run failed: %s", exc)
+            sys.exit(1)
+        bundle_dir = Path(output_path).parent / Path(output_path).stem
+        print(f"\nReport saved to {bundle_dir}")
+        return
     audiences = _ensure_uk(infer_audiences(args.topic))
     topic_slug = sanitize_path_segment(args.topic)
     output_dir = os.path.join(os.getcwd(), topic_slug)

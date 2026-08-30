@@ -1,29 +1,5 @@
 # TODO
 
-## Research-only mode (no image) — *new Spec 046*
-
-**Goal:** Add a mode that skips the entire satirical pipeline (Cultural Strategist,
-Satirist, Image Generator, Image Evaluator) and goes straight from topic to the researched-
-article path, so the tool can be used purely for research/reporting rather than a satirical
-post.
-
-**Reason:** Every run currently generates a satirical image and concept regardless; the
-operator wants a genuine research-only mode, not just a suppressed image with wasted
-concept-generation cost behind it.
-
-**Confirmed:** skips the full satirical pipeline, not just image rendering.
-
-**Things to figure out:**
-- Exact flag shape, and its relationship to existing flags (e.g. `--direct`, spec 035).
-- Whether this requires `--linkedin-post` to be set, since without it there would be no
-  output at all.
-- Output bundle naming/location — today's bundle directory is derived from the cartoon's
-  own `output_path`.
-- Whether Gata's branding/byline stays on a pure research report, or this becomes a fully
-  neutral output.
-
----
-
 ## Lightweight webserver front-end — *new Spec 047*
 
 **Goal:** Stand up a lightweight webserver that can trigger the `gata` CLI (e.g. "generate a

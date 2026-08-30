@@ -1424,6 +1424,75 @@ def test_assemble_article_full_section_order():
     assert indices == sorted(indices)
 
 
+# -- _assemble_report (Spec 046: neutral, unbranded assembly) --
+
+
+def test_assemble_report_neutral_title_fallback_when_title_empty():
+    # FR-005: an empty writer TITLE must fall back to a neutral title, never
+    # the Gata-branded "Gata's Panel Weighs In" default used by branded mode.
+    sections = {"BODY": "Body text."}
+    report = alp._assemble_report(sections, [], RunTelemetry(), "Some Topic")
+    assert "# Research Report: Some Topic" in report
+
+
+def test_assemble_report_uses_writer_title_when_present():
+    # A real writer-supplied title must still win over the neutral fallback.
+    sections = {"TITLE": "A Real Title", "BODY": "Body text."}
+    report = alp._assemble_report(sections, [], RunTelemetry(), "Some Topic")
+    assert "# A Real Title" in report
+
+
+def test_assemble_report_omits_gata_branding():
+    # FR-005: "fully neutral" means no Gata references, no closing/subscribe
+    # block, and no "Behind the Scenes" tech-stack promo at all.
+    sections = {"TITLE": "T", "BODY": "Body text.", "COMMENT": "Question?"}
+    report = alp._assemble_report(sections, [], RunTelemetry(), "T")
+    assert "Gata" not in report
+    assert "gata.the.reporter" not in report
+    assert "Behind the Scenes" not in report
+
+
+def test_assemble_report_keeps_metrics_and_disclosure():
+    # FR-005: the factual metrics line and AI-authorship disclosure are
+    # informational, not promotional — they stay even in neutral mode.
+    sections = {"TITLE": "T", "BODY": "Body text."}
+    report = alp._assemble_report(sections, [], RunTelemetry(), "T")
+    assert "Pipeline Execution Metrics" in report
+    assert "independently researched" in report
+
+
+def test_assemble_report_includes_sources_section_when_present():
+    # A neutral report must still cite real sources — omitting them would be
+    # less credible, not more neutral.
+    sections = {"TITLE": "T", "BODY": "Body text."}
+    sources = [ResearchSource(title="A", url="https://x.com/1")]
+    report = alp._assemble_report(sections, sources, RunTelemetry(), "T")
+    assert "## Sources" in report
+    assert "https://x.com/1" in report
+
+
+def test_assemble_report_omits_sources_heading_when_empty():
+    # An empty source list must not publish a blank Sources heading, same
+    # discipline as the branded assembly path.
+    sections = {"TITLE": "T", "BODY": "Body text."}
+    report = alp._assemble_report(sections, [], RunTelemetry(), "T")
+    assert "## Sources" not in report
+
+
+def test_assemble_report_places_executive_summary_after_title_before_body():
+    # Section ordering must match the branded article's convention even
+    # though the surrounding branding content differs.
+    sections = {
+        "TITLE": "T",
+        "EXECUTIVE_SUMMARY": "The short version of the whole argument.",
+        "BODY": "Body text.",
+    }
+    report = alp._assemble_report(sections, [], RunTelemetry(), "T")
+    assert report.index("## Executive Summary") > report.index("# T")
+    assert report.index("The short version") > report.index("## Executive Summary")
+    assert report.index("Body text.") > report.index("The short version")
+
+
 # -- generate_linkedin_post: end-to-end soft-failure chaining --
 
 
@@ -1514,6 +1583,89 @@ def test_generate_linkedin_post_full_success_assembles_article():
     assert "A Real Title" in article
     assert "https://x.com/1" in article
     assert notification == "Read this."
+
+
+def test_generate_linkedin_post_branded_false_produces_neutral_article():
+    # Spec 046 FR-004/FR-005: branded=False must route through _assemble_report,
+    # never producing Gata branding, even though every other stage is identical.
+    providers = _panelist_providers()
+    telemetry = RunTelemetry()
+    digest = ResearchDigest(
+        summary="s", sources=[ResearchSource(title="A", url="https://x.com/1")]
+    )
+    sections = {
+        "TITLE": "A Real Title",
+        "BODY": "Real body citing [1] a source.",
+        "COMMENT": "Question?",
+        "NOTIFICATION": "Read this.",
+    }
+    with (
+        patch(
+            "agents.agent_linkedin_post.research_all_panelists",
+            return_value=([digest, digest, digest], []),
+        ),
+        patch(
+            "agents.agent_linkedin_post._plan_angles",
+            return_value=(
+                "ANGLE: A\nFOCUS: b",
+                AgentTelemetry(agent_name="p", duration_seconds=0, iterations=1),
+            ),
+        ),
+        patch(
+            "agents.agent_linkedin_post._write_article",
+            return_value=(
+                sections,
+                AgentTelemetry(agent_name="w", duration_seconds=0, iterations=1),
+            ),
+        ),
+    ):
+        article, notification = alp.generate_linkedin_post(
+            BRIEF, "Topic", telemetry, providers, [_provider("agg")], branded=False
+        )
+    assert "A Real Title" in article
+    assert "Gata" not in article
+    assert "Behind the Scenes" not in article
+    # FR-006: the writer's NOTIFICATION is still returned to the caller — the
+    # caller (run_pipeline), not this function, decides whether to discard it.
+    assert notification == "Read this."
+
+
+def test_generate_linkedin_post_branded_default_true_unchanged():
+    # Regression guard: omitting `branded` must keep producing today's exact
+    # Gata-branded article — this feature must not alter existing callers.
+    providers = _panelist_providers()
+    telemetry = RunTelemetry()
+    digest = ResearchDigest(summary="s", sources=[])
+    sections = {
+        "TITLE": "A Real Title",
+        "BODY": "Body.",
+        "COMMENT": "Question?",
+        "NOTIFICATION": "Read this.",
+    }
+    with (
+        patch(
+            "agents.agent_linkedin_post.research_all_panelists",
+            return_value=([digest, digest, digest], []),
+        ),
+        patch(
+            "agents.agent_linkedin_post._plan_angles",
+            return_value=(
+                "ANGLE: A\nFOCUS: b",
+                AgentTelemetry(agent_name="p", duration_seconds=0, iterations=1),
+            ),
+        ),
+        patch(
+            "agents.agent_linkedin_post._write_article",
+            return_value=(
+                sections,
+                AgentTelemetry(agent_name="w", duration_seconds=0, iterations=1),
+            ),
+        ),
+    ):
+        article, _ = alp.generate_linkedin_post(
+            BRIEF, "Topic", telemetry, providers, [_provider("agg")]
+        )
+    assert "Behind the Scenes" in article
 
 
 def test_generate_linkedin_post_strips_empty_angle_strings():

@@ -1,4 +1,5 @@
 import logging
+import re
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -1846,6 +1847,413 @@ def test_normal_mode_unchanged():
     ):
         run_pipeline("AI hype", _DIRECT_SEED, "out.png")
     mock_a0.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Spec 046 — --research-only flag (core.runner.run_pipeline mechanism)
+# ---------------------------------------------------------------------------
+
+_RESEARCH_SEED = StrategyBrief(
+    target_audience="policy analysts",
+    output_language="English",
+    tone="neutral",
+)
+
+FAKE_LINKEDIN_TEL = AgentTelemetry(
+    agent_name="LinkedIn Post", duration_seconds=0.0, iterations=1
+)
+
+
+def test_research_only_skips_entire_satirical_pipeline():
+    # research_only=True must never call Cultural Strategist, Satirist, Image
+    # Generator, or Image Evaluator — that cost is exactly what this mode exists
+    # to avoid.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run") as mock_cs,
+        patch("core.runner.agent_satirist.run") as mock_sat,
+        patch("core.runner.agent_image_generator.generate") as mock_img,
+        patch("core.runner.agent_image_evaluator.evaluate") as mock_eval,
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline("AI regulation", _RESEARCH_SEED, "out.md", research_only=True)
+    mock_cs.assert_not_called()
+    mock_sat.assert_not_called()
+    mock_img.assert_not_called()
+    mock_eval.assert_not_called()
+
+
+def test_research_only_always_calls_generate_linkedin_post():
+    # FR-003: generate_linkedin_post must be invoked in research_only mode
+    # regardless of the generate_linkedin_post flag's own value — that flag
+    # only picks branded vs. neutral output, per this same mode.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ) as mock_post,
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline(
+            "AI regulation",
+            _RESEARCH_SEED,
+            "out.md",
+            research_only=True,
+            generate_linkedin_post=False,
+        )
+    mock_post.assert_called_once()
+
+
+def test_research_only_builds_minimal_enriched_brief_for_linkedin_post():
+    # The minimal EnrichedBrief passed to generate_linkedin_post must carry the
+    # topic verbatim and the seed brief's audience/language/tone — no Cultural
+    # Strategist call happened to produce a richer one.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run") as mock_cs,
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ) as mock_post,
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline("AI regulation", _RESEARCH_SEED, "out.md", research_only=True)
+    mock_cs.assert_not_called()
+    brief = mock_post.call_args.args[0]
+    assert brief.cultural_angle == "AI regulation"
+    assert brief.culturally_loaded_references == []
+    assert brief.target_audience == _RESEARCH_SEED.target_audience
+    assert brief.output_language == _RESEARCH_SEED.output_language
+    assert brief.tone == _RESEARCH_SEED.tone
+
+
+def test_research_only_branded_matches_generate_linkedin_post_flag():
+    # FR-003: branded passed to generate_linkedin_post must equal the caller's
+    # generate_linkedin_post flag — True only when --linkedin-post was set.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ) as mock_post,
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline(
+            "AI regulation",
+            _RESEARCH_SEED,
+            "out.md",
+            research_only=True,
+            generate_linkedin_post=True,
+        )
+    assert mock_post.call_args.kwargs["branded"] is True
+
+
+def test_research_only_branded_false_writes_research_report():
+    # FR-007: when branded=False, write_bundle must receive research_report
+    # (the article text) and linkedin_post=None — never both populated.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("neutral article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_write,
+    ):
+        run_pipeline(
+            "AI regulation",
+            _RESEARCH_SEED,
+            "out.md",
+            research_only=True,
+            generate_linkedin_post=False,
+        )
+    assert mock_write.call_args.kwargs["research_report"] == "neutral article"
+    assert mock_write.call_args.kwargs["linkedin_post"] is None
+
+
+def test_research_only_branded_true_writes_linkedin_post():
+    # FR-003: when branded=True (i.e. --linkedin-post also supplied),
+    # write_bundle must receive linkedin_post and research_report=None.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("branded article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_write,
+    ):
+        run_pipeline(
+            "AI regulation",
+            _RESEARCH_SEED,
+            "out.md",
+            research_only=True,
+            generate_linkedin_post=True,
+        )
+    assert mock_write.call_args.kwargs["linkedin_post"] == (
+        "branded article",
+        "notification",
+    )
+    assert mock_write.call_args.kwargs["research_report"] is None
+
+
+def test_research_only_absent_agents_in_telemetry():
+    # RunTelemetry must contain no Cultural Strategist/Satirist/Image
+    # Generator/Image Evaluator entries in research_only mode.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        telemetry = run_pipeline(
+            "AI regulation", _RESEARCH_SEED, "out.md", research_only=True
+        )
+    agent_names = [a.agent_name for a in telemetry.agents]
+    assert agent_names == []
+
+
+# ---------------------------------------------------------------------------
+# Spec 046 — --research-only CLI flag (pipeline.py)
+# ---------------------------------------------------------------------------
+
+_RESEARCH_ONLY_ARGV = [
+    "pipeline.py",
+    "--topic",
+    "AI hype",
+    "--audience",
+    "developers",
+    "--language",
+    "English",
+    "--tone",
+    "dry",
+    "--research-only",
+]
+
+
+def test_research_only_cli_flag_builds_output_research_path():
+    # FR-008: output_path in research-only mode must live under
+    # output/research/, named from the topic slug plus a timestamp — never
+    # derived from an image path.
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch("sys.argv", _RESEARCH_ONLY_ARGV),
+        patch("pipeline.load_communities"),
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_write,
+        patch("os.makedirs"),
+    ):
+        pipeline.main()
+    output_path = mock_write.call_args.args[0]
+    assert re.match(r"output/research/ai_hype_\d{8}_\d{6}\.md", output_path)
+
+
+def test_research_only_community_topic_mode_builds_output_research_path():
+    # FR-008: the community-topic branch must also override output_path to
+    # output/research/, not its normal output/{community}/... image path.
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch(
+            "sys.argv",
+            [
+                "pipeline.py",
+                "--community",
+                "uk-tech-engineers",
+                "--topic",
+                "AI overload",
+                "--research-only",
+            ],
+        ),
+        patch("os.path.exists", return_value=True),
+        patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_write,
+        patch("os.makedirs"),
+    ):
+        pipeline.main()
+    output_path = mock_write.call_args.args[0]
+    assert re.match(r"output/research/ai_overload_\d{8}_\d{6}\.md", output_path)
+
+
+def test_research_only_named_community_mode_builds_output_research_path():
+    # FR-008: the named-community (Trend Scout) branch must also override
+    # output_path to output/research/, not its normal image path.
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch(
+            "sys.argv",
+            ["pipeline.py", "--community", "uk-tech-engineers", "--research-only"],
+        ),
+        patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
+        patch(
+            "pipeline.trend_scout.get_topics",
+            return_value=([FAKE_HEADLINE], "seed"),
+        ),
+        patch("pipeline.trend_scout.get_topics_for_description", create=True),
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_write,
+        patch("os.makedirs"),
+    ):
+        pipeline.main()
+    output_path = mock_write.call_args.args[0]
+    assert output_path.startswith("output/research/")
+    assert re.match(r"output/research/.+_\d{8}_\d{6}\.md", output_path)
+
+
+def test_research_only_free_text_community_builds_output_research_path():
+    # FR-008: the free-text-community (no exact communities.yaml match) branch
+    # must also override output_path to output/research/.
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch(
+            "sys.argv",
+            ["pipeline.py", "--community", _FREE_TEXT_DESC, "--research-only"],
+        ),
+        patch("os.path.exists", return_value=True),
+        patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
+        patch(
+            "pipeline.trend_scout.get_topics_for_description",
+            return_value=([_FREE_TEXT_HEADLINE], _INFERRED_BRIEF, "trend_scout"),
+            create=True,
+        ),
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_write,
+        patch("os.makedirs"),
+    ):
+        pipeline.main()
+    output_path = mock_write.call_args.args[0]
+    assert output_path.startswith("output/research/")
+    assert re.match(r"output/research/.+_\d{8}_\d{6}\.md", output_path)
+
+
+def test_research_only_random_mode_builds_output_research_path():
+    # FR-008: the default random-community branch must also override
+    # output_path to output/research/, not its normal image path.
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch("sys.argv", ["pipeline.py", "--research-only"]),
+        patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
+        patch(
+            "pipeline.random.choice",
+            side_effect=[COMMUNITY_PT, "Housing crisis"],
+        ),
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_write,
+        patch("os.makedirs"),
+    ):
+        pipeline.main()
+    output_path = mock_write.call_args.args[0]
+    assert output_path.startswith("output/research/")
+    assert re.match(r"output/research/.+_\d{8}_\d{6}\.md", output_path)
+
+
+def test_research_only_cli_flag_passes_research_only_to_run_pipeline():
+    # research_only=True must reach run_pipeline so the satirical pipeline is
+    # actually skipped, not just the output path renamed.
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch("sys.argv", _RESEARCH_ONLY_ARGV),
+        patch("pipeline.load_communities"),
+        patch("pipeline.run_pipeline", return_value=MagicMock()) as mock_run,
+        patch("os.makedirs"),
+    ):
+        pipeline.main()
+    assert mock_run.call_args.kwargs["research_only"] is True
+
+
+def test_research_only_with_direct_logs_info_not_error(caplog):
+    # FR-011: --direct is redundant under --research-only (Cultural Strategist
+    # is already skipped) — this must be an INFO log, never an error/exit.
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch("sys.argv", _RESEARCH_ONLY_ARGV + ["--direct"]),
+        patch("pipeline.load_communities"),
+        patch("pipeline.run_pipeline", return_value=MagicMock()),
+        patch("os.makedirs"),
+        caplog.at_level(logging.INFO),
+    ):
+        pipeline.main()
+    assert any(
+        "--direct" in rec.message and "research-only" in rec.message.lower()
+        for rec in caplog.records
+    )
 
 
 # ---------------------------------------------------------------------------

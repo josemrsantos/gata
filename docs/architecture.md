@@ -32,11 +32,16 @@ flowchart LR
     EX -.->|HTML pages| BW
     SAT -.->|"--linkedin-post"| LP
     LP -.->|".md + .txt"| BW
+    GT -.->|"--research-only\n(minimal brief, no CS/SAT/IG/IE)"| LP
 ```
 
 Solid arrows are the default path. Dashed arrows run only when the corresponding flag is set.
 The HLD has two entry points into the pipeline (both feeding Cultural Strategist):
 **Gata** (direct topic) and **Trend Scout** (auto-topic). Only one fires per run.
+`--research-only` (Spec 046) is the one exception to "both feed Cultural Strategist" — it
+bypasses Cultural Strategist, Satirist, Image Generator, and Image Evaluator entirely, going
+straight from a minimal `EnrichedBrief` to LinkedIn Post, producing `research_report.md`
+(neutral) or `linkedin_post.md` (branded, with `--linkedin-post` also set) — never a cartoon.
 
 ---
 
@@ -76,13 +81,23 @@ and the result feeds into the Cultural Strategist alongside the UK audience.
 
 `pipeline.py` additionally supports `--community`, `--audience`, `--language`,
 `--tone`, `--panels`, `--layout`, `--html`, `--no-title`, `--direct`, `--providers`,
-`--linkedin-post`, and `--angle` flags. The `gata` command is a thin wrapper that
-supplies sensible defaults and exposes the most common flags, including
-`--linkedin-post` and `--angle`.
+`--linkedin-post`, `--angle`, and `--research-only` flags. The `gata` command is a thin
+wrapper that supplies sensible defaults and exposes the most common flags, including
+`--linkedin-post`, `--angle`, and `--research-only`.
 
 `--direct` skips the Cultural Strategist entirely and builds a minimal `EnrichedBrief`
 directly from the topic and seed brief. This removes one agent's latency and cost when
 the extra cultural enrichment is not needed. Both entry points support `--direct`.
+
+`--research-only` (Spec 046) skips Cultural Strategist, Satirist, Image Generator, and
+Image Evaluator entirely — no cartoon is ever produced. It builds the same kind of
+minimal `EnrichedBrief` as `--direct` (via a shared `core/runner._minimal_brief()`
+helper) and always invokes the LinkedIn Post agent's `generate_linkedin_post()`
+regardless of `--linkedin-post`'s own value — that flag now only picks the assembly
+format: branded `linkedin_post.md` when set, or a neutral `research_report.md` when
+not. On the `gata` CLI, `--research-only` runs the pipeline exactly once (using only
+the first inferred audience) instead of once per inferred audience, since a single
+report has no per-audience image variants to produce.
 
 `--providers PATH` loads a `providers.yaml` file that overrides the built-in LLM
 assignments. Each provider slot is an ordered fallback chain — if the primary provider
@@ -713,6 +728,24 @@ Any stage's total failure (all research, all angle-planning panelists, or all
 writing panelists) is non-fatal: a WARNING is logged and neither file is written;
 the rest of the bundle — including the cartoon — is unaffected.
 
+**Branded vs. neutral assembly (Spec 046)**: `generate_linkedin_post()` takes a
+`branded: bool = True` parameter that controls only the final assembly step —
+every stage above (research, domain classification, angle planning, writing,
+citation renumbering) runs identically either way. `branded=True` (the
+existing, unchanged default) produces today's Gata-branded article via
+`_assemble_article` — Executive Summary, body, Sources, then the static
+closing block and "Behind the Scenes" tech-stack promo. `branded=False`
+produces a neutral report via a sibling function, `_assemble_report`: the
+same Executive Summary/body/Sources content, a neutral title fallback
+(`"Research Report: {topic}"` instead of `"Gata's Panel Weighs In"`), and only
+the factual Pipeline Metrics line + AI-authorship disclosure at the bottom —
+no Gata references, no closing/subscribe block, no tech-stack promo. `--research-only`
+(see [Entry points](#gata-cli)) always calls `generate_linkedin_post()`
+regardless of `--linkedin-post`'s own value, passing `branded=<whether
+--linkedin-post was also set>` — this is also the first time this agent runs
+without any cartoon concept behind it, since the article never actually
+depended on one.
+
 ---
 
 ### Newsletter Editor
@@ -795,16 +828,21 @@ flowchart LR
     F6["summary.txt"]
     FH["explanation.html\ndeep_dive_en.html"]
     FL["linkedin_post.md\nlinkedin_notification.txt"]
+    FR["research_report.md"]
 
     IN --> BW
     BW --> F2 & F3 & F4 & F5 & F6
     BW -.->|"--html only"| FH
     BW -.->|"--linkedin-post only"| FL
+    BW -.->|"--research-only\n(without --linkedin-post)"| FR
 ```
 
 The cartoon PNG is written by **Image Generator** to `output_path` before Bundle Writer
 runs. Bundle Writer receives `output_path` only to derive where its bundle folder should
-be (`{parent}/{stem}/`).
+be (`{parent}/{stem}/`). In `--research-only` mode there is no PNG at all — `output_path`
+is a synthetic `output/research/{topic_slug}_{timestamp}.md` key built by the CLI purely
+for this naming derivation, and `write_bundle`'s `research_report: str | None` parameter
+(independent of `linkedin_post`) is what triggers `research_report.md`.
 
 **Example**
 

@@ -85,7 +85,7 @@ working directory — one for the inferred audience and one for the UK public.
 | **Image Generator** | — | Gemini image models | Renders the approved image prompt into a PNG; tries up to 5 models in order before failing; with `--linkedin-post` and a single-panel/horizontal layout, corrects the saved file to LinkedIn's exact 1200x644 cover size |
 | **Image Evaluator** | — | Gemini vision models | Checks for LLM rendering artifacts and rates comedy; triggers regeneration up to 2 times on rejection |
 | **Explainer** | Writer ×3, Editor | Claude · Grok-build (grok-build-0.1) · Gemini (writers) · Grok-4.3 (editor/aggregator) | Three Writers independently draft HTML explanation pages (in-language + English); Editor picks the best per run |
-| **LinkedIn Post** | Research (Gemini/Claude/Grok, independent) → Domain Classifier ×3 + Source Classifier → Angle Planner ×3 + Managing Editor → Writer ×3 + Managing Editor | Same panelist/aggregator chains as Satirist | Each panelist researches the topic with its own real web search; every newly-seen source domain is then classified for paywall/reliability by a dedicated panel (cached in a local `source_domains.duckdb`, so a domain is only ever judged once), and any paywalled or low-reliability domain is stripped before angle-planning or writing ever sees it. Three panelists independently propose article angles (an optional `--angle` steers this), then three panelists draft a serious, non-satirical article — its own labelled Executive Summary leading the piece, citing sources inline as numbered footnotes (`[1]`, `[2]`, ...) against a shared candidate list, up to 15 total. A code-built, numbered Sources list (every source URL always code-verified — never LLM-authored — with a genuinely descriptive title resolved from fetched page data, its own URL, or, as a last resort, that source's own provider; anything with nothing descriptive is dropped, never published bare) matches those footnotes exactly, and the AI-authorship disclosure plus pipeline metrics close out the final "Behind the Scenes" section (`--linkedin-post` only) |
+| **LinkedIn Post** | Research (Gemini/Claude/Grok, independent) → Domain Classifier ×3 + Source Classifier → Angle Planner ×3 + Managing Editor → Writer ×3 + Managing Editor | Same panelist/aggregator chains as Satirist | Each panelist researches the topic with its own real web search; every newly-seen source domain is then classified for paywall/reliability by a dedicated panel (cached in a local `source_domains.duckdb`, so a domain is only ever judged once), and any paywalled or low-reliability domain is stripped before angle-planning or writing ever sees it. Three panelists independently propose article angles (an optional `--angle` steers this), then three panelists draft a serious, non-satirical article — its own labelled Executive Summary leading the piece, citing sources inline as numbered footnotes (`[1]`, `[2]`, ...) against a shared candidate list, up to 15 total. A code-built, numbered Sources list (every source URL always code-verified — never LLM-authored — with a genuinely descriptive title resolved from fetched page data, its own URL, or, as a last resort, that source's own provider; anything with nothing descriptive is dropped, never published bare) matches those footnotes exactly. Everything through here runs identically regardless of `--research-only`; only final assembly differs: `--linkedin-post` produces the Gata-branded `linkedin_post.md` (disclosure + pipeline metrics inside "Behind the Scenes"), while `--research-only` alone produces a neutral `research_report.md` with no Gata branding, closing block, or tech-stack promo |
 | **Engagement Image Concept** | Panelist ×N, Art Director | Same provider chains as Satirist panelists/aggregator (or `providers.yaml`) | Deliberates one image-generation prompt that visually unifies an entire newsletter edition from its stories' text only (never their rendered images); rendered via the shared `ImageGeneration` class and pinned to LinkedIn's exact 1200x644 Article/Newsletter cover size. Runs before the Newsletter Editor call, on by default, skippable with `--no-image` |
 | **Newsletter Editor** | — | Gemini text models (primary) · Grok · Claude (fallback only, cheapest-first) | Merges several stories' `linkedin_post.md` files into one newsletter-edition draft plus a network-facing notification teaser (`edition_notification.txt`), invoked via the standalone `newsletter_merge.py` script — not part of the `gata`/`pipeline.py` flow |
 
@@ -113,6 +113,11 @@ gata "NATO summit in Brussels" --html
 # Generate a researched (non-satirical) companion article alongside the cartoon
 gata "Vibe coding in production" --linkedin-post
 gata "Vibe coding in production" --linkedin-post --angle "where it should not be used" --angle "where it's fine as long as..."
+
+# Research-only mode: skip the entire satirical pipeline (no cartoon, no image
+# cost) and produce only a researched report — runs once, not once per audience
+gata "AI regulation in the EU" --research-only
+gata "AI regulation in the EU" --research-only --linkedin-post
 ```
 
 Output folder: `{cwd}/{topic_slug}/` — one PNG per audience, plus a bundle folder per
@@ -153,6 +158,12 @@ python pipeline.py --community uk-politics --providers providers.yaml
 
 # Researched (non-satirical) companion article, with operator-supplied angles
 python pipeline.py --topic "Vibe coding in production" --audience "engineering leaders" --language English --tone neutral --direct --linkedin-post --angle "where it should not be used" --angle "where it's fine as long as..."
+
+# Research-only mode: skip the entire satirical pipeline (no cartoon, no image
+# cost) — produces research_report.md by default, or the branded
+# linkedin_post.md when combined with --linkedin-post
+python pipeline.py --topic "AI regulation in the EU" --audience "policy analysts" --language English --tone neutral --research-only
+python pipeline.py --community uk-politics --research-only --linkedin-post
 ```
 
 ### Multi-panel flags
@@ -166,6 +177,7 @@ python pipeline.py --topic "Vibe coding in production" --audience "engineering l
 | `--providers` | path | built-in defaults | Path to `providers.yaml` — overrides built-in LLM assignments |
 | `--linkedin-post` | — | off | Generate a researched LinkedIn article (`linkedin_post.md`) and notification snippet (`linkedin_notification.txt`) in the output bundle |
 | `--angle` | text, repeatable | none | An angle the `--linkedin-post` article should explore (e.g. `--angle "X" --angle "Y"`); has no effect without `--linkedin-post` |
+| `--research-only` | — | off | Skip the entire satirical pipeline (Cultural Strategist, Satirist, Image Generator, Image Evaluator) and produce only a researched report — neutral `research_report.md` by default, or the branded `linkedin_post.md` when combined with `--linkedin-post`. On the `gata` CLI, runs once using the first inferred audience instead of looping per audience |
 
 ### Output bundle
 
@@ -183,6 +195,9 @@ Each run writes a bundle folder containing:
 | `deep_dive_en.html` | English operator deep-dive (`--html` only) |
 | `linkedin_post.md` | Researched, non-satirical companion article — independently researched by Claude/Gemini/Grok (paywalled/low-reliability domains filtered before drafting), opening with a labelled Executive Summary and organised by agreed angles, citing sources inline as numbered footnotes against a code-built, matching Sources list (up to 15); the AI-authorship disclosure and pipeline metrics sit at the bottom, inside "Behind the Scenes" (`--linkedin-post` only) |
 | `linkedin_notification.txt` | Serious push-notification teaser for LinkedIn followers (`--linkedin-post` only) |
+| `research_report.md` | Neutral, unbranded researched report — same research/angle-planning/writing engine as `linkedin_post.md`, but no Gata branding, no closing/subscribe block, no "Behind the Scenes" tech-stack promo (`--research-only` without `--linkedin-post` only) |
+
+In `--research-only` mode, `cartoon.png`, `agent0_log.txt`, `bc_log.txt`, and `prompt_card.txt` are never created — no cartoon is generated — and the bundle lives under `output/research/{topic_slug}_{timestamp}/` instead of an image-derived path.
 
 ## Communities
 
@@ -301,3 +316,4 @@ communication protocol framework.
 | 43 | Uniform source titles — every Sources-list entry reads as `domain - page title` regardless of provider; Gemini/Grok resolve it via a direct `httpx` fetch of the cited URL, Claude gets a domain prefix added to its own already-good title | ✅ |
 | 44 | Descriptive source titles — a 4-step chain (fetched `<title>`/`og:title`/`twitter:title` → humanised URL-path slug → the source's own provider's same-call title → drop) replaces the single-tier fetch, so no source is ever published as a bare domain or the site's own name restated | ✅ |
 | 45 | LinkedIn feature image size correction — `engagement_image.png` and, with `--linkedin-post` on a single-panel/horizontal cartoon, `cartoon.png` are corrected in Python (Gemini aspect-ratio hint + Pillow centre-crop/resize) to exactly LinkedIn's 1200x644 Article-cover size, so LinkedIn's own auto-crop never clips the image | ✅ |
+| 46 | Research-only mode — `--research-only` skips the entire satirical pipeline (Cultural Strategist, Satirist, Image Generator, Image Evaluator) and runs only the research/angle-planning/writing engine, producing a neutral `research_report.md` by default or the branded `linkedin_post.md` when combined with `--linkedin-post`; on the `gata` CLI it runs once (first inferred audience) instead of once per audience | ✅ |
