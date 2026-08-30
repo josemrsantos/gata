@@ -1,6 +1,39 @@
 # CHANGELOG
 
 
+## v1.28.0 (2026-08-30)
+
+### Features
+
+* feat: spec 046 — research-only mode
+
+Adds `--research-only` to both `pipeline.py` and the `gata` CLI. When set, the
+entire satirical pipeline (Cultural Strategist, Satirist, Image Generator,
+Image Evaluator) is skipped entirely — no cartoon, no image cost, no concept
+generation — and only the researched-article engine (Spec 042) runs, against
+a minimal EnrichedBrief built directly from the topic (the same construction
+`--direct` already used, now shared via a `core.runner._minimal_brief()`
+helper).
+
+- By default this produces a new, fully neutral, unbranded `research_report.md`
+  in the output bundle — no Gata references, no closing/subscribe block, no
+  "Behind the Scenes" tech-stack promo, just the article, Sources, Pipeline
+  Metrics, and the AI-authorship disclosure.
+- Combined with `--linkedin-post`, it instead produces the existing
+  Gata-branded `linkedin_post.md` / `linkedin_notification.txt` — for the
+  first time reachable without any cartoon concept behind it, since that
+  article generation never actually depended on one.
+- `agent_linkedin_post.generate_linkedin_post()` gains a `branded: bool = True`
+  parameter controlling only final assembly; every research/angle-planning/
+  citation-writing stage is identical regardless, so exactly one expensive
+  panel run happens per invocation, never two.
+- On the `gata` CLI, `--research-only` runs the pipeline exactly once (using
+  only the first inferred audience) instead of once per inferred audience,
+  since a single report has no per-audience image variants.
+- Bundle location is independent of any image path: `output/research/
+  {topic_slug}_{timestamp}/`.
+
+
 ## v1.27.0 (2026-08-29)
 
 ### Features

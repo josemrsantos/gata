@@ -58,6 +58,7 @@ what has already merged to `main`.
 | 043 | Uniform source titles — every Sources-list entry reads as `domain - page title` regardless of provider; Gemini/Grok resolve it via a direct `httpx` fetch of the cited URL, Claude gets a domain prefix added to its own already-good title | ✅ |
 | 044 | Descriptive source titles — a 4-step chain (fetched `<title>`/`og:title`/`twitter:title` → humanised URL-path slug → the source's own provider's same-call title → drop) replaces the single-tier fetch, so no source is ever published as a bare domain or the site's own name restated | ✅ |
 | 045 | LinkedIn feature image size correction — `engagement_image.png` and, with `--linkedin-post` on a single-panel/horizontal cartoon, `cartoon.png` are corrected in Python (Gemini aspect-ratio hint + Pillow centre-crop/resize) to exactly LinkedIn's 1200x644 Article-cover size, so LinkedIn's own auto-crop never clips the image | ✅ |
+| 046 | Research-only mode — `--research-only` skips the entire satirical pipeline (Cultural Strategist, Satirist, Image Generator, Image Evaluator) and runs only the research/angle-planning/writing engine, producing a neutral `research_report.md` by default or the branded `linkedin_post.md` when combined with `--linkedin-post`; on the `gata` CLI it runs once (first inferred audience) instead of once per audience | ✅ |
 <!-- SPECKIT END -->
 
 LLM REVIEW PROTOCOL — this is a hard stop, not a suggestion. Violating it is not acceptable under any circumstances,

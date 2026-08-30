@@ -1206,6 +1206,42 @@ def _build_sources_section(sources: list[ResearchSource]) -> str:
     return "\n".join(lines)
 
 
+def _assemble_report(
+    sections: dict[str, str],
+    sources: list[ResearchSource],
+    telemetry: RunTelemetry,
+    topic: str,
+) -> str:
+    """Neutral, unbranded assembly for research_only mode (Spec 046 FR-005).
+
+    Same section data as _assemble_article, but the title falls back to a
+    neutral default and the Gata-specific closing block / tech-stack promo
+    (_CLOSING_BLOCK, _SECTION_4_BODY) are omitted entirely — only the factual
+    Pipeline Metrics line and AI-authorship disclosure remain.
+    """
+    title = sections.get("TITLE", "").strip() or f"Research Report: {topic}"
+    summary = sections.get("EXECUTIVE_SUMMARY", "").strip()
+    body = sections.get("BODY", "")
+    s1 = f"# {title}"
+    summary_section = f"## Executive Summary\n\n{summary}" if summary else ""
+    sources_section = _build_sources_section(sources)
+    duration = telemetry.total_duration_seconds
+    cost = telemetry.total_cost_usd
+    metrics_line = (
+        f"*Pipeline Execution Metrics - Total Time: {duration:.1f}s"
+        f" | Total Cost: ${cost:.4f}*"
+    )
+    parts = [s1]
+    if summary_section:
+        parts.append(summary_section)
+    if body.strip():
+        parts.append(body.strip())
+    if sources_section:
+        parts.append(sources_section)
+    parts.append(f"{metrics_line}\n\n{_DISCLOSURE}")
+    return "\n\n".join(parts)
+
+
 def _assemble_article(
     sections: dict[str, str], sources: list[ResearchSource], telemetry: RunTelemetry
 ) -> str:
@@ -1252,13 +1288,19 @@ def generate_linkedin_post(
     panelist_providers: list[list[LLMProvider]],
     aggregator_providers: list[LLMProvider],
     angles: list[str] | None = None,
+    branded: bool = True,
 ) -> tuple[str, str]:
-    """Generate the researched LinkedIn article markdown and notification text.
+    """Generate the researched article markdown and notification text.
 
     Returns (article_md, notification_txt). Never raises — a total failure at
     the research, angle-planning, or writing stage returns empty strings so the
     caller can skip writing files (FR-008); every stage still appends its own
     AgentTelemetry entry (or entries) to `telemetry` before returning.
+
+    `branded` (Spec 046) controls only the final assembly step: `True` (the
+    default, unchanged behaviour) produces today's Gata-branded article via
+    `_assemble_article`; `False` produces a neutral, unbranded report via
+    `_assemble_report` — every stage before assembly is identical either way.
     """
     clean_angles = [a.strip() for a in (angles or []) if a and a.strip()] or None
 
@@ -1300,6 +1342,10 @@ def generate_linkedin_post(
     )
     sections["EXECUTIVE_SUMMARY"] = new_summary
     sections["BODY"] = new_body
-    article_md = _assemble_article(sections, final_sources, telemetry)
+    article_md = (
+        _assemble_article(sections, final_sources, telemetry)
+        if branded
+        else _assemble_report(sections, final_sources, telemetry, topic)
+    )
     notification_txt = sections.get("NOTIFICATION", "")
     return article_md, notification_txt
