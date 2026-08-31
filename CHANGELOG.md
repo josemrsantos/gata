@@ -1,6 +1,39 @@
 # CHANGELOG
 
 
+## v1.28.1 (2026-08-31)
+
+### Fixes
+
+* fix: spec 052 — FairParallelPanel verdict truncation drops a panelist
+
+A retrospective audit of 92 persisted FairParallelPanel transcripts found
+that in 29 of them (~32%), gemini-2.5-flash — and only gemini-2.5-flash —
+produced a valid round-1 response and then silently vanished from round 2
+onward. A live LinkedIn Angle Planning run root-caused it: round 2's
+peer-reactive prompt produces a longer response, which was getting cut off
+by `max_tokens` before the closing `</verdict>` tag, and the shared
+`_extract_proposer_verdict()` parser required both an opening and closing
+tag — treating the truncation as a hard protocol violation and dropping the
+panelist entirely, discarding an otherwise-complete, good-faith response.
+
+Two fixes:
+- `_extract_proposer_verdict()` (shared by DualPersonaLoop, FairParallelPanel,
+  and the legacy ParallelPanel) now recovers the content after an opening
+  `<verdict>` tag when the closing tag is missing, logging a WARNING instead
+  of raising. A response with no opening tag at all is unchanged — still a
+  hard failure, since that's a genuine protocol violation, not a truncation.
+- LinkedIn Angle Planning's panelist/aggregator `max_tokens` raised from
+  1200 to 2500 — the one call site with live-proven evidence its budget was
+  too tight for a round-2 response.
+
+Deliberately not touched: Cultural Strategist's and Satirist's `max_tokens`
+(the default 2048) — their historical drops are a well-supported hypothesis,
+not proven, since the actual failure reason was never persisted to a log
+file (see the upcoming Spec 050 persistent-logging work). The shared parser
+fix protects them regardless of which mechanism turns out to be the cause.
+
+
 ## v1.28.0 (2026-08-30)
 
 ### Features

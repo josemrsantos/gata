@@ -51,9 +51,21 @@ Last reviewer feedback:
 
 def _extract_proposer_verdict(text: str) -> str:
     matches = re.findall(r"<verdict>(.*?)</verdict>", text, re.DOTALL)
-    if not matches:
-        raise ValueError(f"proposer response missing <verdict> tag: {text[:200]!r}")
-    return matches[-1]
+    if matches:
+        return matches[-1]
+    # Spec 052: an opening <verdict> with no closing tag is a foreseeable
+    # max_tokens truncation, not a protocol violation — recover the content
+    # instead of dropping the panelist entirely. No opening tag at all is a
+    # genuine violation and still raises.
+    unclosed = re.search(r"<verdict>(.*)$", text, re.DOTALL)
+    if unclosed:
+        logger.warning(
+            "proposer response missing closing </verdict> tag — using"
+            " truncated content: %r",
+            text[:200],
+        )
+        return unclosed.group(1).strip()
+    raise ValueError(f"proposer response missing <verdict> tag: {text[:200]!r}")
 
 
 def _parse_reviewer_verdict(text: str) -> str:
