@@ -1,34 +1,84 @@
 # TODO
 
-## Quieter default terminal output — *new Spec 050*
+## Quieter default terminal output + persistent logging — *new Spec 050*
 
 **Goal:** Reduce default terminal output so a run's important signal (final
 output location, total cost/time, and any real failures) isn't buried under
-per-agent/per-model cost breakdowns and routine log noise. Move the full
-per-agent/per-model token/cost breakdown out of the default terminal view
-(it already duplicates summary.txt in the bundle) down to a single TOTAL
-line; add a --verbose/-v flag that restores today's full on-screen detail.
+per-agent/per-model cost breakdowns and routine log noise — while making
+sure nothing hidden from the terminal is lost: add a FileHandler (WARNING+
+by default) so every run's logging output is also persisted to disk. Move
+the full per-agent/per-model token/cost breakdown out of the default
+terminal view (it already duplicates summary.txt in the bundle) down to a
+single TOTAL line; add a --verbose/-v flag that restores today's full
+on-screen detail.
 
 **Reason:** A real --research-only run's terminal output is dominated by
 ~20+ WARNING lines (SDK nags, panelist retries, excluded-source
 classifications) and a full per-agent/per-model breakdown, making it hard to
 see at a glance whether the run succeeded and where the output landed.
+Separately, a retrospective audit of FairParallelPanel panelist drop-offs
+(29/92 historical runs had a panelist silently fail to reach the final
+round) hit a dead end: the actual failure reason (timeout vs. exception) is
+never persisted anywhere — pipeline.py/core/cli.py only call
+logging.basicConfig() with no FileHandler.
 
 **Confirmed:** WARNING-level lines already go to stderr (verified via
 logging.basicConfig's default stream) — `2>/dev/null` already hides them
-today. The per-agent/per-model cost breakdown is print()-based (stdout),
-the same stream as the final "Report saved to..." line, so it can't
-currently be hidden independently.
+today, but nothing captures them for later. The per-agent/per-model cost
+breakdown is print()-based (stdout), the same stream as the final "Report
+saved to..." line, so it can't currently be hidden independently.
 
 **Things to figure out:**
 - Exact default-quiet format: progress markers + TOTAL line + output path
   only, or leaner still?
 - Whether --verbose restores today's exact output or a new intermediate
   level is warranted.
-- Whether any WARNING-level messages are worth surfacing by default (e.g.
-  "every provider's research failed") vs. purely diagnostic ones.
+- Log file location/naming (per-run file inside the output bundle? a single
+  rolling gata.log? both?) and whether DEBUG-level detail belongs there too.
+- Whether any WARNING-level messages are worth surfacing on-screen by
+  default vs. file-only for purely diagnostic ones.
 - Whether this applies to both pipeline.py and gata, or just the
   interactive gata CLI.
+
+---
+
+## FairParallelPanel aggregation improvements — *new Spec 051*
+
+**Goal:** Three related improvements to FairParallelPanel's aggregation
+step, all touching the same shared class:
+1. **Blind review** — anonymize `CONCEPT {i} ({name}):` to `CONCEPT {i}:`
+   in the aggregator-facing message, so the aggregator judges purely on
+   content with no visibility into which model/panelist produced which
+   concept.
+2. **Configurable round count** — expose `iterations` as a CLI flag (e.g.
+   --fair-rounds N) on both pipeline.py and gata, threaded down to every
+   FairParallelPanel construction site, instead of each panel's hardcoded
+   default (mostly 2).
+3. **Aggregator source disclosure** — after aggregation, have code (not
+   the LLM) determine which panelist's concept the aggregator actually
+   picked (via the existing PICK: N parse), translate that back to the
+   real provider/model name, and log it — e.g. "INFO: Satirist/Co-Satirist:
+   aggregator selected concept from claude-sonnet-4-6".
+
+**Reason:** All three came up together while auditing FairParallelPanel's
+aggregation design: today the aggregator sees full panelist identities (a
+possible bias blind-spot), round count is hardcoded per-panel with no
+operator control, and there's no visibility into which provider's work
+actually won out at the end of a run.
+
+**Confirmed:** All three are changes to the shared
+llm/fair_parallel_panel.py class (plus each call site for round-count flag
+threading) — a single spec, not three per-panel patches.
+
+**Things to figure out:**
+- Exact CLI flag name/default for round count, and whether omitting it
+  keeps each panel's own historical default.
+- Whether the disclosure log line belongs at INFO only, or should also
+  surface in quiet-mode terminal output (ties into Spec 050).
+- Whether disclosure attributes credit only via the PICK: N line, since a
+  synthesized answer may draw from multiple panelists.
+- Panelist anonymization order — stable per-run vs. shuffled, so position
+  doesn't become a de facto identity giveaway.
 
 ---
 
