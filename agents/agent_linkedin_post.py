@@ -983,7 +983,7 @@ def _plan_angles(
             name=slot[0].model_id,
             providers=slot,
             system_prompt=_PLANNER_SYSTEM + _panelist_research_context(digest),
-            max_tokens=1200,
+            max_tokens=2500,
         )
         for slot, digest in zip(panelist_providers, digests)
     ]
@@ -991,7 +991,7 @@ def _plan_angles(
         name="Managing Editor",
         providers=aggregator_providers,
         system_prompt=_PLANNER_AGGREGATOR_SYSTEM,
-        max_tokens=1200,
+        max_tokens=2500,
     )
     panel = FairParallelPanel(
         panelists=panelists, aggregator=aggregator, panel_name="LinkedIn Angle Planning"

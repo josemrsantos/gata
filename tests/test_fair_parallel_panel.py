@@ -267,6 +267,35 @@ def test_failed_panelist_skipped():
     assert result.verdict
 
 
+def test_truncated_round2_verdict_keeps_panelist_active():
+    # Spec 052: a panelist whose round-2 response has an opening <verdict>
+    # but no closing tag (a max_tokens truncation) must be recovered, not
+    # dropped -- it must still reach the final aggregation.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [
+                (_verdict("concept-a-r1"), _make_usage()),
+                ("Response. <verdict>concept-a-r2-truncated", _make_usage()),
+            ],
+            "pb": [
+                (_verdict("concept-b-r1"), _make_usage()),
+                (_verdict("concept-b-r2"), _make_usage()),
+            ],
+            "agg": [(_pick(1, "concept-a-r2-truncated"), _make_usage())],
+        }
+    )
+    panel = FairParallelPanel(
+        _make_panelists(["pa", "pb"]), _make_aggregator(), "P", iterations=2
+    )
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        panel.run("topic")
+    agg_calls = [c for c in mock.calls if c[0] == "agg"]
+    agg_prompt = agg_calls[0][1][0]["content"]
+    assert "concept-a-r2-truncated" in agg_prompt
+
+
 def test_all_panelists_fail_raises():
     # When every panelist fails in round 1 a RuntimeError must be raised because
     # there is no content to aggregate and the run cannot produce a valid result.

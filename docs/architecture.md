@@ -933,7 +933,10 @@ initial_input
 **Key properties:**
 - Panelists run in true parallel threads via `concurrent.futures.ThreadPoolExecutor`
 - A panelist that times out (`panelist_timeout=60s` outer budget) or fails is dropped;
-  the run continues as long as at least one panelist survives
+  the run continues as long as at least one panelist survives. A response with an
+  opening `<verdict>` tag but no closing tag (a `max_tokens` truncation, not a
+  protocol violation) is recovered instead of dropped (Spec 052) — only a response
+  missing the opening tag entirely counts as a failure
 - Default: `iterations=2` (one round of peer sharing before aggregation)
 - Per-provider timeout (Spec 036): each provider in a fallback chain can have its own
   `timeout` field in `providers.yaml`; if it stalls, the next provider starts fresh

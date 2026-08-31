@@ -964,6 +964,20 @@ def test_plan_angles_embeds_each_panelists_own_digest_in_its_own_prompt():
     assert "Findings for C" in prompts[2]
 
 
+def test_plan_angles_panelist_and_aggregator_use_2500_max_tokens():
+    # Spec 052: 1200 was proven too tight for a round-2 peer-reactive
+    # response (live truncation on gemini-2.5-flash) — both panelist and
+    # aggregator configs must use the raised budget.
+    providers = _panelist_providers()
+    digests = [None, None, None]
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.return_value = _fake_loop_output("ANGLE: A\nFOCUS: b")
+        alp._plan_angles("Topic", digests, None, providers, [_provider("agg")])
+    _, kwargs = mock_cls.call_args
+    assert all(p.max_tokens == 2500 for p in kwargs["panelists"])
+    assert kwargs["aggregator"].max_tokens == 2500
+
+
 def test_plan_angles_panel_failure_returns_none():
     # FR-008: total panel failure must soft-fail, not raise.
     providers = _panelist_providers()

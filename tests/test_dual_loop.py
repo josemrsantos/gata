@@ -247,6 +247,38 @@ def test_missing_proposer_verdict_tag_raises_value_error():
         loop.run("input")
 
 
+def test_missing_closing_tag_recovers_truncated_content():
+    # Spec 052: a response cut off by max_tokens before the closing tag is a
+    # foreseeable truncation, not a protocol violation — recover the content
+    # after the opening tag instead of dropping the panelist entirely.
+    from llm.dual_loop import _extract_proposer_verdict
+
+    truncated = "Response. <verdict>ANGLE: X\nFOCUS: Y"
+    assert _extract_proposer_verdict(truncated) == "ANGLE: X\nFOCUS: Y"
+
+
+def test_missing_closing_tag_logs_warning(caplog):
+    # The recovered content may still be incomplete, so this must stay
+    # visible in the logs even though it no longer raises.
+    from llm.dual_loop import _extract_proposer_verdict
+
+    with caplog.at_level(logging.WARNING):
+        _extract_proposer_verdict("<verdict>truncated content")
+    assert any(
+        "missing closing" in rec.message.lower() or "truncat" in rec.message.lower()
+        for rec in caplog.records
+    )
+
+
+def test_missing_opening_tag_still_raises():
+    # Regression guard: a response with no <verdict> tag at all is a genuine
+    # protocol violation, not a truncation — this must keep raising.
+    from llm.dual_loop import _extract_proposer_verdict
+
+    with pytest.raises(ValueError):
+        _extract_proposer_verdict("No tags here at all.")
+
+
 def test_verdict_tag_content_extracted_with_dotall():
     # The <verdict> tag content may span multiple lines; re.DOTALL must be used so
     # newlines inside the tag are preserved in the returned string.
