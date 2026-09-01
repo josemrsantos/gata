@@ -1,47 +1,5 @@
 # TODO
 
-## Quieter default terminal output + persistent logging — *new Spec 050*
-
-**Goal:** Reduce default terminal output so a run's important signal (final
-output location, total cost/time, and any real failures) isn't buried under
-per-agent/per-model cost breakdowns and routine log noise — while making
-sure nothing hidden from the terminal is lost: add a FileHandler (WARNING+
-by default) so every run's logging output is also persisted to disk. Move
-the full per-agent/per-model token/cost breakdown out of the default
-terminal view (it already duplicates summary.txt in the bundle) down to a
-single TOTAL line; add a --verbose/-v flag that restores today's full
-on-screen detail.
-
-**Reason:** A real --research-only run's terminal output is dominated by
-~20+ WARNING lines (SDK nags, panelist retries, excluded-source
-classifications) and a full per-agent/per-model breakdown, making it hard to
-see at a glance whether the run succeeded and where the output landed.
-Separately, a retrospective audit of FairParallelPanel panelist drop-offs
-(29/92 historical runs had a panelist silently fail to reach the final
-round) hit a dead end: the actual failure reason (timeout vs. exception) is
-never persisted anywhere — pipeline.py/core/cli.py only call
-logging.basicConfig() with no FileHandler.
-
-**Confirmed:** WARNING-level lines already go to stderr (verified via
-logging.basicConfig's default stream) — `2>/dev/null` already hides them
-today, but nothing captures them for later. The per-agent/per-model cost
-breakdown is print()-based (stdout), the same stream as the final "Report
-saved to..." line, so it can't currently be hidden independently.
-
-**Things to figure out:**
-- Exact default-quiet format: progress markers + TOTAL line + output path
-  only, or leaner still?
-- Whether --verbose restores today's exact output or a new intermediate
-  level is warranted.
-- Log file location/naming (per-run file inside the output bundle? a single
-  rolling gata.log? both?) and whether DEBUG-level detail belongs there too.
-- Whether any WARNING-level messages are worth surfacing on-screen by
-  default vs. file-only for purely diagnostic ones.
-- Whether this applies to both pipeline.py and gata, or just the
-  interactive gata CLI.
-
----
-
 ## FairParallelPanel aggregation improvements — *new Spec 051*
 
 **Goal:** Three related improvements to FairParallelPanel's aggregation

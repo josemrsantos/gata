@@ -78,6 +78,14 @@ def format_summary(telemetry: RunTelemetry) -> str:
     return "\n".join(lines)
 
 
+def format_total_line(telemetry: RunTelemetry) -> str:
+    """Single-line rollup for quiet-mode terminal output: just the TOTAL."""
+    return (
+        f"TOTAL: {telemetry.total_duration_seconds:.1f}s"
+        f" — ${telemetry.total_cost_usd:.4f}"
+    )
+
+
 def write_bundle(
     output_path: str,
     agent0_log: ConversationLog | None,
@@ -90,6 +98,7 @@ def write_bundle(
     aggregator_providers: "list[LLMProvider] | None" = None,
     linkedin_post: "tuple[str, str] | None" = None,
     research_report: str | None = None,
+    log_lines: list[str] | None = None,
 ) -> str:
     """Create the bundle folder and write all output files. Never raises."""
     bundle_dir = Path(output_path).parent / Path(output_path).stem
@@ -110,6 +119,8 @@ def write_bundle(
         _write_text(bundle_dir / "linkedin_notification.txt", notification_txt)
     if research_report:
         _write_text(bundle_dir / "research_report.md", research_report)
+    if log_lines:
+        _write_text(bundle_dir / "run.log", "\n".join(log_lines))
     if include_html and enriched_brief is not None and image_prompt is not None:
         # Use providers supplied by caller; fall back to hardcoded defaults if absent.
         if panelist_providers is None or aggregator_providers is None:

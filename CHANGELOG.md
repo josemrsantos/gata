@@ -1,6 +1,37 @@
 # CHANGELOG
 
 
+## v1.29.0 (2026-09-01)
+
+### Features
+
+* feat: spec 050 — quieter default terminal output + persistent logging
+
+The terminal was dominated by ~20+ WARNING lines and a full per-agent/
+per-model cost breakdown, burying whether a run succeeded and where its
+output landed. `run_pipeline()`'s final print is now a single
+`TOTAL: {duration}s — ${cost}` line by default (progress markers like
+"Cultural Strategist..." stay, as a lightweight liveness signal); a new
+`--verbose`/`-v` flag on both `pipeline.py` and `gata` restores today's
+full per-agent/per-model breakdown plus `INFO`-level logs on screen.
+`summary.txt`/`telemetry.json` are completely unaffected — full detail is
+always saved to the bundle regardless of this flag.
+
+`pipeline.py`'s `logging.basicConfig` level also moves from an
+unconditional `INFO` to `WARNING` by default, unifying it with `gata`'s
+existing default — `--verbose` restores `INFO` on both.
+
+Separately: every `run_pipeline()` call now captures its own
+`WARNING`-and-above log records (via a small in-memory handler installed
+for the duration of that call) and persists them to a new `run.log` inside
+that run's bundle directory, regardless of terminal verbosity — present
+only when a run actually logged something, same omission convention as
+every other optional bundle file. This closes the exact gap that stalled
+the Spec 052 investigation: the real failure detail behind a WARNING was
+previously visible only in a terminal that was long gone by the time
+anyone went looking.
+
+
 ## v1.28.1 (2026-08-31)
 
 ### Fixes

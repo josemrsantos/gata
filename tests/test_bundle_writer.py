@@ -593,6 +593,48 @@ def test_write_bundle_summary_txt_matches_format_summary(tmp_path):
     assert content == format_summary(telemetry)
 
 
+# -- format_total_line / write_bundle: run.log (Spec 050) --
+
+
+def test_format_total_line_returns_only_total():
+    # Spec 050 SC-001: the quiet-mode print must be exactly the TOTAL line,
+    # with no per-agent/per-model breakdown mixed in.
+    from core.bundle_writer import format_total_line
+
+    text = format_total_line(_make_telemetry())
+    assert text == "TOTAL: 23.3s — $0.0080"
+
+
+def test_write_bundle_creates_run_log_when_lines_given(tmp_path):
+    # Spec 050 FR-004: non-empty log_lines must be persisted as run.log,
+    # one line per entry, alongside the bundle's other files.
+    from core.bundle_writer import write_bundle
+
+    output_path = str(tmp_path / "cartoon.png")
+    write_bundle(
+        output_path,
+        None,
+        None,
+        None,
+        None,
+        log_lines=["WARNING: something happened", "ERROR: something worse"],
+    )
+    content = (tmp_path / "cartoon" / "run.log").read_text()
+    assert content == "WARNING: something happened\nERROR: something worse"
+
+
+def test_write_bundle_skips_run_log_when_lines_empty_or_none(tmp_path):
+    # Spec 050 SC-004: a clean run (no WARNING+) must not create an empty
+    # run.log — omission, same convention as every other optional file.
+    from core.bundle_writer import write_bundle
+
+    output_path = str(tmp_path / "cartoon.png")
+    write_bundle(output_path, None, None, None, None, log_lines=[])
+    assert not (tmp_path / "cartoon" / "run.log").exists()
+    write_bundle(output_path, None, None, None, None, log_lines=None)
+    assert not (tmp_path / "cartoon" / "run.log").exists()
+
+
 # -- write_bundle: research_report (Spec 046) --
 
 

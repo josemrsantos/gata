@@ -109,12 +109,26 @@ def main() -> None:
             " not once per inferred audience."
         ),
     )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help=(
+            "show the full per-agent/per-model cost breakdown and INFO-level"
+            " logs on screen (default: a single TOTAL line and WARNING+ only"
+            " — full detail is always saved to the bundle's summary.txt"
+            " regardless of this flag)"
+        ),
+    )
     args = parser.parse_args()
     if not args.topic.strip():
         print("error: topic must not be empty", file=sys.stderr)
         sys.exit(1)
     found_dotenv = load_dotenv()
-    logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
+    logging.basicConfig(
+        level=logging.INFO if args.verbose else logging.WARNING,
+        format="%(levelname)s: %(message)s",
+    )
     if found_dotenv:
         print("credentials loaded from .env file")
     else:
@@ -161,6 +175,7 @@ def main() -> None:
                 research_only=True,
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
+                verbose=args.verbose,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("research-only run failed: %s", exc)
@@ -193,6 +208,7 @@ def main() -> None:
                 skip_cultural_strategist=args.direct,
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
+                verbose=args.verbose,
             )
             audience_telemetry.append((audience.name, telemetry))
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:

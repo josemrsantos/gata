@@ -28,6 +28,24 @@ from llm.base import LLMProvider
 logger = logging.getLogger(__name__)
 
 
+class _ListLogHandler(logging.Handler):
+    """Captures formatted WARNING+ records in memory for this run's bundle.
+
+    Installed on the root logger for the duration of a single run_pipeline()
+    call (Spec 050) so every WARNING/ERROR — from this project's own code or
+    any third-party SDK — is persisted to that run's bundle as run.log,
+    regardless of terminal verbosity.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.WARNING)
+        self.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+        self.lines: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.lines.append(self.format(record))
+
+
 def _minimal_brief(topic: str, seed_brief: StrategyBrief) -> EnrichedBrief:
     """Build an EnrichedBrief straight from the topic/seed, no Cultural Strategist.
 
@@ -89,6 +107,7 @@ def run_pipeline(
     generate_linkedin_post: bool = False,
     angles: list[str] | None = None,
     research_only: bool = False,
+    verbose: bool = False,
 ) -> RunTelemetry:
     """Run the full pipeline for a single topic and write the output image."""
     # Build provider lists from config when supplied; otherwise wrap hardcoded defaults
@@ -109,6 +128,8 @@ def run_pipeline(
     enriched_brief = None
     concept = None
     telemetry = RunTelemetry()
+    log_handler = _ListLogHandler()
+    logging.getLogger().addHandler(log_handler)
     try:
         if research_only:
             # Research-only mode: skip the entire satirical pipeline — Cultural
@@ -238,6 +259,7 @@ def run_pipeline(
                     research_report = article_md
             else:
                 logger.warning("linkedin_post: generation failed — files not written")
+        logging.getLogger().removeHandler(log_handler)
         bundle_writer.write_bundle(
             output_path,
             agent0_log,
@@ -250,6 +272,11 @@ def run_pipeline(
             aggregator_providers=aggregator_providers,
             linkedin_post=linkedin_post,
             research_report=research_report,
+            log_lines=log_handler.lines,
         )
-        print(bundle_writer.format_summary(telemetry))
+        print(
+            bundle_writer.format_summary(telemetry)
+            if verbose
+            else bundle_writer.format_total_line(telemetry)
+        )
     return telemetry

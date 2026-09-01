@@ -178,6 +178,7 @@ python pipeline.py --community uk-politics --research-only --linkedin-post
 | `--linkedin-post` | — | off | Generate a researched LinkedIn article (`linkedin_post.md`) and notification snippet (`linkedin_notification.txt`) in the output bundle |
 | `--angle` | text, repeatable | none | An angle the `--linkedin-post` article should explore (e.g. `--angle "X" --angle "Y"`); has no effect without `--linkedin-post` |
 | `--research-only` | — | off | Skip the entire satirical pipeline (Cultural Strategist, Satirist, Image Generator, Image Evaluator) and produce only a researched report — neutral `research_report.md` by default, or the branded `linkedin_post.md` when combined with `--linkedin-post`. On the `gata` CLI, runs once using the first inferred audience instead of looping per audience |
+| `--verbose` / `-v` | — | off | Show the full per-agent/per-model cost breakdown and `INFO`-level logs on screen (default: a single `TOTAL:` line and `WARNING`+ only). Full detail is always saved to `summary.txt` regardless of this flag |
 
 ### Output bundle
 
@@ -196,6 +197,7 @@ Each run writes a bundle folder containing:
 | `linkedin_post.md` | Researched, non-satirical companion article — independently researched by Claude/Gemini/Grok (paywalled/low-reliability domains filtered before drafting), opening with a labelled Executive Summary and organised by agreed angles, citing sources inline as numbered footnotes against a code-built, matching Sources list (up to 15); the AI-authorship disclosure and pipeline metrics sit at the bottom, inside "Behind the Scenes" (`--linkedin-post` only) |
 | `linkedin_notification.txt` | Serious push-notification teaser for LinkedIn followers (`--linkedin-post` only) |
 | `research_report.md` | Neutral, unbranded researched report — same research/angle-planning/writing engine as `linkedin_post.md`, but no Gata branding, no closing/subscribe block, no "Behind the Scenes" tech-stack promo (`--research-only` without `--linkedin-post` only) |
+| `run.log` | Every `WARNING`-and-above log message from that run, regardless of terminal verbosity — present only if the run logged at least one (omitted for a clean run) |
 
 In `--research-only` mode, `cartoon.png`, `agent0_log.txt`, `bc_log.txt`, and `prompt_card.txt` are never created — no cartoon is generated — and the bundle lives under `output/research/{topic_slug}_{timestamp}/` instead of an image-derived path.
 
@@ -317,3 +319,5 @@ communication protocol framework.
 | 44 | Descriptive source titles — a 4-step chain (fetched `<title>`/`og:title`/`twitter:title` → humanised URL-path slug → the source's own provider's same-call title → drop) replaces the single-tier fetch, so no source is ever published as a bare domain or the site's own name restated | ✅ |
 | 45 | LinkedIn feature image size correction — `engagement_image.png` and, with `--linkedin-post` on a single-panel/horizontal cartoon, `cartoon.png` are corrected in Python (Gemini aspect-ratio hint + Pillow centre-crop/resize) to exactly LinkedIn's 1200x644 Article-cover size, so LinkedIn's own auto-crop never clips the image | ✅ |
 | 46 | Research-only mode — `--research-only` skips the entire satirical pipeline (Cultural Strategist, Satirist, Image Generator, Image Evaluator) and runs only the research/angle-planning/writing engine, producing a neutral `research_report.md` by default or the branded `linkedin_post.md` when combined with `--linkedin-post`; on the `gata` CLI it runs once (first inferred audience) instead of once per audience | ✅ |
+| 50 | Quieter default terminal output + persistent logging — the terminal now shows one-line progress markers plus a single `TOTAL:` line by default (the full per-agent/per-model breakdown moves behind a new `--verbose`/`-v` flag, which also unifies `pipeline.py`'s log level with `gata`'s); every run's own `WARNING`-and-above messages are persisted to a new `run.log` in its bundle, regardless of verbosity | ✅ |
+| 52 | FairParallelPanel verdict truncation fix — `_extract_proposer_verdict()` recovers a response truncated before its closing `</verdict>` tag (max_tokens cutoff) instead of dropping the panelist; LinkedIn Angle Planning's `max_tokens` raised 1200→2500, the one call site with live-proven evidence | ✅ |
