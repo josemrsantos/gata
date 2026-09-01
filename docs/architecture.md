@@ -829,12 +829,14 @@ flowchart LR
     FH["explanation.html\ndeep_dive_en.html"]
     FL["linkedin_post.md\nlinkedin_notification.txt"]
     FR["research_report.md"]
+    FW["run.log"]
 
     IN --> BW
     BW --> F2 & F3 & F4 & F5 & F6
     BW -.->|"--html only"| FH
     BW -.->|"--linkedin-post only"| FL
     BW -.->|"--research-only\n(without --linkedin-post)"| FR
+    BW -.->|"any WARNING+ logged"| FW
 ```
 
 The cartoon PNG is written by **Image Generator** to `output_path` before Bundle Writer
@@ -843,6 +845,17 @@ be (`{parent}/{stem}/`). In `--research-only` mode there is no PNG at all — `o
 is a synthetic `output/research/{topic_slug}_{timestamp}.md` key built by the CLI purely
 for this naming derivation, and `write_bundle`'s `research_report: str | None` parameter
 (independent of `linkedin_post`) is what triggers `research_report.md`.
+
+**Persistent per-run logging (Spec 050)**: `run_pipeline()` installs a small in-memory
+`logging.Handler` on the root logger for the duration of its own call — capturing every
+`WARNING`-and-above record (this project's own or any third-party SDK's) regardless of
+terminal verbosity — and removes it just before calling Bundle Writer, passing the
+captured lines as `log_lines`. Bundle Writer writes them to `run.log` only when non-empty;
+a clean run gets no `run.log` at all, same omission convention as every other optional
+bundle file. Because the handler is installed inside `run_pipeline()` itself rather than
+in either CLI entry point, each call — including `gata`'s per-audience loop, where
+`run_pipeline()` runs once per audience — gets its own independently-scoped capture, so
+one audience's warnings never leak into another's bundle.
 
 **Example**
 
@@ -884,6 +897,13 @@ uk_prime_minister_resigns_over_housing/
 
 > Trend Scout does not appear in the summary when `--topic` is supplied directly — it was
 > bypassed. It appears only in community-mode runs.
+
+**Terminal output (Spec 050)**: `summary.txt` above is always written in full, regardless
+of verbosity. The *terminal* is quieter by default — `run_pipeline()`'s final `print()` is
+just `TOTAL: 22.5s — $0.0644` (via the new `format_total_line()`), not the full per-agent/
+per-model breakdown shown above. Pass `--verbose`/`-v` (either entry point) to print the
+full breakdown on-screen too, and to raise both entry points' `logging.basicConfig` level
+from `WARNING` to `INFO`.
 
 ---
 

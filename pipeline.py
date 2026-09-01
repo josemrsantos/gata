@@ -129,6 +129,17 @@ def main() -> None:
             " linkedin_post.md when combined with --linkedin-post"
         ),
     )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help=(
+            "show the full per-agent/per-model cost breakdown and INFO-level"
+            " logs on screen (default: a single TOTAL line and WARNING+ only"
+            " — full detail is always saved to the bundle's summary.txt"
+            " regardless of this flag)"
+        ),
+    )
     args = parser.parse_args()
     if args.angle and not args.linkedin_post:
         logger.info("--angle has no effect without --linkedin-post")
@@ -151,7 +162,7 @@ def main() -> None:
     # Logging and env vars must be initialised before any config load can emit errors
     found_dotenv = load_dotenv()
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.INFO if args.verbose else logging.WARNING,
         format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
     )
     # Silence SDK HTTP noise — operators want agent-level output, not socket events
@@ -259,6 +270,7 @@ def main() -> None:
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
                 research_only=args.research_only,
+                verbose=args.verbose,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -312,6 +324,7 @@ def main() -> None:
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
                 research_only=args.research_only,
+                verbose=args.verbose,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -407,6 +420,7 @@ def main() -> None:
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
                 research_only=args.research_only,
+                verbose=args.verbose,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -463,6 +477,7 @@ def main() -> None:
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
                 research_only=args.research_only,
+                verbose=args.verbose,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)

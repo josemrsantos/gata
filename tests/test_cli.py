@@ -172,3 +172,94 @@ def test_direct_with_research_only_logs_info_not_error(caplog):
         "--direct" in rec.message and "research-only" in rec.message.lower()
         for rec in caplog.records
     )
+
+
+# ---------------------------------------------------------------------------
+# Spec 050 — gata --verbose/-v CLI flag
+# ---------------------------------------------------------------------------
+
+
+def test_gata_verbose_flag_sets_info_level():
+    # FR-006: --verbose must raise gata's logging level to INFO.
+    import core.cli as cli
+
+    with (
+        patch.dict("os.environ", ENV),
+        patch("core.cli.load_dotenv"),
+        patch("sys.argv", ["gata", "AI regulation", "--research-only", "--verbose"]),
+        patch("core.cli.infer_audiences", return_value=_AUDIENCES),
+        patch("core.cli.run_pipeline", return_value=RunTelemetry()),
+        patch("os.makedirs"),
+        patch("core.cli.logging.basicConfig") as mock_basic_config,
+    ):
+        cli.main()
+    assert mock_basic_config.call_args.kwargs["level"] == logging.INFO
+
+
+def test_gata_default_sets_warning_level():
+    # FR-006: without --verbose, gata's default stays WARNING (unchanged).
+    import core.cli as cli
+
+    with (
+        patch.dict("os.environ", ENV),
+        patch("core.cli.load_dotenv"),
+        patch("sys.argv", ["gata", "AI regulation", "--research-only"]),
+        patch("core.cli.infer_audiences", return_value=_AUDIENCES),
+        patch("core.cli.run_pipeline", return_value=RunTelemetry()),
+        patch("os.makedirs"),
+        patch("core.cli.logging.basicConfig") as mock_basic_config,
+    ):
+        cli.main()
+    assert mock_basic_config.call_args.kwargs["level"] == logging.WARNING
+
+
+def test_gata_verbose_passed_to_run_pipeline_research_only():
+    # FR-005: --verbose must reach run_pipeline(verbose=True) on the
+    # research-only branch.
+    import core.cli as cli
+
+    with (
+        patch.dict("os.environ", ENV),
+        patch("core.cli.load_dotenv"),
+        patch("sys.argv", ["gata", "AI regulation", "--research-only", "--verbose"]),
+        patch("core.cli.infer_audiences", return_value=_AUDIENCES),
+        patch("core.cli.run_pipeline", return_value=RunTelemetry()) as mock_run,
+        patch("os.makedirs"),
+    ):
+        cli.main()
+    assert mock_run.call_args.kwargs["verbose"] is True
+
+
+def test_gata_verbose_passed_to_run_pipeline_each_audience():
+    # FR-005: --verbose must reach every run_pipeline() call in the
+    # per-audience loop, not just the first.
+    import core.cli as cli
+
+    with (
+        patch.dict("os.environ", ENV),
+        patch("core.cli.load_dotenv"),
+        patch("sys.argv", ["gata", "AI regulation", "--verbose"]),
+        patch("core.cli.infer_audiences", return_value=_AUDIENCES),
+        patch("core.cli.run_pipeline", return_value=RunTelemetry()) as mock_run,
+        patch("os.makedirs"),
+    ):
+        cli.main()
+    # _AUDIENCES already includes a UK entry, so _ensure_uk adds nothing.
+    assert mock_run.call_count == len(_AUDIENCES)
+    assert all(c.kwargs["verbose"] is True for c in mock_run.call_args_list)
+
+
+def test_gata_no_verbose_flag_passes_false_to_run_pipeline():
+    # Regression guard: default (no --verbose) must explicitly pass False.
+    import core.cli as cli
+
+    with (
+        patch.dict("os.environ", ENV),
+        patch("core.cli.load_dotenv"),
+        patch("sys.argv", ["gata", "AI regulation"]),
+        patch("core.cli.infer_audiences", return_value=_AUDIENCES),
+        patch("core.cli.run_pipeline", return_value=RunTelemetry()) as mock_run,
+        patch("os.makedirs"),
+    ):
+        cli.main()
+    assert all(c.kwargs["verbose"] is False for c in mock_run.call_args_list)

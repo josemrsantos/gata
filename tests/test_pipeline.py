@@ -2257,6 +2257,199 @@ def test_research_only_with_direct_logs_info_not_error(caplog):
 
 
 # ---------------------------------------------------------------------------
+# Spec 050 — run_pipeline() verbose flag + persistent run.log capture
+# ---------------------------------------------------------------------------
+
+
+def test_run_pipeline_verbose_false_prints_total_line_only():
+    # SC-001: quiet mode's final print must be format_total_line's output,
+    # not the full per-agent/per-model format_summary breakdown.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+        patch(
+            "core.bundle_writer.format_total_line", return_value="TOTAL_LINE_SENTINEL"
+        ),
+        patch(
+            "core.bundle_writer.format_summary", return_value="FULL_SUMMARY_SENTINEL"
+        ),
+        patch("builtins.print") as mock_print,
+    ):
+        run_pipeline(
+            "AI regulation", _RESEARCH_SEED, "out.md", research_only=True, verbose=False
+        )
+    printed = [str(c.args[0]) if c.args else "" for c in mock_print.call_args_list]
+    assert "TOTAL_LINE_SENTINEL" in printed
+    assert "FULL_SUMMARY_SENTINEL" not in printed
+
+
+def test_run_pipeline_verbose_true_prints_full_summary():
+    # SC-002: --verbose must restore today's full format_summary print.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value=""),
+        patch(
+            "core.bundle_writer.format_total_line", return_value="TOTAL_LINE_SENTINEL"
+        ),
+        patch(
+            "core.bundle_writer.format_summary", return_value="FULL_SUMMARY_SENTINEL"
+        ),
+        patch("builtins.print") as mock_print,
+    ):
+        run_pipeline(
+            "AI regulation", _RESEARCH_SEED, "out.md", research_only=True, verbose=True
+        )
+    printed = [str(c.args[0]) if c.args else "" for c in mock_print.call_args_list]
+    assert "FULL_SUMMARY_SENTINEL" in printed
+    assert "TOTAL_LINE_SENTINEL" not in printed
+
+
+def test_run_pipeline_captures_warning_and_passes_to_write_bundle():
+    # FR-003: a WARNING logged during the run must be captured and handed to
+    # write_bundle as log_lines, regardless of verbose.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("", ""),  # triggers the existing "generation failed" WARNING
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_write,
+    ):
+        run_pipeline("AI regulation", _RESEARCH_SEED, "out.md", research_only=True)
+    log_lines = mock_write.call_args.kwargs["log_lines"]
+    assert any("generation failed" in line for line in log_lines)
+
+
+def test_run_pipeline_no_warnings_passes_empty_log_lines():
+    # SC-004: a clean run must pass an empty list, not None or a missing kwarg —
+    # write_bundle relies on this to decide whether to write run.log.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_write,
+    ):
+        run_pipeline("AI regulation", _RESEARCH_SEED, "out.md", research_only=True)
+    assert mock_write.call_args.kwargs["log_lines"] == []
+
+
+def test_run_pipeline_run_log_excludes_info_level():
+    # SC-005: research_only mode logs an INFO line ("research-only mode...")
+    # — that must never leak into the WARNING+-only log_lines capture.
+    from core.runner import run_pipeline
+
+    with (
+        patch("core.runner.agent_cultural_strategist.run"),
+        patch("core.runner.agent_satirist.run"),
+        patch("core.runner.agent_image_generator.generate"),
+        patch("core.runner.agent_image_evaluator.evaluate"),
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ),
+        patch("core.bundle_writer.write_bundle", return_value="") as mock_write,
+    ):
+        run_pipeline("AI regulation", _RESEARCH_SEED, "out.md", research_only=True)
+    log_lines = mock_write.call_args.kwargs["log_lines"]
+    assert not any("research-only mode" in line for line in log_lines)
+
+
+# ---------------------------------------------------------------------------
+# Spec 050 — pipeline.py --verbose/-v CLI flag
+# ---------------------------------------------------------------------------
+
+
+def test_pipeline_verbose_flag_sets_info_level():
+    # FR-006: --verbose must raise pipeline.py's logging level to INFO.
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch("sys.argv", _MANUAL_ARGV + ["--verbose"]),
+        patch("pipeline.load_communities"),
+        patch("pipeline.run_pipeline", return_value=MagicMock()),
+        patch("os.makedirs"),
+        patch("pipeline.logging.basicConfig") as mock_basic_config,
+    ):
+        pipeline.main()
+    assert mock_basic_config.call_args.kwargs["level"] == logging.INFO
+
+
+def test_pipeline_default_sets_warning_level():
+    # FR-006: without --verbose, pipeline.py's default must be WARNING —
+    # quieter than its previous unconditional INFO default.
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch("sys.argv", _MANUAL_ARGV),
+        patch("pipeline.load_communities"),
+        patch("pipeline.run_pipeline", return_value=MagicMock()),
+        patch("os.makedirs"),
+        patch("pipeline.logging.basicConfig") as mock_basic_config,
+    ):
+        pipeline.main()
+    assert mock_basic_config.call_args.kwargs["level"] == logging.WARNING
+
+
+def test_pipeline_verbose_passed_to_run_pipeline():
+    # FR-005: --verbose must reach run_pipeline(verbose=True).
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch("sys.argv", _MANUAL_ARGV + ["--verbose"]),
+        patch("pipeline.load_communities"),
+        patch("pipeline.run_pipeline", return_value=MagicMock()) as mock_run,
+        patch("os.makedirs"),
+    ):
+        pipeline.main()
+    assert mock_run.call_args.kwargs["verbose"] is True
+
+
+def test_pipeline_no_verbose_flag_passes_false_to_run_pipeline():
+    # Regression guard: default (no --verbose) must explicitly pass False,
+    # not rely on run_pipeline's own default.
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch("sys.argv", _MANUAL_ARGV),
+        patch("pipeline.load_communities"),
+        patch("pipeline.run_pipeline", return_value=MagicMock()) as mock_run,
+        patch("os.makedirs"),
+    ):
+        pipeline.main()
+    assert mock_run.call_args.kwargs["verbose"] is False
+
+
+# ---------------------------------------------------------------------------
 # target_size gating — Spec 045 LinkedIn feature image size correction
 # ---------------------------------------------------------------------------
 
