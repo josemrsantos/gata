@@ -1034,6 +1034,30 @@ def test_write_article_passes_round_validator():
     assert kwargs["round_validator"] is alp._citation_round_validator
 
 
+def test_write_article_panelist_and_aggregator_use_4000_max_tokens():
+    # Spec 053: a real run's run.log showed 3000 truncating once even though
+    # it already carried the file's largest budget (a full 500-800 word
+    # article per round) — both panelist and aggregator configs must use the
+    # raised budget.
+    providers = _panelist_providers()
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.return_value = _fake_loop_output(
+            "===TITLE===\nT\n===BODY===\nB\n===COMMENT===\nC?\n===NOTIFICATION===\nN"
+        )
+        alp._write_article(
+            "Topic",
+            [None, None, None],
+            "ANGLE: A",
+            BRIEF,
+            providers,
+            [_provider("agg")],
+            [],
+        )
+    _, kwargs = mock_cls.call_args
+    assert all(p.max_tokens == 4000 for p in kwargs["panelists"])
+    assert kwargs["aggregator"].max_tokens == 4000
+
+
 def test_write_article_panel_failure_returns_none():
     providers = _panelist_providers()
     with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
@@ -1266,6 +1290,23 @@ def test_classify_domains_panel_uses_panel_timeout_and_iterations():
     _, kwargs = mock_cls.call_args
     assert kwargs["panelist_timeout"] == 90
     assert kwargs["iterations"] == 3
+
+
+def test_classify_domains_panel_panelist_and_aggregator_use_2000_max_tokens():
+    # Spec 053: a real run's run.log showed 1000 truncating 3 times in one
+    # run (tighter than Angle Planning's already-proven-too-tight 1200, and
+    # one more round) — both panelist and aggregator configs must use the
+    # raised budget.
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.return_value = _fake_loop_output(
+            '{"a.com": {"paywalled": false, "reliability": "high"}}'
+        )
+        alp._classify_domains_panel(
+            ["a.com"], _panelist_providers(), [_provider("agg")]
+        )
+    _, kwargs = mock_cls.call_args
+    assert all(p.max_tokens == 2000 for p in kwargs["panelists"])
+    assert kwargs["aggregator"].max_tokens == 2000
 
 
 def test_classify_domains_panel_parses_verdict_json():

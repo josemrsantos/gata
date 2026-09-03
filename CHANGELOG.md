@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v1.29.1 (2026-09-03)
+
+### Fixes
+
+* fix: spec 053 — LinkedIn Post panel `max_tokens` follow-up
+
+A real `--research-only` run's persisted `run.log` (Spec 050) showed the
+same truncation mechanism Spec 052 fixed at Angle Planning recurring at two
+other `agents/agent_linkedin_post.py` `FairParallelPanel` call sites:
+Domain Classification (`max_tokens=1000`, 3 truncations in one run) and
+LinkedIn Article Writing (`max_tokens=3000`, 1 truncation despite already
+carrying the file's largest budget). Spec 052's recovery fallback meant no
+panelist was lost and no content was broken, but this proactively raises
+both budgets — Domain Classification 1000 → 2000, Article Writing 3000 →
+4000 — to reduce how often that recovery path is needed.
+
+
 ## v1.29.0 (2026-09-01)
 
 ### Features
