@@ -820,7 +820,7 @@ def _classify_domains_panel(
             name=slot[0].model_id,
             providers=slot,
             system_prompt=_DOMAIN_CLASSIFIER_SYSTEM,
-            max_tokens=1000,
+            max_tokens=2000,
         )
         for slot in panelist_providers
     ]
@@ -828,7 +828,7 @@ def _classify_domains_panel(
         name="Source Classifier",
         providers=aggregator_providers,
         system_prompt=_DOMAIN_CLASSIFIER_AGGREGATOR_SYSTEM,
-        max_tokens=1000,
+        max_tokens=2000,
     )
     panel = FairParallelPanel(
         panelists=panelists,
@@ -1113,7 +1113,7 @@ def _write_article(
             system_prompt=(
                 _WRITER_SYSTEM + _panelist_research_context(digest) + citable_block
             ),
-            max_tokens=3000,
+            max_tokens=4000,
         )
         for slot, digest in zip(panelist_providers, digests)
     ]
@@ -1121,7 +1121,7 @@ def _write_article(
         name="Managing Editor",
         providers=aggregator_providers,
         system_prompt=_WRITER_AGGREGATOR_SYSTEM,
-        max_tokens=3000,
+        max_tokens=4000,
     )
     panel = FairParallelPanel(
         panelists=panelists,
