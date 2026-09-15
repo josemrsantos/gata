@@ -82,3 +82,40 @@ cases, kept as cheap/free as this side project needs.
 **Success criteria:** Running `python pipeline.py` alone prints usage with at least one fully worked example per mode (manual, community, random).
 
 **Spec check:** No existing spec covers CLI help/usage output (checked every `specs/*/spec.md` for "help"/"usage"/"self-doc" — no hits; spec 008, the closest candidate, only covers audience selection, not help text). Confirmed live: `pipeline.py` with no arguments today prints no usage at all, just falls through to the API-key check. This is new capability, not a correction — new spec number.
+
+---
+
+## FairParallelPanel executor hang risk — *new Spec 054*
+
+**Goal:** Fix the same `ThreadPoolExecutor` context-manager hang pattern in
+`llm/fair_parallel_panel.py`'s `_call_persona()` that was just fixed in
+`agents/agent_linkedin_post.py` (Spec 042 amendment, 2026-09-15) — replace
+`with ThreadPoolExecutor(...) as ex:` + `future.result(timeout=provider.timeout)`
+with a non-context-manager executor and
+`shutdown(wait=False, cancel_futures=True)`, plus (where feasible) an
+SDK-level per-call timeout passed directly to `provider.generate()`.
+
+**Reason:** `_call_persona()` only exercises the executor path when a
+panelist provider has an explicit `timeout` set via `providers.yaml` (Spec
+036) — that wasn't the case in the incident that surfaced the bug, so it
+didn't contribute there, but the exact same "caller gives up via
+future.result(timeout=...), then shutdown(wait=True) blocks on the same
+stuck thread anyway" defect is present, and every FairParallelPanel caller
+(Cultural Strategist, Satirist, Explainer, LinkedIn Angle
+Planning/Writing/Domain Classification) is reachable through it whenever an
+operator configures a per-provider timeout.
+
+**Confirmed:** Isolated to `llm/fair_parallel_panel.py`'s `_call_persona()`
+method — no other file shares this exact pattern outside the two already
+fixed in Spec 042's 2026-09-15 amendment.
+
+**Things to figure out:**
+- Whether `LLMProvider.generate()`'s signature can accept a passthrough
+  per-call timeout uniformly across Claude/Gemini/Grok without breaking
+  every existing call site, or whether this needs to stay
+  orchestration-only (executor fix alone, no SDK-level bound) since
+  `generate()` doesn't currently expose that.
+- Whether this is a Living Spec amendment to Spec 036 (per-provider
+  timeout) or Spec 034 (FairParallelPanel itself), or a fresh spec number —
+  same RULE 18 question as this session's fix, deferred until this item is
+  picked up.

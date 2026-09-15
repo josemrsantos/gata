@@ -475,3 +475,96 @@ this is considered done.
 
 All other Constitution Check rows from the original plan and the first
 amendment are unaffected.
+
+## Amendment (2026-09-15): Research/title-fetch executor hang fix
+
+**Living Spec amendment** (CLAUDE.md RULE 18) implementing `spec.md`'s
+"Amendment (2026-09-15)" section (FR-031, FR-032, SC-018–SC-021). Branch:
+`042-linkedin-research-hang-fix` — a fresh branch per RULE 5 for this stage of
+work, distinct from every prior `042-*` branch (all already merged).
+
+### Source Code Changes (this amendment)
+
+```text
+agents/agent_linkedin_post.py   MODIFY:
+                                 - _research_claude (~line 582): add
+                                   `timeout=_RESEARCH_TIMEOUT_SECONDS` to the
+                                   `client.messages.create()` call (FR-031).
+                                 - _research_grok (~line 661): add
+                                   `timeout=_RESEARCH_TIMEOUT_SECONDS` to the
+                                   `client.responses.create()` call (FR-031).
+                                 - _research_gemini (~line 514): add
+                                   `http_options=genai_types.HttpOptions(
+                                   timeout=int(_RESEARCH_TIMEOUT_SECONDS *
+                                   1000))` to the existing
+                                   `GenerateContentConfig(...)` (FR-031).
+                                 - research_all_panelists (~line 889):
+                                   replace `with
+                                   concurrent.futures.ThreadPoolExecutor(...)
+                                   as executor:` with a plain
+                                   `executor = ThreadPoolExecutor(...)`,
+                                   keeping the existing per-future
+                                   `result(timeout=...)` loop unindented from
+                                   the `with`, followed by
+                                   `executor.shutdown(wait=False,
+                                   cancel_futures=True)` (FR-032).
+                                 - _resolve_sources's do_fetch branch (~line
+                                   449): identical restructuring — drop the
+                                   `with`, add the same
+                                   `shutdown(wait=False,
+                                   cancel_futures=True)` call after the
+                                   per-future loop (FR-032).
+
+tests/test_agent_linkedin_post.py   MODIFY — add coverage for: each research
+                                     function passing an explicit
+                                     timeout/http_options to its mocked SDK
+                                     client (SC-018); research_all_panelists
+                                     returning promptly when one of three
+                                     mocked panelist calls blocks forever
+                                     (SC-019, via a `threading.Event` the
+                                     test never sets, with
+                                     `_RESEARCH_TIMEOUT_SECONDS` monkeypatched
+                                     to a small value so the test itself stays
+                                     fast); _resolve_sources returning
+                                     promptly under the same blocked-future
+                                     setup (SC-020, with
+                                     `_TITLE_FETCH_TIMEOUT_SECONDS`
+                                     monkeypatched small).
+```
+
+**Structure Decision**: fix at the layer that actually blocks — the real
+network call — rather than adding more orchestration on top of the pattern
+that already failed once. Two changes, both necessary:
+
+1. An SDK-level `timeout` bounds the actual blocking operation regardless of
+   what the caller does with `Future.result(timeout=...)` — this is the
+   layer FR-001 always intended to be authoritative.
+2. `shutdown(wait=False, cancel_futures=True)` stops the *caller* from ever
+   blocking on a straggler it already gave up on, closing the specific hang
+   mechanism this incident reproduced even if some future stall still slips
+   past (1) (e.g. a stall inside the SDK's own retry logic that ignores the
+   passed timeout).
+
+Considered and rejected: switching these calls to daemon threads or a
+`ProcessPoolExecutor` so a genuinely stuck worker could be abandoned or
+killed outright. Unnecessary — (1) already bounds the actual operation at
+its source, and Python's `concurrent.futures.thread` module registers a
+process-wide `atexit` hook that joins every thread any `ThreadPoolExecutor`
+ever created regardless of daemon status or a process pool's own
+lifecycle quirks, so that route trades a well-understood, minimal fix for
+more moving parts without removing the real risk. No further defense is
+added beyond (1) and (2), consistent with fixing the proven mechanism rather
+than every hypothetical one.
+
+### Constitution Check (re-run for this amendment)
+
+| # | Principle | Status | Note |
+|---|-----------|--------|------|
+| 1 | SDK and Model Rules | ✅ N/A | Same three SDK clients as the original plan; no new SDK, no new model. |
+| 9 | Testing Rules | ✅ | New tests simulate a genuinely stuck future (a `threading.Event` never set) with the module's own timeout constants monkeypatched small, so they prove the fix without ever actually sleeping for `_RESEARCH_TIMEOUT_SECONDS`/`_TITLE_FETCH_TIMEOUT_SECONDS`; every new test carries a RULE-3 comment. |
+| 11 | Development Stages | ✅ | Branch `042-linkedin-research-hang-fix` created off `main` before any file was written for this amendment. |
+| 12 | Code Quality | ✅ | `ruff check .` / `ruff format .` clean on every changed file. |
+| 13 | Logging | ✅ N/A | No new logging behaviour — the existing "exceeded Xs — treating as failed" warnings are unchanged; this amendment only makes that promise actually true. |
+
+All other Constitution Check rows from the original plan and prior amendments
+are unaffected.

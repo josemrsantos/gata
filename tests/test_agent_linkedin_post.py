@@ -1,3 +1,4 @@
+import threading
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -33,6 +34,23 @@ def _provider(model_id: str) -> MagicMock:
 
 def _panelist_providers() -> list[list[MagicMock]]:
     return [[_provider("model-a")], [_provider("model-b")], [_provider("model-c")]]
+
+
+def _call_with_deadline(func, *args, deadline: float = 2.0, **kwargs):
+    # Runs func in a daemon thread and joins with a deadline — a regression
+    # to the pre-Spec-042-amendment-2026-09-15 executor.shutdown(wait=True)
+    # bug would hang this call forever; daemon=True keeps that failure from
+    # ever blocking the test process itself, so the assertion below is what
+    # actually catches it (Spec 042 amendment 2026-09-15 FR-032).
+    result: list = []
+    thread = threading.Thread(
+        target=lambda: result.append(func(*args, **kwargs)), daemon=True
+    )
+    thread.start()
+    thread.join(timeout=deadline)
+    if thread.is_alive():
+        raise AssertionError(f"{func.__name__} did not return within {deadline}s")
+    return result[0]
 
 
 # -- _build_research_query --
@@ -206,6 +224,19 @@ def test_research_gemini_empty_text_returns_none():
     provider.client.models.generate_content.return_value = response
     digest, usage = alp._research_gemini(provider, "Topic: X")
     assert digest is None
+
+
+def test_research_gemini_passes_explicit_http_timeout():
+    # Spec 042 amendment (2026-09-15) FR-031: Gemini's client expresses a
+    # per-call timeout via GenerateContentConfig.http_options.timeout
+    # (milliseconds), the same bounded-at-the-source guarantee as Claude/Grok.
+    provider = MagicMock(model_id="gemini-2.5-flash")
+    provider.client.models.generate_content.return_value = MagicMock(text="x")
+    alp._research_gemini(provider, "Topic: X")
+    _, kwargs = provider.client.models.generate_content.call_args
+    assert kwargs["config"].http_options.timeout == int(
+        alp._RESEARCH_TIMEOUT_SECONDS * 1000
+    )
 
 
 # -- _fetch_page_title (Spec 043, extended by Spec 044 FR-001/FR-014) --
@@ -627,6 +658,43 @@ def test_resolve_sources_empty_list_returns_empty_list():
     assert alp._resolve_sources([], {}, do_fetch=True) == []
 
 
+def test_resolve_sources_returns_when_one_fetch_hangs():
+    # Spec 042 amendment (2026-09-15) FR-032: a title fetch that genuinely
+    # never returns must not block this function past its own per-future
+    # result(timeout=...) — same executor.shutdown(wait=True) hang mechanism
+    # as research_all_panelists, in the nested title-fetch pool.
+    candidates = [
+        ("x.com", "https://x.com/a", "x.com"),
+        ("y.com", "https://y.com/b", "y.com"),
+    ]
+    stuck = threading.Event()
+
+    def _side_effect(url):
+        if url == "https://x.com/a":
+            stuck.wait(timeout=5)  # release valve — never set within the test
+            return None, url
+        return "Fetched Title", url
+
+    try:
+        with (
+            patch(
+                "agents.agent_linkedin_post._fetch_page_title",
+                side_effect=_side_effect,
+            ),
+            patch.object(alp, "_TITLE_FETCH_TIMEOUT_SECONDS", 0.05),
+        ):
+            # _resolve_sources's own per-future wait is
+            # _TITLE_FETCH_TIMEOUT_SECONDS + 2 (here ~2.05s) — deadline must
+            # clear that plus scheduling slack, not just the patched constant.
+            resolved = _call_with_deadline(
+                alp._resolve_sources, candidates, {}, do_fetch=True, deadline=4.0
+            )
+    finally:
+        stuck.set()  # release the stuck worker so it doesn't outlive the test
+    urls = {s.url for s in resolved}
+    assert "https://y.com/b" in urls
+
+
 def test_research_claude_success_returns_digest_and_usage():
     # A successful Claude web-search call must extract text and citations.
     provider = MagicMock(model_id="claude-sonnet-4-6")
@@ -648,6 +716,21 @@ def test_research_claude_exception_returns_none():
     digest, usage = alp._research_claude(provider, "Topic: X")
     assert digest is None
     assert usage is None
+
+
+def test_research_claude_passes_explicit_timeout():
+    # Spec 042 amendment (2026-09-15) FR-031: the SDK call itself, not just
+    # the caller's own wait, must be bounded — otherwise a stalled connection
+    # can block the underlying thread forever regardless of any orchestration
+    # timeout wrapped around it (the root cause of a real multi-hour hang).
+    provider = MagicMock(model_id="claude-sonnet-4-6")
+    provider.client.messages.create.return_value = MagicMock(
+        content=[MagicMock(type="text", text="x", citations=[])],
+        usage=MagicMock(input_tokens=1, output_tokens=1),
+    )
+    alp._research_claude(provider, "Topic: X")
+    _, kwargs = provider.client.messages.create.call_args
+    assert kwargs["timeout"] == alp._RESEARCH_TIMEOUT_SECONDS
 
 
 def test_research_grok_success_returns_digest_and_usage():
@@ -689,6 +772,19 @@ def test_research_grok_exception_returns_none():
     digest, usage = alp._research_grok(provider, "Topic: X")
     assert digest is None
     assert usage is None
+
+
+def test_research_grok_passes_explicit_timeout():
+    # Spec 042 amendment (2026-09-15) FR-031: same bounded-at-the-source
+    # guarantee as Claude's — an OpenAI-compatible client accepts its own
+    # per-call timeout kwarg independent of any orchestration-level wait.
+    provider = MagicMock(model_id="grok-4.3")
+    provider.client.responses.create.return_value = MagicMock(
+        output=[], output_text="x", usage=MagicMock(input_tokens=1, output_tokens=1)
+    )
+    alp._research_grok(provider, "Topic: X")
+    _, kwargs = provider.client.responses.create.call_args
+    assert kwargs["timeout"] == alp._RESEARCH_TIMEOUT_SECONDS
 
 
 # -- _research_for_provider dispatch --
@@ -898,6 +994,43 @@ def test_research_all_panelists_keeps_eligible_source():
         )
     mock_classify.assert_not_called()
     assert digests[0].sources == [source]
+
+
+def test_research_all_panelists_returns_when_one_panelist_hangs():
+    # Spec 042 amendment (2026-09-15) FR-032: a panelist call that genuinely
+    # never returns (e.g. a stuck connection below any SDK-level timeout)
+    # must not block this function past its own per-future
+    # result(timeout=...) — reproduces the real multi-hour hang, where a
+    # straggler thread kept executor.shutdown(wait=True) blocked forever.
+    providers = _panelist_providers()
+    stuck = threading.Event()
+
+    def _side_effect(provider, topic, angles):
+        if provider.model_id == "model-b":
+            stuck.wait(timeout=5)  # release valve — never set within the test
+            return None, None, 5.0
+        return ResearchDigest(summary="ok", sources=[]), None, 0.01
+
+    try:
+        with (
+            patch(
+                "agents.agent_linkedin_post._research_for_provider",
+                side_effect=_side_effect,
+            ),
+            patch.object(alp, "_RESEARCH_TIMEOUT_SECONDS", 0.05),
+        ):
+            digests, _ = _call_with_deadline(
+                alp.research_all_panelists,
+                providers,
+                "Topic",
+                None,
+                [_provider("agg")],
+            )
+    finally:
+        stuck.set()  # release the stuck worker so it doesn't outlive the test
+    assert digests[0] is not None
+    assert digests[1] is None
+    assert digests[2] is not None
 
 
 # -- _panelist_research_context --
