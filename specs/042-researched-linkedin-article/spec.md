@@ -573,3 +573,82 @@ sources reach any further prompt (angle planning or writing).
   (immediately after each research call returns).
 - `duckdb` is a new project dependency (Python package, no external service —
   single embedded file, no server process).
+
+## Amendment (2026-09-15): Research/title-fetch executor hang fix
+
+**Living Spec amendment** (per CLAUDE.md RULE 18) — this section fixes a defect
+in this spec's own FR-001 guarantee rather than creating a new spec number,
+since it corrects the existing implementation, not new capability.
+
+**Motivation**: a real `--linkedin-post` run hung for over two and a half hours
+(process alive, `0:19` total CPU time against ~2h42m wall clock — i.e. blocked
+on I/O, not computing) after logging all three research-timeout warnings in
+sequence:
+
+```
+WARNING: linkedin_research: claude-sonnet-4-6 exceeded 120.0s — treating as failed
+WARNING: linkedin_research: grok-build-0.1 exceeded 120.0s — treating as failed
+WARNING: linkedin_research: gemini-2.5-flash exceeded 120.0s — treating as failed
+```
+
+Root cause: `research_all_panelists()` (`agents/agent_linkedin_post.py:889`)
+and `_resolve_sources()`'s title-fetch step (`agents/agent_linkedin_post.py:449`)
+both submit work to a `concurrent.futures.ThreadPoolExecutor` used as a context
+manager (`with ... as executor:`), then read each future's result via
+`future.result(timeout=...)`. That call only bounds how long the *caller*
+waits — it does not cancel the submitted callable or stop its thread. When the
+`with` block exits, `ThreadPoolExecutor.__exit__` calls `shutdown(wait=True)`,
+which unconditionally blocks the calling thread until **every** submitted
+callable actually returns — including ones already logged as timed-out. FR-001
+promises these calls are "bounded by an explicit 120-second timeout... a
+provider exceeding it is treated as that provider's research failing, not a
+hang" — the implementation does not keep that promise: a single straggler
+thread (a provider call stalled below any timeout this code controls — e.g. a
+stuck DNS lookup or dead TCP connection) blocks the entire pipeline
+indefinitely at the `with` block boundary, exactly matching the observed hang.
+
+### New Functional Requirements
+
+- **FR-031**: Every direct SDK/HTTP call this feature makes that can block on
+  network I/O (`_research_claude`'s `client.messages.create()`,
+  `_research_grok`'s `client.responses.create()`, `_research_gemini`'s
+  `client.models.generate_content()`) MUST pass an explicit per-call timeout
+  to the underlying client itself — `timeout=_RESEARCH_TIMEOUT_SECONDS` for
+  the Anthropic and OpenAI-compatible (Grok) clients (both natively accept a
+  `timeout` kwarg on the call), and
+  `config=genai_types.GenerateContentConfig(..., http_options=genai_types.HttpOptions(timeout=int(_RESEARCH_TIMEOUT_SECONDS * 1000)))`
+  for Gemini (`HttpOptions.timeout` is milliseconds) — so the underlying
+  network operation itself cannot run past this bound, independent of
+  anything in `research_all_panelists()`'s own orchestration.
+  `_fetch_page_title()` (`agents/agent_linkedin_post.py:340`) already passes
+  `timeout=_TITLE_FETCH_TIMEOUT_SECONDS` directly to `httpx.get()` — it
+  already satisfies this requirement; no code change needed there.
+- **FR-032**: `research_all_panelists()` and `_resolve_sources()`'s title-fetch
+  step MUST NOT use their `ThreadPoolExecutor` as a context manager when
+  collecting bounded-timeout results. Both MUST construct the executor
+  directly (no `with`) and call
+  `executor.shutdown(wait=False, cancel_futures=True)` immediately after the
+  per-future result-collection loop, so a straggler future — one whose
+  `future.result(timeout=...)` already raised `TimeoutError` — can never
+  block the caller's own return.
+
+### New Success Criteria
+
+- **SC-018**: Given a mocked provider client, calling `_research_claude`,
+  `_research_grok`, or `_research_gemini` invokes the underlying SDK call
+  with an explicit `timeout` (or `http_options.timeout` for Gemini) matching
+  `_RESEARCH_TIMEOUT_SECONDS`.
+- **SC-019**: Given one of three mocked panelist calls in
+  `research_all_panelists()` that blocks indefinitely (never returns, no
+  exception), the function still returns within a small bounded margin over
+  `_RESEARCH_TIMEOUT_SECONDS` — not indefinitely — with that panelist's
+  digest as `None` and the other two populated normally.
+- **SC-020**: Given one of several mocked title-fetch calls in
+  `_resolve_sources(do_fetch=True)` that blocks indefinitely, the function
+  still returns within a small bounded margin over
+  `_TITLE_FETCH_TIMEOUT_SECONDS` — not indefinitely — with that candidate's
+  title resolution falling through the existing chain (FR-011).
+- **SC-021**: A real, manually-run end-to-end `--linkedin-post` invocation
+  completes (or soft-fails per FR-005/FR-008) without hanging, confirmed by
+  the process exiting and `run.log`/terminal output showing no gap longer
+  than a few minutes between consecutive log lines.

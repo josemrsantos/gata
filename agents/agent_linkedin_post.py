@@ -446,22 +446,25 @@ def _resolve_sources(
         return []
     fetch_results: dict[str, tuple[str | None, str]] = {}
     if do_fetch:
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=len(candidates)
-        ) as executor:
-            futures = {
-                url: executor.submit(_fetch_page_title, url) for _, url, _ in candidates
-            }
-            for url, future in futures.items():
-                try:
-                    fetch_results[url] = future.result(
-                        timeout=_TITLE_FETCH_TIMEOUT_SECONDS + 2
-                    )
-                except Exception as exc:
-                    logger.debug(
-                        "linkedin_research: title fetch failed for %s — %s", url, exc
-                    )
-                    fetch_results[url] = (None, url)
+        # Not a `with` block — same reason as research_all_panelists (Spec 042
+        # amendment 2026-09-15 FR-032): shutdown(wait=True) on context-exit would
+        # block on a straggler fetch thread even after it's already been given up
+        # on below.
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(candidates))
+        futures = {
+            url: executor.submit(_fetch_page_title, url) for _, url, _ in candidates
+        }
+        for url, future in futures.items():
+            try:
+                fetch_results[url] = future.result(
+                    timeout=_TITLE_FETCH_TIMEOUT_SECONDS + 2
+                )
+            except Exception as exc:
+                logger.debug(
+                    "linkedin_research: title fetch failed for %s — %s", url, exc
+                )
+                fetch_results[url] = (None, url)
+        executor.shutdown(wait=False, cancel_futures=True)
     resolved: list[ResearchSource] = []
     for raw_title, url, domain in candidates:
         # Step 1: the candidate's own raw title (Claude's real citation title,
@@ -518,6 +521,9 @@ def _research_gemini(
                 system_instruction=_RESEARCH_SYSTEM,
                 tools=[genai_types.Tool(google_search=genai_types.GoogleSearch())],
                 temperature=0.2,
+                http_options=genai_types.HttpOptions(
+                    timeout=int(_RESEARCH_TIMEOUT_SECONDS * 1000)
+                ),
             ),
         )
     except Exception as exc:
@@ -587,6 +593,7 @@ def _research_claude(
             tools=[
                 {"type": "web_search_20250305", "name": "web_search", "max_uses": 5}
             ],
+            timeout=_RESEARCH_TIMEOUT_SECONDS,
         )
     except Exception as exc:
         logger.warning(
@@ -663,6 +670,7 @@ def _research_grok(
             instructions=_RESEARCH_SYSTEM,
             input=query,
             tools=[{"type": "web_search"}],
+            timeout=_RESEARCH_TIMEOUT_SECONDS,
         )
     except Exception as exc:
         logger.warning(
@@ -886,32 +894,35 @@ def research_all_panelists(
     primaries = [slot[0] for slot in panelist_providers]
     digests: list[ResearchDigest | None] = [None] * len(primaries)
     telemetries: list[AgentTelemetry] = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(primaries)) as executor:
-        futures = [
-            executor.submit(_research_for_provider, provider, topic, angles)
-            for provider in primaries
-        ]
-        for i, (provider, future) in enumerate(zip(primaries, futures)):
-            try:
-                digest, usage, duration = future.result(
-                    timeout=_RESEARCH_TIMEOUT_SECONDS
-                )
-            except concurrent.futures.TimeoutError:
-                logger.warning(
-                    "linkedin_research: %s exceeded %ss — treating as failed",
-                    provider.model_id,
-                    _RESEARCH_TIMEOUT_SECONDS,
-                )
-                digest, usage, duration = None, None, _RESEARCH_TIMEOUT_SECONDS
-            digests[i] = digest
-            telemetries.append(
-                AgentTelemetry(
-                    agent_name=f"LinkedIn Research ({provider.model_id})",
-                    duration_seconds=duration,
-                    iterations=1 if digest is not None else 0,
-                    calls=[usage] if usage else [],
-                )
+    # Not a `with` block: shutdown(wait=True) on context-exit would block this
+    # function on any straggler thread even after its own future.result(timeout=...)
+    # below already gave up on it (Spec 042 amendment 2026-09-15 FR-032) — the root
+    # cause of a real multi-hour hang.
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(primaries))
+    futures = [
+        executor.submit(_research_for_provider, provider, topic, angles)
+        for provider in primaries
+    ]
+    for i, (provider, future) in enumerate(zip(primaries, futures)):
+        try:
+            digest, usage, duration = future.result(timeout=_RESEARCH_TIMEOUT_SECONDS)
+        except concurrent.futures.TimeoutError:
+            logger.warning(
+                "linkedin_research: %s exceeded %ss — treating as failed",
+                provider.model_id,
+                _RESEARCH_TIMEOUT_SECONDS,
             )
+            digest, usage, duration = None, None, _RESEARCH_TIMEOUT_SECONDS
+        digests[i] = digest
+        telemetries.append(
+            AgentTelemetry(
+                agent_name=f"LinkedIn Research ({provider.model_id})",
+                duration_seconds=duration,
+                iterations=1 if digest is not None else 0,
+                calls=[usage] if usage else [],
+            )
+        )
+    executor.shutdown(wait=False, cancel_futures=True)
     # Every research call is in; classify and filter before anyone downstream
     # (angle-planning, writing) ever sees a bad domain's sources.
     all_domains = {

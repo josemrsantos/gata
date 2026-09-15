@@ -1,6 +1,27 @@
 # CHANGELOG
 
 
+## v1.29.2 (2026-09-15)
+
+### Fixes
+
+* fix: spec 042 amendment — `--linkedin-post` research/title-fetch executor hang
+
+A real `--linkedin-post` run hung for over two and a half hours (process
+alive, near-zero CPU) after logging timeout warnings for all three research
+providers. Root cause: `research_all_panelists()` and `_resolve_sources()`'s
+title-fetch step both used `concurrent.futures.ThreadPoolExecutor` as a
+context manager while also giving up on individual futures via
+`future.result(timeout=...)` — exiting the `with` block still blocks on
+`shutdown(wait=True)` until every submitted thread returns, including ones
+already logged as timed out. Fixed by (1) passing an explicit per-call
+`timeout` directly to the underlying Claude/Grok/Gemini SDK calls, so the
+network operation itself is bounded, and (2) replacing both `with`-managed
+executors with an explicit `shutdown(wait=False, cancel_futures=True)`
+after each result-collection loop, so a straggler thread can no longer
+block the caller.
+
+
 ## v1.29.1 (2026-09-03)
 
 ### Fixes
