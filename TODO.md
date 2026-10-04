@@ -213,3 +213,46 @@ cases, kept as cheap/free as this side project needs.
 **Success criteria:** Running `python pipeline.py` alone prints usage with at least one fully worked example per mode (manual, community, random).
 
 **Spec check:** No existing spec covers CLI help/usage output (checked every `specs/*/spec.md` for "help"/"usage"/"self-doc" — no hits; spec 008, the closest candidate, only covers audience selection, not help text). Confirmed live: `pipeline.py` with no arguments today prints no usage at all, just falls through to the API-key check. This is new capability, not a correction — new spec number.
+
+---
+
+## Automatic model selection — *new Spec (number TBD)*
+
+**Goal:** Stop hand-picking and hand-updating the default model for every
+role. Instead, choose models by a stated policy (e.g. cheapest, best value,
+best performance, or a per-role mix) from what each provider currently offers,
+so a model release or retirement no longer needs a person to edit chain lists
+and price tables across the codebase.
+
+**Reason:** Defaults are hardcoded model IDs duplicated across ~10 files
+(`providers.yaml`, `core/runner.py`, `core/image_generation.py`,
+`core/newsletter_merge.py`, the agents, and three price tables), so every
+provider release forces a manual refresh spec (Spec 039, and Model currency
+refresh II). The refresh recurs and goes stale between runs of it.
+
+**Confirmed:** Idea only, agreed to be recorded now with its open questions
+left to be decided later. Model currency refresh II stays a manual,
+hardcoded refresh; this item is a separate, later approach.
+
+**Things to decide later (open questions):**
+- Selection policy: cheapest, best value, best performance, lowest latency, or
+  a weighted/per-role mix — and how each role (panelist, aggregator,
+  inference, image, newsletter) maps to a policy.
+- Source of truth for what is available: each provider's models-list API,
+  the documentation/pricing pages, or a maintained manifest in the repo.
+- Where prices come from, since provider APIs mostly do not expose them —
+  and what to do when price or availability cannot be fetched.
+- When selection runs: live at the start of each run, or a separate
+  refresh command that rewrites `providers.yaml`/the defaults for review.
+- Whether a human approval gate is required before a newly discovered model
+  becomes a default, and whether to cap the cost increase an automatic
+  upgrade may cause.
+- How "same tier" and "stable vs preview" are defined for providers without
+  tier names (xAI) or with preview-only releases, so a policy can be applied.
+- A last-known-good fallback list when discovery fails, so a provider outage
+  does not break runs.
+- How the chosen model is recorded (run log/telemetry) so runs stay
+  reproducible and cost reports stay explainable.
+- Constitution §1/§6 name specific models; a rule-based policy would need an
+  amendment, and the relationship with operator overrides in `providers.yaml`
+  must be defined.
