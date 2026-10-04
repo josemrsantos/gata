@@ -1,50 +1,52 @@
-"""The constitution's §1 must name the same models the code defaults to (Spec 054)."""
+"""The constitution states model *policy*, not model names (constitution v1.4)."""
 
 import re
 from pathlib import Path
 
-_CONSTITUTION = (
-    Path(__file__).resolve().parent.parent / ".specify/memory/constitution.md"
+_REPO = Path(__file__).resolve().parent.parent
+_CONSTITUTION = _REPO / ".specify/memory/constitution.md"
+_MODEL_ID = re.compile(
+    r"\b(?:claude-(?:sonnet|opus|haiku|fable|mythos)-[\w.\-]+|(?:gemini|grok)-\d[\w.\-]*)"
 )
 
-# Current defaults named in §1 (Gemini Flash stays 2.5: it still works, Spec 054).
-_CURRENT_DEFAULTS = {
-    "claude-sonnet-5-5",
-    "gemini-3.1-flash-image",
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-    "grok-4.3",
-}
 
-
-def _section_1() -> str:
+def _section(start: str, end: str) -> str:
     text = _CONSTITUTION.read_text()
-    start = text.index("### §1")
-    return text[start : text.index("### §2", start)]
+    first = text.index(start)
+    return text[first : text.index(end, first)]
 
 
-def test_section_1_names_only_current_default_models():
-    # A stale model name in §1 would make every later plan's Constitution Check
-    # wrong, so §1 may only name models that are current defaults.
-    named = set(re.findall(r"`((?:claude|gemini|grok)-[\w.\-]+)`", _section_1()))
-    assert named, "§1 should name at least one model"
-    assert named <= _CURRENT_DEFAULTS, sorted(named - _CURRENT_DEFAULTS)
-    assert "claude-sonnet-5-5" in named
-    assert "gemini-3.1-flash-image" in named
+def test_section_1_names_no_specific_model():
+    # §1 states rules, not model names, so a routine provider release can never
+    # make the constitution stale or force an amendment.
+    assert not _MODEL_ID.findall(_section("### §1", "### §2"))
 
 
-def test_section_1_points_at_the_real_image_chain_location():
-    # §1 must point at core/image_generation.py, where the image fallback chain
-    # actually lives, not at the agent module it used to be defined in.
-    section = _section_1()
-    assert "core/image_generation.py" in section
-    assert "agents/agent_image_generator.py" not in section
+def test_section_6_names_no_specific_model():
+    # §6 describes the Grok aggregator and panelist by role for the same reason.
+    assert not _MODEL_ID.findall(_section("### §6", "### §7"))
 
 
-def test_constitution_version_and_amendment_record_are_1_3():
+def test_section_1_points_only_at_files_that_exist():
+    # §1 tells readers where the defaults live, so every file it names must exist.
+    paths = re.findall(r"`([\w/]+\.(?:py|yaml))`", _section("### §1", "### §2"))
+    assert paths, "§1 should point at the code that holds the defaults"
+    missing = [p for p in paths if not (_REPO / p).exists()]
+    assert not missing, missing
+
+
+def test_section_1_states_the_default_model_rules():
+    # The rules every default must follow are the substance of §1 now: verified
+    # current, newest stable same tier, priced, stable image models.
+    text = _section("### §1", "### §2")
+    for phrase in ("currently serves", "same tier", "priced", "stable models"):
+        assert phrase in text, phrase
+
+
+def test_constitution_version_and_amendment_record_are_1_4():
     # An amendment is only valid with a version bump and an amendment-record row,
     # per the constitution's own Amendment Procedure.
     text = _CONSTITUTION.read_text()
-    assert "**Version**: 1.3" in text
-    assert "- v1.3 (" in text
-    assert re.search(r"^\| 1\.3 \|.*Spec 054", text, re.M)
+    assert "**Version**: 1.4" in text
+    assert "- v1.4 (" in text
+    assert re.search(r"^\| 1\.4 \|", text, re.M)
