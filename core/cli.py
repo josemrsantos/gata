@@ -9,7 +9,11 @@ from dotenv import load_dotenv
 from google.genai.errors import APIError as GeminiAPIError
 
 from agents.agent_cultural_strategist import infer_audiences
-from core.config_loader import load_humor_config, sanitize_path_segment
+from core.config_loader import (
+    load_communities,
+    load_humor_config,
+    sanitize_path_segment,
+)
 from core.runner import run_pipeline
 from core.types import AudienceProfile, RunTelemetry, StrategyBrief
 
@@ -18,6 +22,15 @@ logger = logging.getLogger(__name__)
 _UK_AUDIENCE = AudienceProfile(
     name="uk",
     audience="UK public",
+    language="English",
+    tone="dry British wit",
+)
+
+# Built in so a default run works from any folder; a test keeps it equal to the
+# uk-tech-engineers entry in communities.yaml (spec 055 FR-006).
+_DEFAULT_AUDIENCE = AudienceProfile(
+    name="uk-tech-engineers",
+    audience="British software engineers and developers",
     language="English",
     tone="dry British wit",
 )
@@ -31,6 +44,50 @@ def _ensure_uk(profiles: list[AudienceProfile]) -> list[AudienceProfile]:
         if any(term in combined for term in _uk_terms):
             return profiles
     return profiles + [_UK_AUDIENCE]
+
+
+def _resolve_audience_names(names: list[str]) -> list[AudienceProfile]:
+    """Turn --audience values into audience profiles (spec 055).
+
+    Values are matched exactly against the community names in communities.yaml in
+    the current folder; duplicates are dropped, keeping the first position. Without
+    that file only the built-in default's own name is valid. Raises ValueError with
+    the message to show the operator on any bad value.
+    """
+    wanted: list[str] = []
+    for raw in names:
+        if raw.strip() not in wanted:
+            wanted.append(raw.strip())
+    if os.path.exists("communities.yaml"):
+        communities = {c.name: c for c in load_communities("communities.yaml")}
+        profiles = []
+        for name in wanted:
+            community = communities.get(name)
+            if community is None:
+                valid = ", ".join(communities)
+                raise ValueError(
+                    f"unknown audience {name!r} — valid audiences: {valid}"
+                )
+            safe_name = sanitize_path_segment(community.name)
+            if not safe_name:
+                raise ValueError(f"audience {name!r} cannot be used as a file name")
+            profiles.append(
+                AudienceProfile(
+                    name=safe_name,
+                    audience=community.target_audience,
+                    language=community.output_language,
+                    tone=community.tone,
+                )
+            )
+        return profiles
+    for name in wanted:
+        if name != _DEFAULT_AUDIENCE.name:
+            raise ValueError(
+                "communities.yaml not found in the current folder — only the"
+                f" built-in audience {_DEFAULT_AUDIENCE.name!r} is available"
+                f" (got {name!r})"
+            )
+    return [_DEFAULT_AUDIENCE]
 
 
 def _research_output_path(topic: str) -> str:
@@ -56,13 +113,33 @@ def _format_grand_total(audience_telemetry: list[tuple[str, RunTelemetry]]) -> s
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
-            "Generate satirical cartoons for topic-relevant audiences"
-            " from a single topic."
+            "Generate a satirical cartoon from a single topic. By default one"
+            " cartoon is made for the 'uk-tech-engineers' audience; use --audience"
+            " to pick audiences from communities.yaml, or --infer-audiences to"
+            " have audiences guessed for the topic."
         )
     )
     parser.add_argument(
         "topic",
         help="topic to satirise, e.g. 'World Cup Qatar vs Swiss'",
+    )
+    parser.add_argument(
+        "--audience",
+        action="append",
+        metavar="NAME",
+        help=(
+            "generate for this audience (a community name from communities.yaml in"
+            " the current folder); repeatable, one cartoon per audience, in the"
+            " order given. Replaces the default 'uk-tech-engineers' audience."
+        ),
+    )
+    parser.add_argument(
+        "--infer-audiences",
+        action="store_true",
+        help=(
+            "guess the audiences for the topic (and always add the UK public), as"
+            " gata did before the single-audience default"
+        ),
     )
     parser.add_argument(
         "--html",
@@ -129,6 +206,18 @@ def main() -> None:
         level=logging.INFO if args.verbose else logging.WARNING,
         format="%(levelname)s: %(message)s",
     )
+    # Both options choose the audiences, so they cannot be combined — stop before
+    # any key check or paid call.
+    if args.infer_audiences and args.audience:
+        logger.error("--infer-audiences and --audience cannot be used together")
+        sys.exit(1)
+    selected: list[AudienceProfile] = []
+    if args.audience:
+        try:
+            selected = _resolve_audience_names(args.audience)
+        except ValueError as exc:
+            logger.error(str(exc))
+            sys.exit(1)
     if found_dotenv:
         print("credentials loaded from .env file")
     else:
@@ -157,9 +246,20 @@ def main() -> None:
             sys.exit(1)
     if args.research_only:
         # US3: a single neutral/branded report has no per-audience image
-        # variants — run once, using only the most relevant inferred audience
-        # (no _ensure_uk, no loop).
-        audience = infer_audiences(args.topic)[0]
+        # variants — run once, using the first selected audience (no loop).
+        if selected:
+            audience = selected[0]
+            if len(selected) > 1:
+                ignored = ", ".join(p.name for p in selected[1:])
+                logger.warning(
+                    "--research-only runs once: using audience %r, ignoring %s",
+                    audience.name,
+                    ignored,
+                )
+        elif args.infer_audiences:
+            audience = infer_audiences(args.topic)[0]
+        else:
+            audience = _DEFAULT_AUDIENCE
         seed_brief = StrategyBrief(
             target_audience=audience.audience,
             output_language=audience.language,
@@ -183,7 +283,12 @@ def main() -> None:
         bundle_dir = Path(output_path).parent / Path(output_path).stem
         print(f"\nReport saved to {bundle_dir}")
         return
-    audiences = _ensure_uk(infer_audiences(args.topic))
+    if selected:
+        audiences = selected
+    elif args.infer_audiences:
+        audiences = _ensure_uk(infer_audiences(args.topic))
+    else:
+        audiences = [_DEFAULT_AUDIENCE]
     topic_slug = sanitize_path_segment(args.topic)
     output_dir = os.path.join(os.getcwd(), topic_slug)
     os.makedirs(output_dir, exist_ok=True)

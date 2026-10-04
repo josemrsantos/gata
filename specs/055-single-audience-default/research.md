@@ -75,3 +75,14 @@ needed: this feature changes which audiences the existing pipeline is called for
   only for the three fields; the file's other fields are irrelevant to `gata`.
 - **Name collisions**: a community named like an inferred audience (for example
   `uk`) is unaffected, since the two selection modes never mix (D4).
+
+## Smoke test result (T045, 2026-10-04)
+
+`gata "model currency smoke test"` from a folder with no `communities.yaml`: one audience
+(`[1/1] uk-tech-engineers — English`), one image, **155.2 s, $0.1317**, no audience-guessing
+step, `summary.txt` with one audience line and a TOTAL. The run also logged warnings from
+spec 054's new default model, not from this feature: `claude-sonnet-5-5` failed twice with
+`'ThinkingBlock' object has no attribute 'text'` (`llm/claude.py:75` reads
+`response.content[0].text`), so the Claude panelist was dropped from later rounds, and three
+`proposer response missing closing </verdict> tag` truncation warnings appeared. Reported to
+the project lead separately; not fixed in this spec.

@@ -39,8 +39,8 @@ only source of names; `--infer-audiences` with `--audience` is rejected).
 
 **Purpose**: Branch hygiene and a green baseline (RULE 5).
 
-- [ ] T001 Confirm active git branch is `055-single-audience-default`; if on `main`, switch before touching any source file
-- [ ] T002 Run `python -m pytest tests/ -q` and `ruff check .`; record that both pass on the untouched code (717 tests at the start)
+- [X] T001 Confirm active git branch is `055-single-audience-default`; if on `main`, switch before touching any source file
+- [X] T002 Run `python -m pytest tests/ -q` and `ruff check .`; record that both pass on the untouched code (717 tests at the start)
 
 ---
 
@@ -51,9 +51,9 @@ story can build on them.
 
 **CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T003 Write failing tests in `tests/test_cli.py` (one-sentence comment each): (a) `core.cli._DEFAULT_AUDIENCE` equals the `uk-tech-engineers` entry of the repo's `communities.yaml` on `target_audience`/`output_language`/`tone` — "the built-in values MUST match the `uk-tech-engineers` entry in `communities.yaml`, and a test MUST fail if they drift apart" (FR-006); (b) `gata --help` (run via `main()` with `sys.argv = ["gata", "--help"]`, expecting `SystemExit(0)`, text read with `capsys`) mentions `uk-tech-engineers`, `--audience` and `--infer-audiences` (FR-011, SC-006)
-- [ ] T004 In `core/cli.py` add the module constant `_DEFAULT_AUDIENCE = AudienceProfile(name="uk-tech-engineers", audience="British software engineers and developers", language="English", tone="dry British wit")` next to `_UK_AUDIENCE`
-- [ ] T005 In `core/cli.py` register `--audience` (`action="append"`, `metavar="NAME"`) and `--infer-audiences` (`action="store_true"`) with the help text from `contracts/cli-contract.md`, and change the parser description to state the default audience (parsing only — no behaviour yet)
+- [X] T003 Write failing tests in `tests/test_cli.py` (one-sentence comment each): (a) `core.cli._DEFAULT_AUDIENCE` equals the `uk-tech-engineers` entry of the repo's `communities.yaml` on `target_audience`/`output_language`/`tone` — "the built-in values MUST match the `uk-tech-engineers` entry in `communities.yaml`, and a test MUST fail if they drift apart" (FR-006); (b) `gata --help` (run via `main()` with `sys.argv = ["gata", "--help"]`, expecting `SystemExit(0)`, text read with `capsys`) mentions `uk-tech-engineers`, `--audience` and `--infer-audiences` (FR-011, SC-006)
+- [X] T004 In `core/cli.py` add the module constant `_DEFAULT_AUDIENCE = AudienceProfile(name="uk-tech-engineers", audience="British software engineers and developers", language="English", tone="dry British wit")` next to `_UK_AUDIENCE`
+- [X] T005 In `core/cli.py` register `--audience` (`action="append"`, `metavar="NAME"`) and `--infer-audiences` (`action="store_true"`) with the help text from `contracts/cli-contract.md`, and change the parser description to state the default audience (parsing only — no behaviour yet)
 
 **Checkpoint**: `python -m pytest tests/test_cli.py -k "default_audience or help" -v`
 
@@ -67,16 +67,16 @@ story can build on them.
 
 ### Tests for User Story 1 — Write FIRST, Confirm FAILING Before Implementation
 
-- [ ] T006 [US1] In `tests/test_cli.py` write a failing test: running `gata "topic"` (patched `run_pipeline`, patched `infer_audiences`, `os.makedirs`) calls `run_pipeline` exactly once, with a seed brief built from `_DEFAULT_AUDIENCE` and an output path ending `uk-tech-engineers.png`, and `infer_audiences` is **not** called (SC-001, SC-002)
-- [ ] T007 [US1] In `tests/test_cli.py` write a failing test: the default run prints `[1/1] uk-tech-engineers — English` (read with `capsys`), the output contains no `UK public`, and the written `summary.txt` has exactly one audience line (`uk-tech-engineers: …`) followed by a `TOTAL:` line (FR-002, FR-010, US1 scenario 3)
-- [ ] T008 [US1] In `tests/test_cli.py` write a failing test: the default run still works when the current folder has no `communities.yaml` (`monkeypatch.chdir(tmp_path)`), with one `run_pipeline` call (FR-006)
+- [X] T006 [US1] In `tests/test_cli.py` write a failing test: running `gata "topic"` (patched `run_pipeline`, patched `infer_audiences`, `os.makedirs`) calls `run_pipeline` exactly once, with a seed brief built from `_DEFAULT_AUDIENCE` and an output path ending `uk-tech-engineers.png`, and `infer_audiences` is **not** called (SC-001, SC-002)
+- [X] T007 [US1] In `tests/test_cli.py` write a failing test: the default run prints `[1/1] uk-tech-engineers — English` (read with `capsys`), the output contains no `UK public`, and the written `summary.txt` has exactly one audience line (`uk-tech-engineers: …`) followed by a `TOTAL:` line (FR-002, FR-010, US1 scenario 3)
+- [X] T008 [US1] In `tests/test_cli.py` write a failing test: the default run still works when the current folder has no `communities.yaml` (`monkeypatch.chdir(tmp_path)`), with one `run_pipeline` call (FR-006)
 
 > **STOP**: Confirm T006–T008 FAIL (`python -m pytest tests/test_cli.py -v`) before proceeding to T009.
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] In `core/cli.py` make the non-research path use `audiences = [_DEFAULT_AUDIENCE]` instead of `_ensure_uk(infer_audiences(args.topic))` (the `--infer-audiences` path is restored in Phase 4)
-- [ ] T010 [US1] In `core/cli.py` make the `--research-only` path use `_DEFAULT_AUDIENCE` instead of `infer_audiences(args.topic)[0]` (the first-selected-audience rule is completed in Phase 6). Note: `infer_audiences` is imported but unused until T014, so `ruff check` would report F401 here — expected; do not run ruff as a gate before T014
+- [X] T009 [US1] In `core/cli.py` make the non-research path use `audiences = [_DEFAULT_AUDIENCE]` instead of `_ensure_uk(infer_audiences(args.topic))` (the `--infer-audiences` path is restored in Phase 4)
+- [X] T010 [US1] In `core/cli.py` make the `--research-only` path use `_DEFAULT_AUDIENCE` instead of `infer_audiences(args.topic)[0]` (the first-selected-audience rule is completed in Phase 6). Note: `infer_audiences` is imported but unused until T014, so `ruff check` would report F401 here — expected; do not run ruff as a gate before T014
 
 > **STOP**: T006–T008 now PASS. Several older tests that assume guessing will FAIL — that is expected and is fixed in T016. Do not push until Phase 4 is done.
 
@@ -92,17 +92,17 @@ story can build on them.
 
 ### Tests for User Story 4 — Write FIRST, Confirm FAILING Before Implementation
 
-- [ ] T011 [US4] In `tests/test_cli.py` write a failing test: `--infer-audiences` calls `infer_audiences` once and runs `run_pipeline` once per returned audience, adding the `UK public` audience when none of them is UK (use the file's `_AUDIENCES` fixture and a no-UK variant) (SC-007)
-- [ ] T012 [US4] In `tests/test_cli.py` write a failing test: `--infer-audiences --research-only` runs `run_pipeline` once, using the first guessed audience (as today)
-- [ ] T013 [US4] In `tests/test_cli.py` write a failing test: `--infer-audiences` together with `--audience uk-politics` exits with status 1, logs `--infer-audiences and --audience cannot be used together` at ERROR (caplog), and calls neither `infer_audiences` nor `run_pipeline`
+- [X] T011 [US4] In `tests/test_cli.py` write a failing test: `--infer-audiences` calls `infer_audiences` once and runs `run_pipeline` once per returned audience, adding the `UK public` audience when none of them is UK (use the file's `_AUDIENCES` fixture and a no-UK variant) (SC-007)
+- [X] T012 [US4] In `tests/test_cli.py` write a failing test: `--infer-audiences --research-only` runs `run_pipeline` once, using the first guessed audience (as today)
+- [X] T013 [US4] In `tests/test_cli.py` write a failing test: `--infer-audiences` together with `--audience uk-politics` exits with status 1, logs `--infer-audiences and --audience cannot be used together` at ERROR (caplog), and calls neither `infer_audiences` nor `run_pipeline`
 
 > **STOP**: Confirm T011–T013 FAIL before proceeding to T014.
 
 ### Implementation for User Story 4
 
-- [ ] T014 [US4] In `core/cli.py` restore the guessing path behind the flag: with `args.infer_audiences`, normal runs use `_ensure_uk(infer_audiences(args.topic))` and `--research-only` uses `infer_audiences(args.topic)[0]`; keep `_UK_AUDIENCE`, `_ensure_uk`, and the `infer_audiences` import
-- [ ] T015 [US4] In `core/cli.py` reject `--infer-audiences` with `--audience`: after `logging.basicConfig` and before the API-key check, `logger.error("--infer-audiences and --audience cannot be used together")` and `sys.exit(1)`
-- [ ] T016 [US4] Run `python -m pytest tests/test_cli.py -v`. For every PRE-EXISTING test in `tests/test_cli.py` that now fails because it assumed the guessed-audience default (expected: the per-audience verbose test, the research-only tests that expect the first *inferred* audience, and any test relying on `_ensure_uk`): if its intent is the guessing behaviour, add `--infer-audiences` to its `sys.argv`; if its intent is generic, change its expectation to the default audience. Add a one-line note in each edited test's comment saying which and why (FR-012)
+- [X] T014 [US4] In `core/cli.py` restore the guessing path behind the flag: with `args.infer_audiences`, normal runs use `_ensure_uk(infer_audiences(args.topic))` and `--research-only` uses `infer_audiences(args.topic)[0]`; keep `_UK_AUDIENCE`, `_ensure_uk`, and the `infer_audiences` import
+- [X] T015 [US4] In `core/cli.py` reject `--infer-audiences` with `--audience`: after `logging.basicConfig` and before the API-key check, `logger.error("--infer-audiences and --audience cannot be used together")` and `sys.exit(1)`
+- [X] T016 [US4] Run `python -m pytest tests/test_cli.py -v`. For every PRE-EXISTING test in `tests/test_cli.py` that now fails because it assumed the guessed-audience default (expected: the per-audience verbose test, the research-only tests that expect the first *inferred* audience, and any test relying on `_ensure_uk`): if its intent is the guessing behaviour, add `--infer-audiences` to its `sys.argv`; if its intent is generic, change its expectation to the default audience. Add a one-line note in each edited test's comment saying which and why (FR-012)
 
 > **STOP**: Run `python -m pytest tests/ -v` — confirm all tests PASS before proceeding.
 
@@ -120,22 +120,22 @@ story can build on them.
 
 Use `monkeypatch.chdir(tmp_path)` with a small `communities.yaml` written to `tmp_path` (names `uk-politics`, `portuguese-adults`, `uk-tech-engineers`, each with the three required fields plus `panels: 3`, `layout: vertical`).
 
-- [ ] T017 [US2] In `tests/test_cli.py` write a failing test: `--audience uk-politics` runs once, with a seed brief built from that community's `target_audience`/`output_language`/`tone`, output path ending `uk-politics.png`, no `infer_audiences` call (FR-003, FR-004)
-- [ ] T018 [US2] In `tests/test_cli.py` write a failing test: two `--audience` values run in the order given, output paths `<a>.png` then `<b>.png` in the same folder, and the progress lines `[1/2]` and `[2/2]` appear (SC-003, FR-010)
-- [ ] T019 [US2] In `tests/test_cli.py` write a failing test: the same audience given twice runs once (spec scenario 3)
-- [ ] T020 [US2] In `tests/test_cli.py` write a failing test: an unknown name exits 1, logs a message containing the value and the valid names (e.g. `unknown audience 'nope' — valid audiences:` plus the names), and calls neither `infer_audiences` nor `run_pipeline` (FR-007, SC-004)
-- [ ] T021 [US2] In `tests/test_cli.py` write a failing test: `--audience ""` is rejected the same way, naming the empty value (FR-007)
-- [ ] T022 [US2] In `tests/test_cli.py` write failing tests for a folder with **no** `communities.yaml`: `--audience uk-tech-engineers` runs once with the built-in default; `--audience uk-politics` exits 1 with a message containing `communities.yaml not found in the current folder` and `only the built-in audience 'uk-tech-engineers'` (FR-007); and a folder whose `communities.yaml` exists but has **no** `uk-tech-engineers` entry: `--audience uk-tech-engineers` is rejected as unknown (the file wins; the built-in copy only serves the file-absent case)
-- [ ] T023 [US2] In `tests/test_cli.py` write a failing test: for a community with `panels: 3` / `layout: vertical`, `run_pipeline` is called without any `panels` or `layout` keyword and nothing about them reaches the call (FR-003a)
-- [ ] T024 [US2] In `tests/test_cli.py` write a failing test: an invalid `communities.yaml` (e.g. missing `communities` key) with `--audience x` exits 1 and logs the loader's message at ERROR (contract row 4)
-- [ ] T025 [US2] In `tests/test_cli.py` write a failing test: a community named `Odd Name/../x` selected with `--audience 'Odd Name/../x'` produces an output path whose file name is `sanitize_path_segment`-clean (no `/` or `..`), stays inside the topic folder, and `uk-tech-engineers` is unchanged (FR-014)
+- [X] T017 [US2] In `tests/test_cli.py` write a failing test: `--audience uk-politics` runs once, with a seed brief built from that community's `target_audience`/`output_language`/`tone`, output path ending `uk-politics.png`, no `infer_audiences` call (FR-003, FR-004)
+- [X] T018 [US2] In `tests/test_cli.py` write a failing test: two `--audience` values run in the order given, output paths `<a>.png` then `<b>.png` in the same folder, and the progress lines `[1/2]` and `[2/2]` appear (SC-003, FR-010)
+- [X] T019 [US2] In `tests/test_cli.py` write a failing test: the same audience given twice runs once (spec scenario 3)
+- [X] T020 [US2] In `tests/test_cli.py` write a failing test: an unknown name exits 1, logs a message containing the value and the valid names (e.g. `unknown audience 'nope' — valid audiences:` plus the names), and calls neither `infer_audiences` nor `run_pipeline` (FR-007, SC-004)
+- [X] T021 [US2] In `tests/test_cli.py` write a failing test: `--audience ""` is rejected the same way, naming the empty value (FR-007)
+- [X] T022 [US2] In `tests/test_cli.py` write failing tests for a folder with **no** `communities.yaml`: `--audience uk-tech-engineers` runs once with the built-in default; `--audience uk-politics` exits 1 with a message containing `communities.yaml not found in the current folder` and `only the built-in audience 'uk-tech-engineers'` (FR-007); and a folder whose `communities.yaml` exists but has **no** `uk-tech-engineers` entry: `--audience uk-tech-engineers` is rejected as unknown (the file wins; the built-in copy only serves the file-absent case)
+- [X] T023 [US2] In `tests/test_cli.py` write a failing test: for a community with `panels: 3` / `layout: vertical`, `run_pipeline` is called without any `panels` or `layout` keyword and nothing about them reaches the call (FR-003a)
+- [X] T024 [US2] In `tests/test_cli.py` write a failing test: an invalid `communities.yaml` (e.g. missing `communities` key) with `--audience x` exits 1 and logs the loader's message at ERROR (contract row 4)
+- [X] T025 [US2] In `tests/test_cli.py` write a failing test: a community named `Odd Name/../x` selected with `--audience 'Odd Name/../x'` produces an output path whose file name is `sanitize_path_segment`-clean (no `/` or `..`), stays inside the topic folder, and `uk-tech-engineers` is unchanged (FR-014)
 
 > **STOP**: Confirm T017–T025 FAIL before proceeding to T026.
 
 ### Implementation for User Story 2
 
-- [ ] T026 [US2] In `core/cli.py` add `_resolve_audience_names(names: list[str]) -> list[AudienceProfile]` per research D3: strip values, reject empty, de-duplicate keeping first position, load `communities.yaml` from the current folder only if it exists (else accept only `_DEFAULT_AUDIENCE.name`; when the file exists it is the only source of valid names, even for `uk-tech-engineers`), build `AudienceProfile(name=sanitize_path_segment(community.name), audience=target_audience, language=output_language, tone=tone)` from each community (FR-014: names already file-safe such as `uk-tech-engineers` are unchanged; import `sanitize_path_segment` from `core.config_loader`), and raise `ValueError` with the exact messages in `contracts/cli-contract.md` (unknown value + valid choices; file not found; loader errors passed through)
-- [ ] T027 [US2] In `core/cli.py` wire it into `main()`: after `logging.basicConfig` and before the API-key check, when `args.audience` is given call `_resolve_audience_names(args.audience)`; on `ValueError` `logger.error(str(exc))` and `sys.exit(1)`; the resulting list becomes `audiences` for the existing per-audience loop
+- [X] T026 [US2] In `core/cli.py` add `_resolve_audience_names(names: list[str]) -> list[AudienceProfile]` per research D3: strip values, reject empty, de-duplicate keeping first position, load `communities.yaml` from the current folder only if it exists (else accept only `_DEFAULT_AUDIENCE.name`; when the file exists it is the only source of valid names, even for `uk-tech-engineers`), build `AudienceProfile(name=sanitize_path_segment(community.name), audience=target_audience, language=output_language, tone=tone)` from each community (FR-014: names already file-safe such as `uk-tech-engineers` are unchanged; import `sanitize_path_segment` from `core.config_loader`), and raise `ValueError` with the exact messages in `contracts/cli-contract.md` (unknown value + valid choices; file not found; loader errors passed through)
+- [X] T027 [US2] In `core/cli.py` wire it into `main()`: after `logging.basicConfig` and before the API-key check, when `args.audience` is given call `_resolve_audience_names(args.audience)`; on `ValueError` `logger.error(str(exc))` and `sys.exit(1)`; the resulting list becomes `audiences` for the existing per-audience loop
 
 > **STOP**: Run `python -m pytest tests/ -v` — confirm all tests PASS before proceeding.
 
@@ -151,15 +151,15 @@ Use `monkeypatch.chdir(tmp_path)` with a small `communities.yaml` written to `tm
 
 ### Tests for User Story 3 — Write FIRST, Confirm FAILING Before Implementation
 
-- [ ] T028 [US3] In `tests/test_cli.py` write a failing test: `--research-only --audience uk-politics --audience portuguese-adults` runs `run_pipeline` once for `uk-politics` and logs a WARNING (caplog) saying `portuguese-adults` is ignored; and `--research-only` alone uses the default audience (FR-008, SC-008)
-- [ ] T029 [US3] In `tests/test_cli.py` write a test (regression guard, expected to pass already): with two `--audience` values plus `--no-title --html --direct --linkedin-post --angle X --verbose`, every `run_pipeline` call receives `show_title=False`, `include_html=True`, `skip_cultural_strategist=True`, `generate_linkedin_post=True`, `angles=["X"]`, `verbose=True` (FR-009)
-- [ ] T030 [US3] In `tests/test_cli.py` write a test (regression guard, expected to pass already): when the first of two audiences raises `RuntimeError`, the second still runs and `main()` exits 1 with the partial-failure message (spec edge case)
+- [X] T028 [US3] In `tests/test_cli.py` write a failing test: `--research-only --audience uk-politics --audience portuguese-adults` runs `run_pipeline` once for `uk-politics` and logs a WARNING (caplog) saying `portuguese-adults` is ignored; and `--research-only` alone uses the default audience (FR-008, SC-008)
+- [X] T029 [US3] In `tests/test_cli.py` write a test (regression guard, expected to pass already): with two `--audience` values plus `--no-title --html --direct --linkedin-post --angle X --verbose`, every `run_pipeline` call receives `show_title=False`, `include_html=True`, `skip_cultural_strategist=True`, `generate_linkedin_post=True`, `angles=["X"]`, `verbose=True` (FR-009)
+- [X] T030 [US3] In `tests/test_cli.py` write a test (regression guard, expected to pass already): when the first of two audiences raises `RuntimeError`, the second still runs and `main()` exits 1 with the partial-failure message (spec edge case)
 
 > **STOP**: Confirm T028 FAILS (T029 and T030 may already pass) before proceeding to T031.
 
 ### Implementation for User Story 3
 
-- [ ] T031 [US3] In `core/cli.py` make the `--research-only` branch use the first selected audience (`audiences[0]`; or `infer_audiences(topic)[0]` with `--infer-audiences`), and when more than one `--audience` value was resolved emit `logger.warning` naming the ignored audiences
+- [X] T031 [US3] In `core/cli.py` make the `--research-only` branch use the first selected audience (`audiences[0]`; or `infer_audiences(topic)[0]` with `--infer-audiences`), and when more than one `--audience` value was resolved emit `logger.warning` naming the ignored audiences
 
 > **STOP**: Run `python -m pytest tests/ -v` — confirm all tests PASS before proceeding.
 
@@ -175,15 +175,15 @@ Use `monkeypatch.chdir(tmp_path)` with a small `communities.yaml` written to `tm
 
 ### Tests for User Story 5 — Write FIRST, Confirm FAILING Before Implementation
 
-- [ ] T032 [US5] In `tests/test_newsletter_merge.py` write a failing test: the default of the `audience` parameter of `core.newsletter_merge.merge_edition` is `"uk-tech-engineers"` (read with `inspect.signature`), with a one-sentence comment (RULE 3)
-- [ ] T033 [US5] In `tests/test_newsletter_merge.py` write a failing test: running the script's `main()` with no `--audience` (patched `merge_edition`) passes `audience="uk-tech-engineers"`, and its `--help` text states that default (FR-013)
-- [ ] T034 [US5] In `tests/test_newsletter_merge.py` write a regression-guard test: an explicit `--audience uk` is passed through unchanged, so earlier editions still merge (spec scenario 2; expected to pass already)
+- [X] T032 [US5] In `tests/test_newsletter_merge.py` write a failing test: the default of the `audience` parameter of `core.newsletter_merge.merge_edition` is `"uk-tech-engineers"` (read with `inspect.signature`), with a one-sentence comment (RULE 3)
+- [X] T033 [US5] In `tests/test_newsletter_merge.py` write a failing test: running the script's `main()` with no `--audience` (patched `merge_edition`) passes `audience="uk-tech-engineers"`, and its `--help` text states that default (FR-013)
+- [X] T034 [US5] In `tests/test_newsletter_merge.py` write a regression-guard test: an explicit `--audience uk` is passed through unchanged, so earlier editions still merge (spec scenario 2; expected to pass already)
 
 > **STOP**: Confirm T032 and T033 FAIL (T034 may already pass) before proceeding to T035.
 
 ### Implementation for User Story 5
 
-- [ ] T035 [US5] In `core/newsletter_merge.py` change the `merge_edition` default `audience: str = "uk"` to `"uk-tech-engineers"`, and in the root `newsletter_merge.py` change the `--audience` default and its help text (`default: uk-tech-engineers`; mention `--audience uk` for earlier editions)
+- [X] T035 [US5] In `core/newsletter_merge.py` change the `merge_edition` default `audience: str = "uk"` to `"uk-tech-engineers"`, and in the root `newsletter_merge.py` change the `--audience` default and its help text (`default: uk-tech-engineers`; mention `--audience uk` for earlier editions)
 
 > **STOP**: Run `python -m pytest tests/ -v` — confirm all tests PASS before proceeding.
 
@@ -193,17 +193,17 @@ Use `monkeypatch.chdir(tmp_path)` with a small `communities.yaml` written to `tm
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T036 [P] Run `ruff check . --fix` and `ruff format .` on all modified files; confirm `ruff check .` exits 0 (§12)
-- [ ] T037 [P] Update `README.md`: the `gata` command section (new default, `--audience` with examples, `--infer-audiences`), the Communities section if it implies `gata` ignores communities, and add the spec 055 row to the status table and mention the newsletter-merge default (RULE 6, RULE 17); list exactly what was stale before editing
-- [ ] T038 [P] Update `docs/architecture.md`: the audience-selection description, the `newsletter_merge.py` example (default audience folder `uk-tech-engineers`, `--audience uk` for earlier editions) and any wording that says a UK audience is always added or that audiences are always inferred (RULE 17)
-- [ ] T039 [P] Add a v1.31.0 entry at the top of `CHANGELOG.md` in plain English: default is one audience (`uk-tech-engineers`), `--audience`, `--infer-audiences`, what changed for users who relied on the guessed audiences (RULE 17)
-- [ ] T040 [P] Bump the version to `1.31.0` in `pyproject.toml` and `core/__version__.py` (RULE 15)
-- [ ] T041 [P] Add the 055 row to the "Completed Stages" table in `CLAUDE.md` (and update its "as of" date), in this PR, as specs 050, 052 and 054 did
-- [ ] T042 [P] Remove the "Single-audience default for `gata`" item from `TODO.md` in this same PR (RULE 19); touch no other item
-- [ ] T043 Check for stale claims: `grep -rniE "always (added|present|included)|UK public|inferred" README.md docs` — only text that correctly describes `--infer-audiences` may remain
-- [ ] T044 Run the free manual checks in `specs/055-single-audience-default/quickstart.md` §2 (they exit before any model call, so they cost nothing) and confirm each prints the expected `ERROR:` text and exits 1
-- [ ] T045 Approved by the project lead at G2 (2026-10-04): run the paid smoke test in `quickstart.md` §3 (`gata "model currency smoke test"`, one pipeline run) and confirm one `[1/1] uk-tech-engineers — English` line and one image
-- [ ] T046 Run `python -m pytest tests/ -q` — must report 0 failures; do the three self-review passes (G4 rules), commit, push the branch and open the PR
+- [X] T036 [P] Run `ruff check . --fix` and `ruff format .` on all modified files; confirm `ruff check .` exits 0 (§12)
+- [X] T037 [P] Update `README.md`: the `gata` command section (new default, `--audience` with examples, `--infer-audiences`), the Communities section if it implies `gata` ignores communities, and add the spec 055 row to the status table and mention the newsletter-merge default (RULE 6, RULE 17); list exactly what was stale before editing
+- [X] T038 [P] Update `docs/architecture.md`: the audience-selection description, the `newsletter_merge.py` example (default audience folder `uk-tech-engineers`, `--audience uk` for earlier editions) and any wording that says a UK audience is always added or that audiences are always inferred (RULE 17)
+- [X] T039 [P] Add a v1.31.0 entry at the top of `CHANGELOG.md` in plain English: default is one audience (`uk-tech-engineers`), `--audience`, `--infer-audiences`, what changed for users who relied on the guessed audiences (RULE 17)
+- [X] T040 [P] Bump the version to `1.31.0` in `pyproject.toml` and `core/__version__.py` (RULE 15)
+- [X] T041 [P] Add the 055 row to the "Completed Stages" table in `CLAUDE.md` (and update its "as of" date), in this PR, as specs 050, 052 and 054 did
+- [X] T042 [P] Remove the "Single-audience default for `gata`" item from `TODO.md` in this same PR (RULE 19); touch no other item
+- [X] T043 Check for stale claims: `grep -rniE "always (added|present|included)|UK public|inferred" README.md docs` — only text that correctly describes `--infer-audiences` may remain
+- [X] T044 Run the free manual checks in `specs/055-single-audience-default/quickstart.md` §2 (they exit before any model call, so they cost nothing) and confirm each prints the expected `ERROR:` text and exits 1
+- [X] T045 Approved by the project lead at G2 (2026-10-04): run the paid smoke test in `quickstart.md` §3 (`gata "model currency smoke test"`, one pipeline run) and confirm one `[1/1] uk-tech-engineers — English` line and one image
+- [X] T046 Run `python -m pytest tests/ -q` — must report 0 failures; do the three self-review passes (G4 rules), commit, push the branch and open the PR
 
 ---
 

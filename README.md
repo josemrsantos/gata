@@ -49,9 +49,11 @@ NEWSAPI_ORG_KEY=your_key_here
 gata "World Cup final: Argentina vs France"
 ```
 
-This infers the most culturally relevant audience, negotiates a cultural angle, generates
-three independent cartoon concepts, picks the strongest one, and saves two PNGs to your
-working directory — one for the inferred audience and one for the UK public.
+This negotiates a cultural angle for the default audience (UK software engineers,
+`uk-tech-engineers`), generates three independent cartoon concepts, picks the strongest
+one, and saves one PNG to your working directory. Use `--audience` to pick other
+audiences from `communities.yaml`, or `--infer-audiences` to have audiences guessed for
+the topic (see the `gata` command below).
 
 ## How it works
 
@@ -91,9 +93,10 @@ working directory — one for the inferred audience and one for the UK public.
 
 ## `gata` command
 
-The simplest way to run the pipeline. Give it any topic and it generates two satirical
-cartoons: one for the most culturally relevant audience (inferred automatically) and one
-for the UK public.
+The simplest way to run the pipeline. Give it any topic and it generates one satirical
+cartoon, for the built-in default audience: UK software engineers (`uk-tech-engineers`).
+Choose other audiences with `--audience`, or ask for topic-guessed audiences with
+`--infer-audiences`.
 
 ```bash
 # Generate cartoons for a news topic
@@ -103,6 +106,14 @@ gata "Interest rates stay high despite falling inflation"
 gata "World Cup final: Argentina vs France"
 gata "Tech layoffs hit Silicon Valley again"
 gata "Portugal wins Eurovision"
+
+# Choose the audiences yourself: names from communities.yaml in the current folder,
+# one cartoon per audience, in the order given (replaces the default audience)
+gata "Interest rates stay high" --audience uk-politics
+gata "Interest rates stay high" --audience uk-politics --audience portuguese-adults
+
+# Bring back the old behaviour: audiences guessed for the topic, plus the UK public
+gata "World Cup final: Argentina vs France" --infer-audiences
 
 # Skip the Cultural Strategist — feed the topic straight to the Satirist
 gata "AI is replacing junior developers" --direct
@@ -115,13 +126,14 @@ gata "Vibe coding in production" --linkedin-post
 gata "Vibe coding in production" --linkedin-post --angle "where it should not be used" --angle "where it's fine as long as..."
 
 # Research-only mode: skip the entire satirical pipeline (no cartoon, no image
-# cost) and produce only a researched report — runs once, not once per audience
+# cost) and produce only a researched report — runs once, for the first selected audience
 gata "AI regulation in the EU" --research-only
 gata "AI regulation in the EU" --research-only --linkedin-post
 ```
 
-Output folder: `{cwd}/{topic_slug}/` — one PNG per audience, plus a bundle folder per
-image. Run `gata --help` to see all options.
+Output folder: `{cwd}/{topic_slug}/` — one PNG per audience (the default run writes
+`uk-tech-engineers.png`), plus a bundle folder per image. `--audience` and
+`--infer-audiences` cannot be combined. Run `gata --help` to see all options.
 
 ## `pipeline.py` — advanced usage
 
@@ -177,7 +189,7 @@ python pipeline.py --community uk-politics --research-only --linkedin-post
 | `--providers` | path | built-in defaults | Path to `providers.yaml` — overrides built-in LLM assignments |
 | `--linkedin-post` | — | off | Generate a researched LinkedIn article (`linkedin_post.md`) and notification snippet (`linkedin_notification.txt`) in the output bundle |
 | `--angle` | text, repeatable | none | An angle the `--linkedin-post` article should explore (e.g. `--angle "X" --angle "Y"`); has no effect without `--linkedin-post` |
-| `--research-only` | — | off | Skip the entire satirical pipeline (Cultural Strategist, Satirist, Image Generator, Image Evaluator) and produce only a researched report — neutral `research_report.md` by default, or the branded `linkedin_post.md` when combined with `--linkedin-post`. On the `gata` CLI, runs once using the first inferred audience instead of looping per audience |
+| `--research-only` | — | off | Skip the entire satirical pipeline (Cultural Strategist, Satirist, Image Generator, Image Evaluator) and produce only a researched report — neutral `research_report.md` by default, or the branded `linkedin_post.md` when combined with `--linkedin-post`. On the `gata` CLI, runs once using the first selected audience (the default, the first `--audience`, or the first inferred audience with `--infer-audiences`) instead of looping per audience |
 | `--verbose` / `-v` | — | off | Show the full per-agent/per-model cost breakdown and `INFO`-level logs on screen (default: a single `TOTAL:` line and `WARNING`+ only). Full detail is always saved to `summary.txt` regardless of this flag |
 
 ### Output bundle
@@ -215,6 +227,9 @@ audience, output language, tone, seed topics, and optionally a default panel cou
 | `us-startup-crowd` | English | Sarcastic Silicon Valley cynicism |
 
 To add a new community, add an entry to `communities.yaml` — no code changes required.
+`gata --audience NAME` accepts these community names (the file is read from the current
+folder); `gata`'s default audience, `uk-tech-engineers`, is also built in, so a plain
+`gata "topic"` works from any folder.
 
 ## LLM provider configuration (`providers.yaml`)
 
@@ -323,3 +338,4 @@ communication protocol framework.
 | 52 | FairParallelPanel verdict truncation fix — `_extract_proposer_verdict()` recovers a response truncated before its closing `</verdict>` tag (max_tokens cutoff) instead of dropping the panelist; LinkedIn Angle Planning's `max_tokens` raised 1200→2500, the one call site with live-proven evidence | ✅ |
 | 53 | LinkedIn Post panel `max_tokens` follow-up — a real run's persisted `run.log` showed the same truncation mechanism at two more `FairParallelPanel` call sites; Domain Classification's `max_tokens` raised 1000→2000 and LinkedIn Article Writing's raised 3000→4000 | ✅ |
 | 54 | Model currency refresh II — defaults, fallback chains and cost tables updated to what each provider serves today (verified against official docs and one live call per default): Claude defaults move to `claude-sonnet-5-5` / `claude-opus-5-5`, Gemini Flash-Lite to `gemini-3.5-flash-lite`, the image chain to the stable `gemini-3.1-flash-image` → `gemini-3-pro-image`; Claude/Gemini/Grok price tables completed (and the `claude-sonnet-5` price corrected to $2/$10); constitution v1.3 | ✅ |
+| 55 | Single-audience default for `gata` — `gata "topic"` now generates one cartoon for the built-in `uk-tech-engineers` audience instead of guessing audiences and always adding the UK public; new repeatable `--audience NAME` (community names from `communities.yaml`, replaces the default) and `--infer-audiences` (restores the previous behaviour); `newsletter_merge.py` now defaults to reading the `uk-tech-engineers` audience folder (use `--audience uk` for older editions); named audiences get file-safe names | ✅ |
