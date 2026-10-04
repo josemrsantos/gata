@@ -211,7 +211,7 @@ def test_gemini_models_come_before_other_providers():
     chain = build_fallback_chain()
     model_ids = [p.model_id for p, _ in chain]
     gemini_ids = {
-        "gemini-2.5-flash-lite",
+        "gemini-3.5-flash-lite",
         "gemini-3.1-flash-lite",
         "gemini-2.5-flash",
         "gemini-2.5-pro",
@@ -231,7 +231,7 @@ def test_each_tier_is_ranked_ascending_by_combined_rate():
     # model can legitimately precede the cheapest Grok model).
     chain = build_fallback_chain()
     gemini_ids = {
-        "gemini-2.5-flash-lite",
+        "gemini-3.5-flash-lite",
         "gemini-3.1-flash-lite",
         "gemini-2.5-flash",
         "gemini-2.5-pro",

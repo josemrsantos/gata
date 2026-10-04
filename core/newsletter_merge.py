@@ -28,21 +28,21 @@ _ENGAGEMENT_IMAGE_FILENAME = "engagement_image.png"
 # Active Gemini text models considered for the merge call — image models are
 # excluded, this call never generates or evaluates an image (Spec 040 FR-007).
 _GEMINI_TEXT_MODELS = [
-    "gemini-2.5-flash-lite",
+    "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
     "gemini-2.5-flash",
     "gemini-2.5-pro",
     "gemini-3.1-pro-preview",
 ]
 # Claude/Grok models tried once every Gemini option has failed (FR-013).
-_CLAUDE_MODELS = ["claude-haiku-4-5-20251001", "claude-sonnet-4-6", "claude-opus-4-7"]
+_CLAUDE_MODELS = ["claude-haiku-4-5-20251001", "claude-sonnet-5-5", "claude-opus-5-5"]
 _GROK_MODELS = ["grok-build-0.1", "grok-4.3", "grok-4.5"]
 
 # Default engagement-image deliberation providers, mirroring core/runner.py's
 # _PARALLEL_PANELISTS / _GROK_AGGREGATOR defaults — used when no providers.yaml
 # override is supplied (Spec 041 FR-002).
 _DEFAULT_PANELIST_PROVIDERS: list[LLMProvider] = [
-    ClaudeProvider("claude-sonnet-4-6"),
+    ClaudeProvider("claude-sonnet-5-5"),
     GrokProvider("grok-build-0.1"),
     GeminiProvider("gemini-2.5-flash"),
 ]

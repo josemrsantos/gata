@@ -1,11 +1,18 @@
 # Gata Newsroom — Project Constitution
 
-**Version**: 1.2
+**Version**: 1.3
 **Ratified**: 2026-06-22
 **Ratified by**: Jose Santos (project lead)
 **Status**: Active
 
 **Amendment log**:
+- v1.3 (2026-10-04) — Spec 054: §1 model names refreshed to what each provider
+  currently serves — primary creative model `claude-sonnet-4-6` →
+  `claude-sonnet-5-5`; Gemini image primary `gemini-3.1-flash-image-preview`
+  (documented as shut down 2026-06-25) → the stable `gemini-3.1-flash-image`, and
+  the pointer to the image fallback chain corrected to `core/image_generation.py`.
+  Gemini text models (`gemini-2.5-flash`, `gemini-2.5-pro`) and Grok (`grok-4.3`)
+  are unchanged; §6 is untouched. Approved by the project lead, 2026-10-04.
 - v1.2 (2026-08-03) — Spec 040: corrected §10's env var names to match actual code
   — `GROK_API_KEY` → `XAI_API_KEY` (see `llm/grok.py`), `NEWSAPI_KEY` →
   `NEWSAPI_ORG_KEY` (see `agents/trend_scout.py`, `agents/sources/newsapi.py`). Both
@@ -41,11 +48,11 @@ the plan's Complexity Tracking table and explicitly accepted by the project lead
 
 ### §1 — SDK and Model Rules
 
-- Claude SDK: `import anthropic`; primary creative model `claude-sonnet-4-6`
+- Claude SDK: `import anthropic`; primary creative model `claude-sonnet-5-5`
 - Gemini SDK: `from google import genai` (google-genai package); never use the
   deprecated `google-generativeai` package
-- Gemini image generation: `gemini-3.1-flash-image-preview` (primary); fallback
-  chain defined in `agents/agent_image_generator.py`
+- Gemini image generation: `gemini-3.1-flash-image` (primary); fallback
+  chain defined in `core/image_generation.py`
 - Gemini text models: `gemini-2.5-flash` (primary for most agents);
   `gemini-2.5-pro` for evaluator tasks
 - Grok SDK: `from openai import OpenAI` with `base_url="https://api.x.ai/v1"`;
@@ -220,3 +227,4 @@ Rules:
 | 1.0 | 2026-06-22 | All | Initial ratification | Jose Santos |
 | 1.1 | 2026-06-22 | §6 | Grok-3 replaces Claude as aggregator across all ParallelPanel agents; Grok-3-mini becomes the Grok panelist | Jose Santos |
 | 1.2 | 2026-08-03 | §10 | Corrected env var names to match code: `GROK_API_KEY` → `XAI_API_KEY`, `NEWSAPI_KEY` → `NEWSAPI_ORG_KEY` | Jose Santos |
+| 1.3 | 2026-10-04 | §1 | Model names refreshed (Spec 054): Claude primary `claude-sonnet-5-5`; Gemini image primary `gemini-3.1-flash-image`; image-chain pointer corrected to `core/image_generation.py`; Gemini text and Grok unchanged | Jose Santos |

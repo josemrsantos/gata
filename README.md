@@ -225,7 +225,7 @@ Each panelist slot is an ordered fallback chain. If the primary model fails, the
 ```yaml
 panelists:
   - - provider: claude
-      model: claude-sonnet-4-6
+      model: claude-sonnet-5-5
       timeout: 25.0        # optional: per-call limit in seconds
     - provider: gemini
       model: gemini-2.5-flash
@@ -239,7 +239,7 @@ aggregator:
   - provider: grok
     model: grok-4.3
   - provider: claude
-    model: claude-sonnet-4-6
+    model: claude-sonnet-5-5
 ```
 
 The optional `timeout` field (Spec 036) gives each provider its own per-call budget. If a provider stalls beyond that limit it is abandoned and the next provider in the chain starts with a fresh budget. Omit `timeout` (the default) to keep unbounded calls.
@@ -322,3 +322,4 @@ communication protocol framework.
 | 50 | Quieter default terminal output + persistent logging — the terminal now shows one-line progress markers plus a single `TOTAL:` line by default (the full per-agent/per-model breakdown moves behind a new `--verbose`/`-v` flag, which also unifies `pipeline.py`'s log level with `gata`'s); every run's own `WARNING`-and-above messages are persisted to a new `run.log` in its bundle, regardless of verbosity | ✅ |
 | 52 | FairParallelPanel verdict truncation fix — `_extract_proposer_verdict()` recovers a response truncated before its closing `</verdict>` tag (max_tokens cutoff) instead of dropping the panelist; LinkedIn Angle Planning's `max_tokens` raised 1200→2500, the one call site with live-proven evidence | ✅ |
 | 53 | LinkedIn Post panel `max_tokens` follow-up — a real run's persisted `run.log` showed the same truncation mechanism at two more `FairParallelPanel` call sites; Domain Classification's `max_tokens` raised 1000→2000 and LinkedIn Article Writing's raised 3000→4000 | ✅ |
+| 54 | Model currency refresh II — defaults, fallback chains and cost tables updated to what each provider serves today (verified against official docs and one live call per default): Claude defaults move to `claude-sonnet-5-5` / `claude-opus-5-5`, Gemini Flash-Lite to `gemini-3.5-flash-lite`, the image chain to the stable `gemini-3.1-flash-image` → `gemini-3-pro-image`; Claude/Gemini/Grok price tables completed (and the `claude-sonnet-5` price corrected to $2/$10); constitution v1.3 | ✅ |

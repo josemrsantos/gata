@@ -8,14 +8,17 @@ from core.types import TokenUsage
 from llm.base import LLMProvider
 
 _COST_PER_M: dict[str, tuple[float, float]] = {
+    "grok-4.7": (2.00, 6.00),
+    "grok-4.6": (2.00, 6.00),
     "grok-4.5": (2.00, 6.00),
     "grok-4.3": (1.25, 2.50),
     "grok-build-0.1": (1.00, 2.00),
     # grok-3, grok-3-mini, grok-3-fast, and grok-3-mini-fast are retired (spec 039).
-    # Confirmed by a live API call: all four now silently redirect to and bill as
-    # grok-4.3, so they are kept here as priced aliases at that rate rather than
-    # deleted — a leftover custom providers.yaml entry still gets a real cost
-    # instead of a silent $0.00.
+    # Confirmed by a live API call (re-confirmed 2026-10-04, spec 054: xAI reports
+    # model grok-4.3 for grok-3 and grok-3-mini): all four now silently redirect to
+    # and bill as grok-4.3, so they are kept here as priced aliases at that rate
+    # rather than deleted — a leftover custom providers.yaml entry still gets a
+    # real cost instead of a silent $0.00.
     "grok-3": (1.25, 2.50),
     "grok-3-mini": (1.25, 2.50),
     "grok-3-fast": (1.25, 2.50),

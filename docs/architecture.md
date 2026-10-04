@@ -246,7 +246,7 @@ proposals and picks the sharpest one. Skipped entirely when `--direct` is set.
 ```mermaid
 flowchart TD
     IN["topic + strategy brief"]
-    F1["Framer — Claude\nclaude-sonnet-4-6"]
+    F1["Framer — Claude\nclaude-sonnet-5-5"]
     F2["Framer — Grok\ngrok-build-0.1"]
     F3["Framer — Gemini\ngemini-2.5-flash"]
     RES["Resonator — Grok-4.3\naggregator"]
@@ -299,7 +299,7 @@ Grok-4.3 (Aggregator) picks the strongest and wraps it in a `<verdict>` JSON blo
 ```mermaid
 flowchart TD
     IN["EnrichedBrief + topic"]
-    P1["Panelist — Claude\nclaude-sonnet-4-6"]
+    P1["Panelist — Claude\nclaude-sonnet-5-5"]
     P2["Panelist — Grok\ngrok-build-0.1"]
     P3["Panelist — Gemini\ngemini-2.5-flash"]
     AGG["Aggregator — Grok-4.3\npicks strongest concept"]
@@ -353,11 +353,8 @@ order; falls back to the next model on any error.
 ```mermaid
 flowchart LR
     IN["image prompt\n(concept + character desc)"]
-    M1["gemini-3.1-flash-image-preview"]
-    M2["gemini-3.1-flash-image"]
-    M3["gemini-3-pro-image-preview"]
-    M4["gemini-3-pro-image"]
-    M5["gemini-2.5-flash-image"]
+    M1["gemini-3.1-flash-image"]
+    M2["gemini-3-pro-image"]
     TS1["target_size fit\n(Pillow centre-crop + resize)\nopt-in, skipped when None"]
     TL["title overlay\n(PIL, dark banner)"]
     TS2["target_size re-fit\n(only if banner grew the canvas)"]
@@ -365,10 +362,7 @@ flowchart LR
 
     IN --> M1
     M1 -->|"fail"| M2
-    M2 -->|"fail"| M3
-    M3 -->|"fail"| M4
-    M4 -->|"fail"| M5
-    M1 & M2 & M3 & M4 & M5 -->|"success"| TS1
+    M1 & M2 -->|"success"| TS1
     TS1 --> TL
     TL --> TS2
     TS2 --> OUT
@@ -601,7 +595,7 @@ configured for the Satirist:**
        IN["3 research digests\n(each with its own sources)"]
        COLLECT["Collect every source domain"]
        CACHE{"Already in\nsource_domains.duckdb?"}
-       P1["Panelist — Claude\nclaude-sonnet-4-6"]
+       P1["Panelist — Claude\nclaude-sonnet-5-5"]
        P2["Panelist — Grok\ngrok-build-0.1"]
        P3["Panelist — Gemini\ngemini-2.5-flash"]
        AGG["Source Classifier — Grok-4.3\npaywalled? reliability high/low?"]
@@ -1048,7 +1042,7 @@ from llm.claude import ClaudeProvider
 
 persona = PersonaConfig(
     name="MyPersona",
-    providers=[ClaudeProvider("claude-sonnet-4-6")],
+    providers=[ClaudeProvider("claude-sonnet-5-5")],
     system_prompt="You are ...",
     max_tokens=2048,   # optional
 )

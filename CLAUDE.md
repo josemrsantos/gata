@@ -16,7 +16,7 @@ data-model.md, contracts/, tasks.md, quickstart.md)
 **Active stage**: See TODO.md for candidate next features; the table below reflects
 what has already merged to `main`.
 
-## Completed Stages (as of 2026-08-08)
+## Completed Stages (as of 2026-10-04)
 
 | Spec | Name                                                    | Status |
 |------|---------------------------------------------------------|--------|
@@ -61,6 +61,7 @@ what has already merged to `main`.
 | 046 | Research-only mode — `--research-only` skips the entire satirical pipeline (Cultural Strategist, Satirist, Image Generator, Image Evaluator) and runs only the research/angle-planning/writing engine, producing a neutral `research_report.md` by default or the branded `linkedin_post.md` when combined with `--linkedin-post`; on the `gata` CLI it runs once (first inferred audience) instead of once per audience | ✅ |
 | 050 | Quieter default terminal output + persistent logging — terminal print collapses to progress markers + a single `TOTAL:` line by default, restored via new `--verbose`/`-v` flag (also unifies `pipeline.py`'s log level with `gata`'s); every run persists its own `WARNING`+ messages to a new `run.log` in its bundle regardless of verbosity | ✅ |
 | 052 | FairParallelPanel verdict truncation fix — `_extract_proposer_verdict()` recovers a response truncated before its closing `</verdict>` tag (max_tokens cutoff) instead of dropping the panelist; LinkedIn Angle Planning's `max_tokens` raised 1200→2500, the one call site with live-proven evidence | ✅ |
+| 054 | Model currency refresh II — default models, fallback chains and cost tables refreshed for Claude, Gemini and Grok (verified against official docs plus a live call per default); Claude defaults → `claude-sonnet-5-5`/`claude-opus-5-5`, Gemini Flash-Lite → `gemini-3.5-flash-lite`, image chain → `gemini-3.1-flash-image` → `gemini-3-pro-image`; constitution v1.3 | ✅ |
 <!-- SPECKIT END -->
 
 LLM REVIEW PROTOCOL — this is a hard stop, not a suggestion. Violating it is not acceptable under any circumstances,

@@ -1,6 +1,37 @@
 # CHANGELOG
 
 
+## v1.30.0 (2026-10-04)
+
+### Changes
+
+* feat: spec 054 — model currency refresh II (defaults, fallback chains, cost tables)
+
+Providers keep releasing and retiring models, so the built-in defaults and the
+cost tables had drifted. Each default was checked against the provider's official
+documentation and then with one short real call per model (results recorded in
+`specs/054-model-currency-refresh-ii/research.md`). What changed:
+
+* Claude defaults move to the newest model of the same tier: `claude-sonnet-4-6`
+  → `claude-sonnet-5-5` and `claude-opus-4-7` → `claude-opus-5-5`. Haiku 4.5 has
+  no newer model and stays.
+* Gemini: only Flash-Lite moves (`gemini-2.5-flash-lite` → `gemini-3.5-flash-lite`),
+  because that model now returns 404 for our key. `gemini-2.5-flash` and
+  `gemini-2.5-pro` still work and are unchanged.
+* The image chain is now `gemini-3.1-flash-image` → `gemini-3-pro-image`. The
+  `-preview` image names and `gemini-2.5-flash-image` are documented as shut down
+  (they still answered a live call, so they keep a price entry).
+* Grok is unchanged (`grok-4.3` aggregator, `grok-build-0.1` panelist); the old
+  `grok-3*` names still redirect to and bill as `grok-4.3`.
+* Cost tables now price every non-retired Claude model, plus the new Gemini and Grok
+  models. This also fixes `claude-sonnet-5`, which was priced at $3/$15 instead of
+  its real $2/$10, and stops the new defaults from reporting a $0.00 cost.
+* Constitution §1 amended to v1.3 so its model names match the code.
+
+Dated follow-ups: re-check Haiku 4.5 after 2026-10-15; remove the Opus 4.5 price
+rows after 2026-11-24 and the Sonnet 4.5 rows after 2026-11-30; update
+`gemini-3.8-flash` to $1.50/$7.50 after 2026-12-31.
+
 ## v1.29.2 (2026-09-15)
 
 ### Fixes
