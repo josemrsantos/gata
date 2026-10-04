@@ -24,6 +24,7 @@ from core.types import (
 )
 from llm import ClaudeProvider, GeminiProvider, GrokProvider
 from llm.base import LLMProvider
+from llm.claude import PANELIST_CLAUDE_EFFORT
 
 logger = logging.getLogger(__name__)
 
@@ -62,10 +63,18 @@ def _minimal_brief(topic: str, seed_brief: StrategyBrief) -> EnrichedBrief:
     )
 
 
-def _build_provider(spec: ModelSpec) -> LLMProvider:
-    """Instantiate the correct LLMProvider from a ModelSpec."""
+def _build_provider(spec: ModelSpec, panelist: bool = False) -> LLMProvider:
+    """Instantiate the correct LLMProvider from a ModelSpec.
+
+    Claude panelists request low effort (spec 054 amendment A); every other role
+    keeps the model's default.
+    """
     if spec.provider == "claude":
-        return ClaudeProvider(spec.model, timeout=spec.timeout)
+        return ClaudeProvider(
+            spec.model,
+            timeout=spec.timeout,
+            effort=PANELIST_CLAUDE_EFFORT if panelist else None,
+        )
     if spec.provider == "gemini":
         return GeminiProvider(spec.model, timeout=spec.timeout)
     if spec.provider == "grok":
@@ -85,7 +94,7 @@ _GEMINI_PRO_CHAIN = [
     GeminiProvider("gemini-3.5-flash-lite"),
 ]
 _PARALLEL_PANELISTS = [
-    ClaudeProvider("claude-sonnet-5-5"),
+    ClaudeProvider("claude-sonnet-5-5", effort=PANELIST_CLAUDE_EFFORT),
     GrokProvider("grok-build-0.1"),
     GeminiProvider("gemini-2.5-flash"),
 ]
@@ -114,7 +123,8 @@ def run_pipeline(
     # in single-element lists so each slot has the same list[list[LLMProvider]] shape.
     if providers_config is not None:
         panelist_providers: list[list[LLMProvider]] = [
-            [_build_provider(s) for s in slot] for slot in providers_config.panelists
+            [_build_provider(s, panelist=True) for s in slot]
+            for slot in providers_config.panelists
         ]
         aggregator_providers: list[LLMProvider] = [
             _build_provider(s) for s in providers_config.aggregator

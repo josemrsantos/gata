@@ -12,9 +12,11 @@ import yaml
 import core.image_generation as image_generation
 from agents import agent_cultural_strategist, trend_scout
 from core import newsletter_merge, runner
+from core.types import ModelSpec, ProvidersConfig
 from llm import claude as claude_prices
 from llm import gemini as gemini_prices
 from llm import grok as grok_prices
+from llm.claude import ClaudeProvider
 
 _REPO = Path(__file__).resolve().parent.parent
 
@@ -206,3 +208,58 @@ def test_every_default_model_has_a_price_entry():
         if model not in table:
             missing.append(model)
     assert not missing, f"defaults without a price entry: {missing}"
+
+
+# ---------------------------------------------------------------------------
+# Claude panelists run at low effort (spec 054 amendment A)
+# ---------------------------------------------------------------------------
+
+
+def _claude_only(providers):
+    return [p for p in providers if isinstance(p, ClaudeProvider)]
+
+
+def test_default_claude_panelists_run_at_low_effort():
+    # The default Claude panelist must request low effort so Sonnet 5.5 does not
+    # spend hundreds of thinking tokens on every panel round.
+    claude = _claude_only(runner._PARALLEL_PANELISTS)
+    assert claude
+    assert all(p.effort == "low" for p in claude)
+
+
+def test_claude_models_outside_the_panel_keep_their_default_effort():
+    # Only panelists are tuned: the Claude fallback chain and the aggregator slots
+    # must not silently change behaviour.
+    assert all(p.effort is None for p in _claude_only(runner._CLAUDE_CHAIN))
+
+
+def test_runner_build_provider_sets_effort_only_for_panelists():
+    # providers.yaml entries become panelists or aggregators; only a panelist
+    # Claude entry on a model that supports effort gets low effort.
+    spec = ModelSpec(provider="claude", model="claude-sonnet-5-5")
+    assert runner._build_provider(spec, panelist=True).effort == "low"
+    assert runner._build_provider(spec).effort is None
+    haiku = ModelSpec(provider="claude", model="claude-haiku-4-5-20251001")
+    assert runner._build_provider(haiku, panelist=True).effort is None
+
+
+def test_newsletter_engagement_panelists_run_at_low_effort_aggregator_does_not():
+    # The newsletter's engagement-image panel is a panel too: its Claude panelists
+    # use low effort and its aggregator is left alone.
+    assert all(
+        p.effort == "low"
+        for p in _claude_only(newsletter_merge._DEFAULT_PANELIST_PROVIDERS)
+    )
+    claude = ModelSpec(provider="claude", model="claude-sonnet-5-5")
+    config = ProvidersConfig(panelists=[[claude]], aggregator=[claude])
+    panelists, aggregator = newsletter_merge._build_engagement_providers(config)
+    assert panelists[0][0].effort == "low"
+    assert aggregator[0].effort is None
+
+
+def test_bundle_writer_fallback_panelists_use_the_shared_effort_constant():
+    # bundle_writer builds its own fallback panel; its Claude panelist must use the
+    # same shared low-effort setting (checked in the source because the defaults are
+    # created inside a function).
+    text = (_REPO / "core" / "bundle_writer.py").read_text()
+    assert "PANELIST_CLAUDE_EFFORT" in text

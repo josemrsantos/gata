@@ -190,3 +190,56 @@ appears in the default configuration, and no default model is absent from §1.
 - The next stage is numbered 054, the next free number after 053.
 - The constitution amendment follows its Amendment Procedure and needs the
   project lead's explicit approval before it is written.
+
+---
+
+## Amendment A (2026-10-04) — Claude 5 thinking blocks
+
+*Living-spec amendment (RULE 18): a defect in what this spec shipped, found by the first
+real run after merge. Approved by the project lead on 2026-10-04.*
+
+### Problem
+
+The new Claude defaults (`claude-sonnet-5-5`, `claude-opus-5-5`) decide per request whether
+to think, and a reply that thinks starts with a thinking block. `ClaudeProvider` read
+`response.content[0].text`, so those replies crashed and the Claude panelist was dropped.
+Measured on real prompts: Sonnet 5.5 thought on 6 of 6 Satirist prompts and 1 of 3 round-2
+framer prompts; Opus 5.5 thought on every call. The original verification used a trivial
+"ping" prompt, which models answer without thinking, so it missed this.
+
+### Requirements
+
+- **FR-011**: `ClaudeProvider` MUST return the concatenated text blocks of a reply, in order,
+  ignoring thinking blocks, and MUST raise an error naming the model, stop reason, output
+  tokens and approximate billed cost when a reply has no text block.
+- **FR-012**: Claude panelists MUST request `effort: low` on models that support the
+  parameter (`claude-sonnet-5-5`, `claude-opus-5-5`, `claude-sonnet-5`, `claude-opus-5`);
+  the setting MUST NOT be sent to models that do not support it (for example Haiku 4.5), and
+  MUST NOT apply to the aggregator, the newsletter editor or research calls.
+- **FR-013**: A reply that stopped at `max_tokens` MUST be logged as a warning, because
+  thinking tokens share that budget.
+- **FR-014**: The live verification MUST use a realistic prompt per default model, not a
+  trivial one, and MUST confirm text is returned.
+
+### Success criteria
+
+- **SC-007**: Each Claude default returns text on a real Satirist-sized prompt (0 crashes).
+- **SC-008**: With panelist effort, Sonnet 5.5 produces no thinking on the measured prompts.
+- **SC-009**: A reply with a leading thinking block, several text blocks or no text block is
+  handled as FR-011 states, covered by tests.
+
+### Clarifications (2026-10-04)
+
+- Q: Fix only the crash, or also lower thinking for Claude panelists? → A: both — effort low
+  for the Claude panelists (the lead chose this over measuring quality first).
+
+### What does NOT change
+
+Model choices, prices, chain order, the aggregator, the newsletter editor, LinkedIn research
+(which reads the client directly), and every non-Claude provider.
+
+### Assumptions
+
+- Joke quality at low effort is not measured; the lead accepted that risk and can revisit it.
+- Truncation warnings ("missing closing `</verdict>` tag") are a separate, older issue: 39
+  occurred in runs from before this spec, and no measured Claude call hit `max_tokens`.

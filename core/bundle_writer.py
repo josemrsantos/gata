@@ -125,9 +125,10 @@ def write_bundle(
         # Use providers supplied by caller; fall back to hardcoded defaults if absent.
         if panelist_providers is None or aggregator_providers is None:
             from llm import ClaudeProvider, GeminiProvider, GrokProvider
+            from llm.claude import PANELIST_CLAUDE_EFFORT
 
             panelist_providers = [
-                [ClaudeProvider("claude-sonnet-5-5")],
+                [ClaudeProvider("claude-sonnet-5-5", effort=PANELIST_CLAUDE_EFFORT)],
                 [GrokProvider("grok-build-0.1")],
                 [GeminiProvider("gemini-2.5-flash")],
             ]

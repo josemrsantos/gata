@@ -113,6 +113,8 @@ the first selected audience — the default, the first `--audience` value, or wi
 `--audience` values) instead of once per audience, since a single
 report has no per-audience image variants to produce.
 
+`ClaudeProvider` (Spec 054 amendment A) returns the text blocks of a reply — Claude 5 models may start a reply with a thinking block, which is ignored — raises a clear error when a reply has no text, and warns when a reply stops at `max_tokens` (thinking shares that budget). Claude panelists, built with the `panelist` flag in `core/runner.py` and `core/newsletter_merge.py`, request `effort: low` on the models that support it (Sonnet 5.5, Opus 5.5); other roles and Haiku 4.5 are unchanged.
+
 `--providers PATH` loads a `providers.yaml` file that overrides the built-in LLM
 assignments. Each provider slot is an ordered fallback chain — if the primary provider
 fails, the next is tried (cross-provider fallback, Spec 032). An optional `timeout`

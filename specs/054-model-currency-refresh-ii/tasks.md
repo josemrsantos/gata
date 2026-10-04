@@ -208,3 +208,15 @@ price table. All planned defaults passed. Tasks below are already rewritten to t
 | 5 US3 | T028–T029 | US3 | Constitution v1.3 — approved |
 | 6 Polish | T030–T040 | — | ruff, docs, version, TODO, follow-ups, final checks |
 | **Total** | **40 tasks** | | |
+
+---
+
+## Amendment A tasks (2026-10-04) — Claude 5 thinking blocks
+
+- [X] T047 Measure on real prompts (research.md §9): block order, thinking tokens, stop reason, effort variants
+- [X] T048 Write failing tests in `tests/test_claude_provider.py`: leading thinking block, several text blocks, no text block (error names model/stop reason), `max_tokens` warning, effort sent / not sent / ignored for Haiku (FR-011–FR-013)
+- [X] T049 Write failing tests in `tests/test_default_models.py`: panelists low effort, other roles unchanged, factory `panelist` flag, newsletter engagement panel, bundle_writer constant
+- [X] T050 Implement in `llm/claude.py`: text-block extraction, error, `max_tokens` warning, `effort` + `PANELIST_CLAUDE_EFFORT`
+- [X] T051 Wire panelist-only effort in `core/runner.py`, `core/newsletter_merge.py`, `core/bundle_writer.py`; update `tests/test_providers_config.py`
+- [X] T052 Verify the fixed provider live on real Satirist prompts for Sonnet 5.5, Opus 5.5 and Haiku 4.5 (research.md §9)
+- [X] T053 Update `quickstart.md` live check to realistic prompts (FR-014); CHANGELOG v1.31.1; version 1.31.1; README and architecture notes
