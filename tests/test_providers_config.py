@@ -158,14 +158,17 @@ def test_load_providers_config_empty_slot(tmp_path):
 
 
 def test_build_provider_claude():
-    # Factory must return a ClaudeProvider for provider='claude'.
+    # Factory must return a ClaudeProvider for provider='claude'; a non-panelist gets
+    # no effort setting (spec 054 amendment A: only panelists request low effort).
     with patch("core.runner.ClaudeProvider") as MockClaude:
         instance = MagicMock()
         MockClaude.return_value = instance
         result = _build_provider(
             ModelSpec(provider="claude", model="claude-sonnet-4-6")
         )
-        MockClaude.assert_called_once_with("claude-sonnet-4-6", timeout=None)
+        MockClaude.assert_called_once_with(
+            "claude-sonnet-4-6", timeout=None, effort=None
+        )
         assert result is instance
 
 

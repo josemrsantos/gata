@@ -1,6 +1,29 @@
 # CHANGELOG
 
 
+## v1.31.1 (2026-10-04)
+
+### Fixes
+
+* fix: spec 054 amendment — Claude 5 models crashed when a reply started with a thinking block
+
+The new default Claude models (`claude-sonnet-5-5`, `claude-opus-5-5`) decide per request whether
+to think, and a reply that thinks begins with a thinking block. `ClaudeProvider` assumed the first
+block was text, so those replies raised an error and the Claude panelist was dropped from the
+panel — on real prompts Sonnet 5.5 thought on every Satirist call, and Opus 5.5 on every call.
+The verification in 1.30.0 used a trivial prompt that models answer without thinking, so it missed this.
+
+* `ClaudeProvider` now returns the text blocks of a reply and ignores thinking blocks; a reply with no
+  text raises an error that names the model, stop reason and the billed tokens and cost (a crashed call
+  is still billed, but was invisible in the cost report). A reply that stopped at `max_tokens` is logged
+  as a warning.
+* Claude panelists now run at `effort: low` on the models that support it, which removed the thinking in
+  every measured Sonnet 5.5 call and roughly halved a Satirist call's cost ($0.017 → $0.009). The aggregator,
+  newsletter editor and research calls are unchanged; Haiku 4.5, which does not support the setting, is not sent it.
+  Joke quality at low effort has not been measured.
+* Correction to 1.31.0: a cartoon run costs about $0.25 (typical $0.17–$0.37) and about two minutes, measured
+  over 28 earlier runs — not $0.13–$0.20.
+
 ## v1.31.0 (2026-10-04)
 
 ### Changes
@@ -11,8 +34,8 @@
 always add a "UK public" audience, so a typical run paid for about two cartoons. It now
 generates one cartoon, for the built-in `uk-tech-engineers` audience (British software
 engineers and developers, English, dry British wit), with no audience-guessing call.
-A one-audience run costs roughly $0.13–$0.20 and takes a few minutes (a real smoke run
-measured $0.13 and 155 s), so the default saves about that much per run.
+A one-audience run costs roughly $0.25 (typical $0.17–$0.37) and takes about two minutes
+(measured over 28 earlier cartoon runs), so the default saves about that much per run.
 
 * New repeatable `--audience NAME` option: names of communities in `communities.yaml`
   (read from the current folder). It replaces the default, runs one cartoon per

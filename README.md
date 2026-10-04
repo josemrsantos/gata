@@ -235,7 +235,7 @@ folder); `gata`'s default audience, `uk-tech-engineers`, is also built in, so a 
 
 `providers.yaml` controls which LLM models handle each agent role and in what fallback order. It is optional — if absent, Gata uses its built-in defaults (Claude Sonnet, Grok grok-build-0.1, and Gemini Flash as panelists; Grok grok-4.3 as aggregator).
 
-Each panelist slot is an ordered fallback chain. If the primary model fails, the next model in the slot is tried — including across provider boundaries (cross-provider fallback). The aggregator entry works the same way.
+Each panelist slot is an ordered fallback chain. If the primary model fails, the next model in the slot is tried — including across provider boundaries (cross-provider fallback). The aggregator entry works the same way. Claude panelists on the Claude 5 models run at low reasoning effort to keep their thinking short and cheap; the aggregator and other roles use the model's default.
 
 ```yaml
 panelists:

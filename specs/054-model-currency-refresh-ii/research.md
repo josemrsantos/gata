@@ -216,3 +216,39 @@ CHANGELOG entry). Adding any of these to `TODO.md` needs the project lead's appr
 | after 2026-11-30 | Remove the `claude-sonnet-4-5-20250929` / `claude-sonnet-4-5` price rows |
 | after 2026-12-31 | Update `gemini-3.8-flash` in `llm/gemini.py` to $1.50 / $7.50 (promotion ends) |
 | next refresh | Re-test the three `-preview` / 2.5 image names; drop their price rows once they stop answering |
+
+## 9. Amendment A — thinking-block measurements (2026-10-04, about $0.60 of real calls)
+
+Same real prompts the pipeline sends (framer and Satirist system prompts, same message
+format), 2048 `max_tokens` unless stated. "Thinking first" = the reply began with a thinking block.
+
+| Model / setting | Prompt | Thinking first | Thinking tokens | Hit max_tokens |
+|---|---|---|---|---|
+| Sonnet 5.5 default | Satirist | 6 of 6 | 514–880 | 0 |
+| Sonnet 5.5 default | framer round 2 (sees other proposals) | 1 of 3 | 822 | 0 |
+| Sonnet 5.5 default | framer round 1 | 0 of 10 | 0 | 0 |
+| Sonnet 5.5 default | aggregator-style | 2 of 2 | 599–880 | 0 |
+| Opus 5.5 default | framer | 3 of 3 | 487–594 | 0 |
+| Sonnet 5.5 `effort=low` or `thinking=between_tools` | Satirist / framer | 0 of 7 | 0 | 0 |
+| Haiku 4.5, Sonnet 4.6 (controls) | framer, Satirist | 0 | none | 0 |
+
+Largest reply: 1703 of 2048 tokens. Sonnet 5.5 at default effort writes about 1,200–1,700
+output tokens on the Satirist prompt versus about 450 for Sonnet 4.6 (about twice the cost per
+call despite the lower price per token). **After the fix** (real `ClaudeProvider`, Satirist
+prompt, 2 calls each): Sonnet 5.5 without effort — OK, $0.017/call; with panelist effort low —
+OK, $0.009/call, ~700 tokens; Opus 5.5 default $0.034 vs low $0.021; Haiku 4.5 with effort
+requested — OK, field not sent. Haiku's replies did not contain `</verdict>` (a model habit
+that the truncation recovery from spec 052 handles; unrelated to this fix).
+
+**Also found**: 39 "missing closing `</verdict>`" warnings in 11 pre-054 `run.log` files
+(older, separate issue); a failed call is billed by Anthropic but was never recorded in the
+cost report (the error message now includes the billed tokens and cost); the test suite
+writes real folders into `output/` (not addressed here).
+
+**LinkedIn research call checked, left unchanged (2026-10-04)**: `agent_linkedin_post` reads
+only `text` blocks (so it cannot hit the thinking-block crash) and calls the client directly
+(so the panelist effort setting does not reach it). A real Sonnet 5.5 web-search call with
+`max_tokens=1200`, twice default and twice effort low, returned text every time; thinking was
+71–89 tokens at default and 0 at low. All four calls stopped at `max_tokens` regardless of
+effort, so that truncation is an older, separate limit (not caused by thinking) and is not
+changed here.

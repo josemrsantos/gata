@@ -13,6 +13,7 @@ from llm.claude import _COST_PER_M, ClaudeProvider
 def _make_response(text: str, in_tok: int = 10, out_tok: int = 5) -> MagicMock:
     """Build a mock anthropic Message response."""
     block = MagicMock()
+    block.type = "text"
     block.text = text
     usage = MagicMock()
     usage.input_tokens = in_tok
@@ -20,6 +21,7 @@ def _make_response(text: str, in_tok: int = 10, out_tok: int = 5) -> MagicMock:
     resp = MagicMock()
     resp.content = [block]
     resp.usage = usage
+    resp.stop_reason = "end_turn"
     return resp
 
 
@@ -241,3 +243,94 @@ def test_generate_computes_correct_cost_for_sonnet_5_5():
     )
     _, usage = provider.generate("s", [{"role": "user", "content": "q"}])
     assert abs(usage.cost_usd - 12.00) < 0.001  # $2 input + $10 output
+
+
+# ---------------------------------------------------------------------------
+# content blocks and effort (spec 054 amendment A)
+# ---------------------------------------------------------------------------
+
+
+def _typed_block(block_type: str, text: str = "") -> MagicMock:
+    # A response content block like the SDK's: a thinking block has no .text.
+    block = MagicMock(spec=["type"] if block_type == "thinking" else ["type", "text"])
+    block.type = block_type
+    if block_type != "thinking":
+        block.text = text
+    return block
+
+
+def _response_with(blocks, stop_reason="end_turn", out_tok=5) -> MagicMock:
+    resp = _make_response("unused", out_tok=out_tok)
+    resp.content = blocks
+    resp.stop_reason = stop_reason
+    return resp
+
+
+def _generate_with(provider, response):
+    claude_mod._client = MagicMock()
+    claude_mod._client.messages.create.return_value = response
+    return provider.generate("s", [{"role": "user", "content": "q"}])
+
+
+def test_generate_skips_a_leading_thinking_block():
+    # Claude 5.5 models may start a reply with a thinking block; the answer text
+    # must still be returned instead of crashing on the missing .text.
+    response = _response_with(
+        [_typed_block("thinking"), _typed_block("text", "ANSWER")]
+    )
+    text, _ = _generate_with(ClaudeProvider("claude-sonnet-5-5"), response)
+    assert text == "ANSWER"
+
+
+def test_generate_joins_several_text_blocks_in_order():
+    # A reply split into several text blocks must come back as one string, in order.
+    response = _response_with([_typed_block("text", "A"), _typed_block("text", "B")])
+    text, _ = _generate_with(ClaudeProvider("claude-sonnet-5-5"), response)
+    assert text == "AB"
+
+
+def test_generate_without_any_text_block_raises_a_clear_error():
+    # A reply with no text block (for example thinking that ran out of tokens) must
+    # raise an error naming the model and stop reason so the fallback chain moves on.
+    response = _response_with([_typed_block("thinking")], stop_reason="max_tokens")
+    with pytest.raises(RuntimeError) as exc:
+        _generate_with(ClaudeProvider("claude-sonnet-5-5"), response)
+    assert "claude-sonnet-5-5" in str(exc.value)
+    assert "max_tokens" in str(exc.value)
+
+
+def test_generate_warns_when_the_reply_hit_max_tokens(caplog):
+    # A reply cut off at max_tokens must be visible in the log, because thinking
+    # tokens share the budget and a truncated answer would otherwise look normal.
+    response = _response_with(
+        [_typed_block("text", "cut off")], stop_reason="max_tokens"
+    )
+    with caplog.at_level("WARNING", logger="llm.claude"):
+        text, _ = _generate_with(ClaudeProvider("claude-sonnet-5-5"), response)
+    assert text == "cut off"
+    assert "max_tokens" in caplog.text
+
+
+def test_generate_passes_low_effort_for_models_that_support_it():
+    # A provider created with effort="low" must send output_config.effort=low on
+    # Sonnet 5.5, which is how the panelists keep thinking short and cheap.
+    provider = ClaudeProvider("claude-sonnet-5-5", effort="low")
+    _generate_with(provider, _make_response("x"))
+    kwargs = claude_mod._client.messages.create.call_args.kwargs
+    assert kwargs["extra_body"] == {"output_config": {"effort": "low"}}
+    assert provider.effort == "low"
+
+
+def test_generate_sends_no_effort_by_default():
+    # Without an effort setting the request must be exactly what it was before.
+    _generate_with(ClaudeProvider("claude-sonnet-5-5"), _make_response("x"))
+    assert "extra_body" not in claude_mod._client.messages.create.call_args.kwargs
+
+
+def test_effort_is_ignored_for_models_that_do_not_support_it():
+    # Haiku 4.5 does not support the effort parameter, so asking for it must not add
+    # the field (the API would reject the request).
+    provider = ClaudeProvider("claude-haiku-4-5-20251001", effort="low")
+    _generate_with(provider, _make_response("x"))
+    assert "extra_body" not in claude_mod._client.messages.create.call_args.kwargs
+    assert provider.effort is None

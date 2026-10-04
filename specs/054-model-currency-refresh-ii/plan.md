@@ -138,3 +138,14 @@ is covered by the invariant tests instead of removed here.
 |-----------|------------|--------------------------------------|
 | §1 SDK and Model Rules — model names change | Retired and superseded models must leave the defaults; §1 lists them by name | Leaving §1 as is would make every later plan's Constitution Check wrong; amendment is the procedure the constitution itself prescribes |
 | §6 — only if the lead changes the Grok aggregator or panelist | Keep §6 naming consistent with code | Not triggered: the lead kept `grok-4.3` and `grok-build-0.1` |
+
+## Amendment A (2026-10-04) — Claude 5 thinking blocks
+
+**Cause (measured, research.md §9)**: `llm/claude.py` assumed the first content block is
+text; Claude 5 models may start with a thinking block. **Change**: read text blocks only;
+clear error when there is none; warn on `max_tokens`; optional `effort` on `ClaudeProvider`
+sent only for models that support it, applied to panelists through a `panelist` flag on the
+provider factories in `core/runner.py` and `core/newsletter_merge.py` and the defaults in
+`core/bundle_writer.py`. **Constitution Check**: unchanged — no new provider, SDK, module or
+principle touched (§1 rules (a)-(d) still hold; rule (a)'s "one real call" is now interpreted
+as a realistic call, see FR-014). **Version**: patch `1.31.0` → `1.31.1`.

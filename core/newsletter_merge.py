@@ -11,7 +11,7 @@ from core.image_generation import LINKEDIN_FEATURE_IMAGE_SIZE, ImageGeneration
 from core.types import EditionMergeResult, ModelSpec, OrderedStory, ProvidersConfig
 from llm.base import LLMProvider
 from llm.claude import _COST_PER_M as _CLAUDE_COST_PER_M
-from llm.claude import ClaudeProvider
+from llm.claude import PANELIST_CLAUDE_EFFORT, ClaudeProvider
 from llm.gemini import _COST_PER_M as _GEMINI_COST_PER_M
 from llm.gemini import GeminiProvider
 from llm.grok import _COST_PER_M as _GROK_COST_PER_M
@@ -42,7 +42,7 @@ _GROK_MODELS = ["grok-build-0.1", "grok-4.3", "grok-4.5"]
 # _PARALLEL_PANELISTS / _GROK_AGGREGATOR defaults — used when no providers.yaml
 # override is supplied (Spec 041 FR-002).
 _DEFAULT_PANELIST_PROVIDERS: list[LLMProvider] = [
-    ClaudeProvider("claude-sonnet-5-5"),
+    ClaudeProvider("claude-sonnet-5-5", effort=PANELIST_CLAUDE_EFFORT),
     GrokProvider("grok-build-0.1"),
     GeminiProvider("gemini-2.5-flash"),
 ]
@@ -151,10 +151,14 @@ def build_fallback_chain() -> list[tuple[LLMProvider, tuple[float, float]]]:
     return gemini_tier + other_tier
 
 
-def _build_provider(spec: ModelSpec) -> LLMProvider:
+def _build_provider(spec: ModelSpec, panelist: bool = False) -> LLMProvider:
     """Instantiate the correct LLMProvider from a ModelSpec (mirrors core/runner.py)."""
     if spec.provider == "claude":
-        return ClaudeProvider(spec.model, timeout=spec.timeout)
+        return ClaudeProvider(
+            spec.model,
+            timeout=spec.timeout,
+            effort=PANELIST_CLAUDE_EFFORT if panelist else None,
+        )
     if spec.provider == "gemini":
         return GeminiProvider(spec.model, timeout=spec.timeout)
     if spec.provider == "grok":
@@ -173,7 +177,8 @@ def _build_engagement_providers(
     """
     if providers_config is not None:
         panelist_providers = [
-            [_build_provider(s) for s in slot] for slot in providers_config.panelists
+            [_build_provider(s, panelist=True) for s in slot]
+            for slot in providers_config.panelists
         ]
         aggregator_providers = [_build_provider(s) for s in providers_config.aggregator]
         return panelist_providers, aggregator_providers

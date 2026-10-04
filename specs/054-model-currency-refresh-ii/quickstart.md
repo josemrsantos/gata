@@ -17,7 +17,9 @@ Expected: the new invariant tests (every default model has a price entry; no
 retired name in any default; Grok panelist ≠ aggregator; chain provider order
 unchanged) pass — see `contracts/model-matrix.md` §4.
 
-## 2. One-off live check — FR-001 / SC-004 (manual, NOT in the test suite)
+## 2. One-off live check — FR-001 / SC-004 / FR-014 (manual, NOT in the test suite)
+
+**Use a realistic prompt, not a trivial one** (Amendment A): a "ping" is answered without thinking and hides problems such as the Claude 5 thinking-block crash. Send each Claude default the real Satirist prompt (`_build_satirist_system_prompt(...)` with a topic as the user message, as in research.md §9) through `ClaudeProvider.generate()` and confirm text comes back.
 
 One short call per **distinct** default model. Before changing code, run it
 against the *proposed* new models to confirm they exist; after the change, run
