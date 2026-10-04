@@ -1,0 +1,24 @@
+{
+  "integration": "speckit",
+  "version": "1.1.0",
+  "installed_at": "2026-10-04T15:36:40.208724+00:00",
+  "files": {
+    ".specify/templates/tasks-template.md": "9af460c2ec4d9672162c0b41c9ba5afe6821c438aee2a30c9ca84953b1d1cae6",
+    ".specify/templates/spec-template.md": "4d0a3902c8d849566c9b8ff6e5e8607f7713fe28ce41fecd5d9c68d1b6ece61e",
+    ".specify/templates/plan-template.md": "b3489720e205e989a904a4718400da4b8ca5da7e4055a90053c4bcc3b29fecc1",
+    ".specify/scripts/bash/create-new-feature.sh": "972f03ed8ca5ee17b7baad6d56d821d46269d77abc337496beafb0fe85a725f2",
+    ".specify/scripts/bash/check-prerequisites.sh": "daa377146db4fb69912f42611a7b91c5d55873b3e3e27ed33bd8d67505826344",
+    ".specify/scripts/bash/setup-plan.sh": "d0bd298c026446f3c63167130d65e49e4aa4485de6bef18bcdfd57b19aa0de96",
+    ".specify/scripts/bash/resolve-template.sh": "829e227096abc8bf0889889ec9f792f503ca5d395b7836a8a7eb739ee75214e7",
+    ".specify/scripts/bash/setup-tasks.sh": "4a33dd1e6c32ddc7d570f4b538572c54069192573eed0ec654d9fb826e31a4fe",
+    ".specify/scripts/bash/common.sh": "53cb1c23e349db4586c272436ce35c6e2f36a9c0b5351a85e0b216d9887a26b7",
+    ".specify/templates/checklist-template.md": "856532b3cb66171c662cc16f16b31a5856e4655a8666aad1e545bbfc7f603ca1",
+    ".specify/templates/constitution-template.md": "ce7549540fa45543cca797a150201d868e64495fdff39dc38246fb17bd4024b3",
+    ".specify/.gitignore": "8c908410d177a1ef3d0dee16d7ad55f2ac3333df3104c4d4adee1c9b82f1dbc1"
+  },
+  "recovered_files": [
+    ".specify/templates/plan-template.md",
+    ".specify/templates/spec-template.md",
+    ".specify/templates/tasks-template.md"
+  ]
+}
