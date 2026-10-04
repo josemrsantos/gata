@@ -1,6 +1,137 @@
 # TODO
 
-## FairParallelPanel aggregation improvements — *new Spec 051*
+## Model currency refresh II — *new Spec (number TBD)*
+
+**Goal:** Update the default models, fallback chains and pricing tables for all
+three providers (Claude, Gemini, Grok) to the latest releases, covering both
+the defaults in `providers.yaml` and the cost tables used for run-cost reporting.
+
+**Reason:** Providers keep releasing and retiring models, so defaults and
+pricing go stale — retired models can break runs and out-of-date prices make
+cost reports wrong. Spec 039 did this once; it needs repeating to keep up.
+
+**Confirmed:** Covers all three providers, both defaults and pricing. A new
+spec (Flow-Forward, per RULE 18), not an amendment to Spec 039 — kept as a
+separate historical record of this refresh.
+
+**Things to figure out:**
+- Which specific models are the current releases per provider (verify against
+  each provider's docs, not memory).
+- Whether any currently configured model is already retired or deprecated.
+- Whether fallback chain ordering should change alongside the new defaults.
+
+---
+
+## Single-audience default for `gata` — *new Spec (number TBD)*
+
+**Goal:** Running `gata` generates for one audience by default — `uk-tech-engineers`
+only — instead of today's topic-inferred audiences plus the always-added UK
+public audience. A repeatable `--audience` flag overrides the default and
+accepts more than one audience.
+
+**Reason:** Each extra audience is a full paid pipeline run (Strategist,
+Satirist, image, evaluator), so the current ~2-audience default doubles cost
+and time. Most runs need one; multi-audience stays available on request.
+
+**Confirmed:**
+- Default is a fixed audience definition for `gata` (language/tone of
+  `uk-tech-engineers`), replacing the "UK public" fallback in `_ensure_uk`.
+- `--audience` is repeatable (multiple values).
+- A new spec (Flow-Forward, per RULE 18), not an amendment — it changes a
+  default and evolves Specs 008 (multi-audience CLI), 015 (single main
+  audience) and possibly 010 (dynamic audiences).
+
+**Things to figure out:**
+- What `--audience` accepts: community names from `communities.yaml`,
+  free-text audience descriptions, or both.
+- Whether the default reads `uk-tech-engineers` from `communities.yaml` or
+  hardcodes an equivalent in `gata`.
+- Whether `--audience` replaces the default or adds to it, and how to get
+  the old behaviour (topic-inferred audiences) back, if at all.
+- Interaction with `--research-only`, which today uses the first inferred
+  audience — should it use the new default?
+
+---
+
+## Image-prompt-only mode — *new Spec (number TBD)*
+
+**Goal:** A new `--image-prompt-only` flag, on both `pipeline.py` and `gata`,
+runs the whole text pipeline but skips only the actual image creation (the
+Gemini image call). Instead it writes the full image-generation request to a
+file and prints a message that no image was auto-generated, that it must be
+generated manually using that file as input in Gemini, and the file's location.
+
+**Reason:** Image generation is the slowest, most expensive and sometimes
+failing step. Prompt-only mode lets you pay only for the text stages, see
+exactly what Gemini would receive, and paste it into Gemini yourself. It also
+lets you use a monthly plan you are already paying for (the Gemini app)
+instead of spending more money on direct API calls for image generation.
+
+**Confirmed:**
+- Skips ONLY the image creation; every other stage still runs (and so the text
+  bundle is still produced).
+- On `gata` with multiple audiences: one prompt file per audience, each
+  location printed.
+- A new spec (Flow-Forward, per RULE 18), not an amendment to Spec 004.
+- Finding: today's `prompt_card.txt` is not the full request. For multi-panel
+  cartoons it holds `concept.full_text` while Gemini receives
+  `_build_multi_panel_prompt(panels, layout)`; and the aspect-ratio config
+  (only when `target_size` is pinned), the title banner overlay and the final
+  crop are applied in Python, outside the prompt text.
+
+**Things to figure out:**
+- Whether the file should be the exact string `ImageGeneration.generate()`
+  sends (from one shared builder used by both paths) plus a header with the
+  manual-use settings (aspect ratio/target size, title, note that banner and
+  crop are not applied) — and whether to fix `prompt_card.txt` to the same
+  string in this spec.
+- The file's name and location in the bundle (new file vs. reusing
+  `prompt_card.txt`).
+- What the Image Evaluator and its retry loop do when no image exists
+  (presumably skipped entirely).
+- How the flag interacts with `--linkedin-post`, whose cartoon is pinned to
+  1200x644 (the header would need to state that size).
+
+---
+
+## FairParallelPanel executor hang risk — *new Spec (number TBD)*
+
+**Goal:** Fix the same `ThreadPoolExecutor` context-manager hang pattern in
+`llm/fair_parallel_panel.py`'s `_call_persona()` that was just fixed in
+`agents/agent_linkedin_post.py` (Spec 042 amendment, 2026-09-15) — replace
+`with ThreadPoolExecutor(...) as ex:` + `future.result(timeout=provider.timeout)`
+with a non-context-manager executor and
+`shutdown(wait=False, cancel_futures=True)`, plus (where feasible) an
+SDK-level per-call timeout passed directly to `provider.generate()`.
+
+**Reason:** `_call_persona()` only exercises the executor path when a
+panelist provider has an explicit `timeout` set via `providers.yaml` (Spec
+036) — that wasn't the case in the incident that surfaced the bug, so it
+didn't contribute there, but the exact same "caller gives up via
+future.result(timeout=...), then shutdown(wait=True) blocks on the same
+stuck thread anyway" defect is present, and every FairParallelPanel caller
+(Cultural Strategist, Satirist, Explainer, LinkedIn Angle
+Planning/Writing/Domain Classification) is reachable through it whenever an
+operator configures a per-provider timeout.
+
+**Confirmed:** Isolated to `llm/fair_parallel_panel.py`'s `_call_persona()`
+method — no other file shares this exact pattern outside the two already
+fixed in Spec 042's 2026-09-15 amendment.
+
+**Things to figure out:**
+- Whether `LLMProvider.generate()`'s signature can accept a passthrough
+  per-call timeout uniformly across Claude/Gemini/Grok without breaking
+  every existing call site, or whether this needs to stay
+  orchestration-only (executor fix alone, no SDK-level bound) since
+  `generate()` doesn't currently expose that.
+- Whether this is a Living Spec amendment to Spec 036 (per-provider
+  timeout) or Spec 034 (FairParallelPanel itself), or a fresh spec number —
+  same RULE 18 question as this session's fix, deferred until this item is
+  picked up.
+
+---
+
+## FairParallelPanel aggregation improvements — *new Spec (number TBD)*
 
 **Goal:** Three related improvements to FairParallelPanel's aggregation
 step, all touching the same shared class:
@@ -40,7 +171,7 @@ threading) — a single spec, not three per-panel patches.
 
 ---
 
-## Lightweight webserver front-end — *new Spec 047*
+## Lightweight webserver front-end — *new Spec (number TBD)*
 
 **Goal:** Stand up a lightweight webserver that can trigger the `gata` CLI (e.g. "generate a
 report on X") over HTTP instead of only via terminal.
@@ -56,7 +187,7 @@ workflow.
 
 ---
 
-## Move generation to AWS (cost-conscious) — *new Spec 048*
+## Move generation to AWS (cost-conscious) — *new Spec (number TBD)*
 
 **Goal:** Investigate moving the generation workload to AWS, using free-tier or otherwise
 minimal-cost resources where possible.
@@ -73,7 +204,7 @@ cases, kept as cheap/free as this side project needs.
 
 ---
 
-## Self-documenting CLI — *new Spec 049*
+## Self-documenting CLI — *new Spec (number TBD)*
 
 **Goal:** Calling the pipeline script with no arguments (or with `--help`) should display all available calling modes with concrete, ready-to-edit examples.
 
@@ -82,40 +213,3 @@ cases, kept as cheap/free as this side project needs.
 **Success criteria:** Running `python pipeline.py` alone prints usage with at least one fully worked example per mode (manual, community, random).
 
 **Spec check:** No existing spec covers CLI help/usage output (checked every `specs/*/spec.md` for "help"/"usage"/"self-doc" — no hits; spec 008, the closest candidate, only covers audience selection, not help text). Confirmed live: `pipeline.py` with no arguments today prints no usage at all, just falls through to the API-key check. This is new capability, not a correction — new spec number.
-
----
-
-## FairParallelPanel executor hang risk — *new Spec 054*
-
-**Goal:** Fix the same `ThreadPoolExecutor` context-manager hang pattern in
-`llm/fair_parallel_panel.py`'s `_call_persona()` that was just fixed in
-`agents/agent_linkedin_post.py` (Spec 042 amendment, 2026-09-15) — replace
-`with ThreadPoolExecutor(...) as ex:` + `future.result(timeout=provider.timeout)`
-with a non-context-manager executor and
-`shutdown(wait=False, cancel_futures=True)`, plus (where feasible) an
-SDK-level per-call timeout passed directly to `provider.generate()`.
-
-**Reason:** `_call_persona()` only exercises the executor path when a
-panelist provider has an explicit `timeout` set via `providers.yaml` (Spec
-036) — that wasn't the case in the incident that surfaced the bug, so it
-didn't contribute there, but the exact same "caller gives up via
-future.result(timeout=...), then shutdown(wait=True) blocks on the same
-stuck thread anyway" defect is present, and every FairParallelPanel caller
-(Cultural Strategist, Satirist, Explainer, LinkedIn Angle
-Planning/Writing/Domain Classification) is reachable through it whenever an
-operator configures a per-provider timeout.
-
-**Confirmed:** Isolated to `llm/fair_parallel_panel.py`'s `_call_persona()`
-method — no other file shares this exact pattern outside the two already
-fixed in Spec 042's 2026-09-15 amendment.
-
-**Things to figure out:**
-- Whether `LLMProvider.generate()`'s signature can accept a passthrough
-  per-call timeout uniformly across Claude/Gemini/Grok without breaking
-  every existing call site, or whether this needs to stay
-  orchestration-only (executor fix alone, no SDK-level bound) since
-  `generate()` doesn't currently expose that.
-- Whether this is a Living Spec amendment to Spec 036 (per-provider
-  timeout) or Spec 034 (FairParallelPanel itself), or a fresh spec number —
-  same RULE 18 question as this session's fix, deferred until this item is
-  picked up.
