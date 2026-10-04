@@ -28,6 +28,9 @@ request.
 - Q: Where does the default audience come from? → A: a built-in copy inside `gata`, so the default works from any folder
 - Q: Should a named audience's panel count and layout apply in `gata`? (FR-003) → A: no; layout stays automatic for every audience, as today
 - Q: Which audience does `--research-only` use? (FR-008) → A: the first selected audience (the default, or the first `--audience` value); extra values are ignored with a visible note
+- Q: What happens to `newsletter_merge.py`, whose default audience folder is `uk`? → A: its default changes to `uk-tech-engineers` so it finds default `gata` output; editions built earlier use `--audience uk`
+- Q: Should named audiences be made safe for use as file names? → A: yes
+- Q: Assumptions (built-in default answers to its own name only when `communities.yaml` is absent; an existing file is the only source of names; `--infer-audiences` with `--audience` rejected) → A: confirmed
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -115,6 +118,25 @@ it produced before this feature (guessed audiences plus UK when needed).
 
 ---
 
+### User Story 5 — The newsletter merge finds default output (Priority: P2)
+
+An operator builds a newsletter edition from stories made with default `gata` runs and
+runs `newsletter_merge.py` without naming an audience; it finds each story's output.
+
+**Why this priority**: Without it the default change would break the newsletter merge.
+
+**Independent Test**: `python newsletter_merge.py <edition-folder>` on stories whose
+audience sub-folder is `uk-tech-engineers` merges them without `--audience`.
+
+**Acceptance Scenarios**:
+
+1. **Given** story folders each containing `uk-tech-engineers/linkedin_post.md`,
+   **When** the merge runs with no `--audience`, **Then** it reads that folder.
+2. **Given** an older edition whose stories use `uk/`, **When** the operator passes
+   `--audience uk`, **Then** it still merges them.
+
+---
+
 ### Edge Cases
 
 - No audience option and no `communities.yaml` in the current folder → the default
@@ -174,6 +196,12 @@ it produced before this feature (guessed audiences plus UK when needed).
   updated so the suite passes with zero failures; `README.md`,
   `docs/architecture.md` and `CHANGELOG.md` MUST be updated (RULE 17), the version
   bumped (RULE 15), and this item removed from `TODO.md` in the same PR (RULE 19).
+- **FR-013**: `newsletter_merge.py` MUST default its `--audience` to `uk-tech-engineers`
+  (its help text and the function default included), so it finds default `gata` output;
+  an explicit `--audience uk` keeps working for earlier editions.
+- **FR-014**: When an audience is chosen by name, the name used for its output file and
+  folder MUST be made safe for file names (lower-case letters, digits, `-` and `_`
+  only); names already in that form, such as `uk-tech-engineers`, are unchanged.
 
 ### Key Entities
 
@@ -199,6 +227,8 @@ it produced before this feature (guessed audiences plus UK when needed).
   audiences, same "UK public" rule).
 - **SC-008**: `--research-only` produces exactly 1 report, for the first selected
   audience.
+- **SC-009**: `newsletter_merge.py` run with no `--audience` finds the stories of default
+  `gata` runs (0 "missing expected file" errors for `uk-tech-engineers/` stories).
 
 ## What does NOT change
 
@@ -207,6 +237,7 @@ it produced before this feature (guessed audiences plus UK when needed).
   (`<topic-folder>/<audience-name>.png`).
 - Which models are used (spec 054) and their cost reporting.
 - `communities.yaml` itself: no audience is added, removed or edited by this feature.
+- `newsletter_merge.py` itself, except the default audience folder name (FR-013).
 - The existing options `--direct`, `--html`, `--no-title`, `--linkedin-post`,
   `--angle`, `--research-only` and `--verbose` themselves.
 - Layout selection: `gata` keeps choosing the layout automatically for every
@@ -227,7 +258,7 @@ it produced before this feature (guessed audiences plus UK when needed).
 - The audience-guessing function stays in the code and is reached through
   `--infer-audiences` (FR-005).
 - The built-in default also answers to its own name `uk-tech-engineers` when
-  `communities.yaml` is absent (proposed; see FR-007).
+  `communities.yaml` is absent (confirmed; see FR-007).
 - When `communities.yaml` is present and the operator names `uk-tech-engineers`
   explicitly, the file's entry is used; the built-in copy only serves the default
   and the file-missing case.

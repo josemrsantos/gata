@@ -9,8 +9,8 @@
 audience, `uk-tech-engineers`. A repeatable `--audience` option picks community
 audiences by name (validated against `communities.yaml` before any paid call), and a
 new `--infer-audiences` flag keeps today's guessed-plus-UK behaviour. The change is
-confined to `core/cli.py`: one constant, two small helpers and two new arguments; the
-pipeline, agents and `pipeline.py` are untouched. The bulk of the work is updating
+confined to `core/cli.py`: one constant, two small helpers and two new arguments, plus the one-line
+default change in the newsletter merge; the pipeline, agents and `pipeline.py` are untouched. The bulk of the work is updating
 about 10 existing CLI tests that assumed the guessing default, plus docs.
 
 ## Technical Context
@@ -23,7 +23,7 @@ about 10 existing CLI tests that assumed the guessing default, plus docs.
 **Project Type**: CLI pipeline — behaviour change at the entry point
 **Performance Goals**: a default run does 1 pipeline run and 0 guessing calls (today ≈ 2 runs + 1 call)
 **Constraints**: ruff `line-length=88`; no bare `print()` for new messages (§13: use `logger`); validation errors before any paid call
-**Scale/Scope**: 1 source file (~60 lines changed), 1 test file, 3 docs, version bump
+**Scale/Scope**: 3 source files (`core/cli.py` mainly), 2 test files, 3 docs, version bump
 
 ## Constitution Check
 
@@ -76,6 +76,9 @@ core/cli.py            MODIFY  add _DEFAULT_AUDIENCE, _resolve_audience_names(),
 tests/test_cli.py      MODIFY  update ~10 tests that assume guessing (add --infer-audiences or patch
                                the default); ADD tests for default run, --audience, dedupe, errors,
                                --infer-audiences, research-only, drift guard
+newsletter_merge.py    MODIFY  `--audience` default and help text: `uk` → `uk-tech-engineers` (FR-013)
+core/newsletter_merge.py  MODIFY  `merge_edition(audience=...)` default `uk` → `uk-tech-engineers`
+tests/test_newsletter_merge.py  MODIFY  ADD default-audience tests (default, script default + help, `--audience uk` still honoured)
 README.md              MODIFY  `gata` command section: new default, --audience, --infer-audiences; status row 55
 docs/architecture.md   MODIFY  audience-selection description and any "UK always" / inference wording
 CHANGELOG.md           MODIFY  v1.31.0 entry (hand-written, RULE 17)
@@ -91,19 +94,20 @@ has its own community mechanism and is out of scope).
 
 ## Version and docs gates
 
-- **Version (RULE 15)**: `1.30.0` → `1.31.0` (new flag, changed default) — pending the lead's confirmation (plan-summary decision 4).
+- **Version (RULE 15)**: `1.30.0` → `1.31.0` (new flag, changed default) — approved by the lead.
 - **RULE 17**: CHANGELOG entry, README, `docs/architecture.md` before merge.
 - **RULE 19**: remove the TODO item in this PR.
 
-## Decisions awaiting the project lead
+## Decisions (project lead, 2026-10-04, gate G2)
 
-See `plan-summary.md` §3. Four: (1) what to do with `newsletter_merge.py`'s default
-`--audience uk`, which will no longer match default `gata` output (`uk-tech-engineers/`);
-(2) whether to run the optional paid smoke test (about $0.20, 5 minutes); (3) whether to
-sanitize named audiences when used as file names; (4) the version bump to `1.31.0`.
-Three assumptions to confirm: the built-in default answers to its own name when
-`communities.yaml` is absent; when the file exists it is the only source of valid names;
-`--infer-audiences` with `--audience` is rejected.
+1. **Newsletter merge default** — answered **A**: change `newsletter_merge.py`'s default
+   audience to `uk-tech-engineers` (spec FR-013, user story 5); earlier editions use `--audience uk`.
+2. **Optional paid smoke test** — answered **yes** (about $0.20, 5 minutes).
+3. **File-safe names for named audiences** — answered **yes** (FR-014).
+4. **Version bump to 1.31.0** — answered **yes**.
+5. **Assumptions** — confirmed: the built-in default answers to its own name only when
+   `communities.yaml` is absent; an existing file is the only source of valid names;
+   `--infer-audiences` with `--audience` is rejected.
 
 ## Complexity Tracking
 
