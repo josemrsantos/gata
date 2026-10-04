@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+import llm.claude as claude_mod
 from llm.claude import _COST_PER_M, ClaudeProvider
 
 # ---------------------------------------------------------------------------
@@ -175,8 +176,10 @@ def test_generate_cost_defaults_to_zero_for_unknown_model():
 
 def test_cost_table_includes_new_sonnet_5_and_opus_5():
     # _COST_PER_M must include the newer Sonnet 5 / Opus 5 models so telemetry
-    # doesn't silently report $0.00 if providers.yaml is pointed at them.
-    assert _COST_PER_M["claude-sonnet-5"] == (3.00, 15.00)
+    # doesn't silently report $0.00 if providers.yaml is pointed at them. Sonnet 5's
+    # introductory $2/$10 became the standard price (Anthropic's pricing page,
+    # 2026-10-04): the planned increase to $3/$15 will not occur.
+    assert _COST_PER_M["claude-sonnet-5"] == (2.00, 10.00)
     assert _COST_PER_M["claude-opus-5"] == (5.00, 25.00)
 
 
@@ -190,3 +193,51 @@ def test_cost_table_opus_4_7_and_4_8_match_current_pricing():
 def test_cost_table_haiku_4_5_matches_current_pricing():
     # Regression guard: Haiku 4.5 must not silently revert to the stale Haiku 3.5 rate.
     assert _COST_PER_M["claude-haiku-4-5-20251001"] == (1.00, 5.00)
+
+
+# ---------------------------------------------------------------------------
+# price table — every non-retired, generally available model (Spec 054)
+# ---------------------------------------------------------------------------
+
+
+def test_cost_table_matches_published_rates_on_2026_10_04():
+    # Every non-retired Claude model on Anthropic's pricing page must have its
+    # published rate here (data-model: "value equals the provider's published rate
+    # on the verification date"); an unpriced model silently reports $0.00.
+    expected = {
+        "claude-sonnet-5-5": (2.00, 10.00),
+        "claude-opus-5-5": (4.00, 20.00),
+        "claude-opus-4-6": (5.00, 25.00),
+        "claude-opus-4-5-20251101": (5.00, 25.00),
+        "claude-opus-4-5": (5.00, 25.00),
+        "claude-sonnet-4-5-20250929": (3.00, 15.00),
+        "claude-fable-5-1": (10.00, 50.00),
+        "claude-fable-5": (10.00, 50.00),
+        "claude-sonnet-5": (2.00, 10.00),
+        "claude-sonnet-4-6": (3.00, 15.00),
+        "claude-sonnet-4-5": (3.00, 15.00),
+        "claude-opus-5": (5.00, 25.00),
+        "claude-opus-4-8": (5.00, 25.00),
+        "claude-opus-4-7": (5.00, 25.00),
+        "claude-haiku-4-5-20251001": (1.00, 5.00),
+    }
+    for model, rate in expected.items():
+        assert _COST_PER_M.get(model) == rate, model
+
+
+def test_cost_table_has_no_invitation_only_mythos_models():
+    # Mythos models are invitation-only (not generally available), so they are
+    # deliberately not priced in the table.
+    assert not [m for m in _COST_PER_M if "mythos" in m]
+
+
+def test_generate_computes_correct_cost_for_sonnet_5_5():
+    # claude-sonnet-5-5 is the new default creative model: generate() must price it
+    # at its published $2.00/$10.00 per MTok instead of silently reporting $0.00.
+    provider = ClaudeProvider("claude-sonnet-5-5")
+    claude_mod._client = MagicMock()
+    claude_mod._client.messages.create.return_value = _make_response(
+        "x", in_tok=1_000_000, out_tok=1_000_000
+    )
+    _, usage = provider.generate("s", [{"role": "user", "content": "q"}])
+    assert abs(usage.cost_usd - 12.00) < 0.001  # $2 input + $10 output

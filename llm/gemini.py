@@ -7,6 +7,9 @@ from core.types import TokenUsage
 from llm.base import LLMProvider
 
 _COST_PER_M: dict[str, tuple[float, float]] = {
+    "gemini-3.8-flash": (0.75, 3.75),  # promotional rate through 2026-12-31
+    "gemini-3.5-flash": (1.50, 9.00),
+    "gemini-3.5-flash-lite": (0.30, 2.50),
     "gemini-2.5-pro": (1.25, 10.00),
     "gemini-2.5-flash": (0.30, 2.50),
     "gemini-2.5-flash-lite": (0.10, 0.40),
@@ -19,9 +22,14 @@ _COST_PER_M: dict[str, tuple[float, float]] = {
     "gemini-3-pro-image": (2.00, 120.00),
     "gemini-2.5-flash-image": (0.30, 30.23),
 }
+# gemini-3.8-flash is $0.75/$3.75 only through 2026-12-31, then $1.50/$7.50 —
+# update that row after the promotion ends (spec 054 research.md, dated follow-ups).
 # gemini-2.0-flash (and -lite) were shut down by Google on 2026-06-01 (spec 039) —
 # deliberately no longer listed; any reference to it is a dead default, not a
 # valid custom-config target.
+# The two -image-preview names and gemini-2.5-flash-image are documented as shut
+# down but still answered a live call on 2026-10-04 (spec 054), so they stay priced
+# even though no default chain uses them any more.
 
 _client: genai.Client | None = None
 

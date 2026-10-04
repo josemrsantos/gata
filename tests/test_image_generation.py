@@ -154,7 +154,7 @@ def test_generate_logs_model_and_prompt_length(caplog, tmp_path):
         ImageGeneration().generate(PROMPT, output_path=str(out_file))
 
     assert any(
-        r.levelno == logging.DEBUG and "gemini-3.1-flash-image-preview" in r.message
+        r.levelno == logging.DEBUG and "model=gemini-3.1-flash-image," in r.message
         for r in caplog.records
     )
     prompt_len = str(len(PROMPT))
@@ -180,7 +180,7 @@ def test_generate_records_real_output_tokens_and_nonzero_cost(tmp_path):
         _, telemetry = ImageGeneration().generate(PROMPT, output_path=str(out_file))
 
     call = telemetry.calls[0]
-    assert call.model == "gemini-3.1-flash-image-preview"
+    assert call.model == "gemini-3.1-flash-image"
     assert call.input_tokens == 500
     assert call.output_tokens == 1120
     assert call.cost_usd == pytest.approx(compute_cost(call.model, 500, 1120))

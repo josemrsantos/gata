@@ -274,3 +274,13 @@ def test_grok_provider_failure_falls_through_to_next_provider():
         result = loop.run("initial brief")
     assert result.verdict == "approved concept"
     assert fallback.generate.call_count == 1
+
+
+def test_cost_table_has_newer_grok_models_at_published_rates():
+    # grok-4.6 and grok-4.7 are current xAI models priced $2.00/$6.00 per MTok;
+    # the existing rows for 4.5, 4.3 and build-0.1 must keep their published rates.
+    assert _COST_PER_M["grok-4.6"] == (2.00, 6.00)
+    assert _COST_PER_M["grok-4.7"] == (2.00, 6.00)
+    assert _COST_PER_M["grok-4.5"] == (2.00, 6.00)
+    assert _COST_PER_M["grok-4.3"] == (1.25, 2.50)
+    assert _COST_PER_M["grok-build-0.1"] == (1.00, 2.00)

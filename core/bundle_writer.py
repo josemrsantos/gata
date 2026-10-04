@@ -127,7 +127,7 @@ def write_bundle(
             from llm import ClaudeProvider, GeminiProvider, GrokProvider
 
             panelist_providers = [
-                [ClaudeProvider("claude-sonnet-4-6")],
+                [ClaudeProvider("claude-sonnet-5-5")],
                 [GrokProvider("grok-build-0.1")],
                 [GeminiProvider("gemini-2.5-flash")],
             ]

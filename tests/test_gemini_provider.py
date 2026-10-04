@@ -98,3 +98,28 @@ def test_cost_table_excludes_dead_gemini_2_0_flash():
     # gemini-2.0-flash was shut down by Google on 2026-06-01 (confirmed via official
     # deprecation docs) — it must not remain in the cost table as if still billable.
     assert "gemini-2.0-flash" not in _COST_PER_M
+
+
+def test_cost_table_has_current_flash_generation_rows():
+    # The newer stable Flash / Flash-Lite models must be priced at their published
+    # rates (gemini-3.8-flash is the promotional rate valid to 2026-12-31).
+    assert _COST_PER_M["gemini-3.8-flash"] == (0.75, 3.75)
+    assert _COST_PER_M["gemini-3.5-flash"] == (1.50, 9.00)
+    assert _COST_PER_M["gemini-3.5-flash-lite"] == (0.30, 2.50)
+
+
+def test_cost_table_keeps_models_that_are_still_served():
+    # Names Google's docs call shut down but that still answer live (checked
+    # 2026-10-04) are still billed, so they keep a price row (FR-005); the image
+    # models in the chain keep their published rates.
+    for model in (
+        "gemini-3.1-flash-image-preview",
+        "gemini-3-pro-image-preview",
+        "gemini-2.5-flash-image",
+        "gemini-2.5-pro",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+    ):
+        assert model in _COST_PER_M, model
+    assert _COST_PER_M["gemini-3.1-flash-image"] == (0.50, 60.00)
+    assert _COST_PER_M["gemini-3-pro-image"] == (2.00, 120.00)

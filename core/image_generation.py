@@ -17,11 +17,8 @@ logger = logging.getLogger(__name__)
 _gemini_client: genai.Client | None = None
 
 _MODELS = [
-    "gemini-3.1-flash-image-preview",
     "gemini-3.1-flash-image",
-    "gemini-3-pro-image-preview",
     "gemini-3-pro-image",
-    "gemini-2.5-flash-image",
 ]
 
 # LinkedIn's documented Article/Newsletter cover spec.

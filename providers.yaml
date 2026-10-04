@@ -13,7 +13,7 @@
 #   next provider in the chain is tried with its own fresh budget.
 #   Omit `timeout` (as below) to keep the current unbounded behaviour.
 #   Recommended starting values based on observed latencies:
-#     claude-sonnet-4-6:  timeout: 25.0
+#     claude-sonnet-5-5:  timeout: 25.0
 #     grok-4.3:           timeout: 20.0
 #     grok-build-0.1:     timeout: 12.0
 #     gemini-2.5-flash:   timeout: 15.0
@@ -21,7 +21,7 @@
 
 panelists:
   - - provider: claude
-      model: claude-sonnet-4-6
+      model: claude-sonnet-5-5
     - provider: gemini
       model: gemini-2.5-flash
     - provider: grok
@@ -43,6 +43,6 @@ aggregator:
   - provider: grok
     model: grok-4.3
   - provider: claude
-    model: claude-sonnet-4-6
+    model: claude-sonnet-5-5
   - provider: gemini
     model: gemini-2.5-pro

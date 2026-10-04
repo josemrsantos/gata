@@ -75,17 +75,17 @@ def _build_provider(spec: ModelSpec) -> LLMProvider:
 
 # Provider chains created once; each chain tries models in priority order on failure.
 _CLAUDE_CHAIN = [
-    ClaudeProvider("claude-sonnet-4-6"),
-    ClaudeProvider("claude-opus-4-7"),
+    ClaudeProvider("claude-sonnet-5-5"),
+    ClaudeProvider("claude-opus-5-5"),
     ClaudeProvider("claude-haiku-4-5-20251001"),
 ]
 _GEMINI_PRO_CHAIN = [
     GeminiProvider("gemini-2.5-pro"),
     GeminiProvider("gemini-2.5-flash"),
-    GeminiProvider("gemini-2.5-flash-lite"),
+    GeminiProvider("gemini-3.5-flash-lite"),
 ]
 _PARALLEL_PANELISTS = [
-    ClaudeProvider("claude-sonnet-4-6"),
+    ClaudeProvider("claude-sonnet-5-5"),
     GrokProvider("grok-build-0.1"),
     GeminiProvider("gemini-2.5-flash"),
 ]

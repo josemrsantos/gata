@@ -5,13 +5,25 @@ import anthropic
 from core.types import TokenUsage
 from llm.base import LLMProvider
 
+# Published rates in USD per million input/output tokens, verified against
+# Anthropic's pricing page on 2026-10-04 (Spec 054). Lookups are exact-string, so
+# a model with both a dateless alias and a dated ID needs a row for each. Mythos
+# models are invitation-only and deliberately not priced.
 _COST_PER_M: dict[str, tuple[float, float]] = {
-    "claude-sonnet-4-6": (3.00, 15.00),
-    "claude-sonnet-4-5": (3.00, 15.00),
-    "claude-sonnet-5": (3.00, 15.00),
+    "claude-fable-5-1": (10.00, 50.00),
+    "claude-fable-5": (10.00, 50.00),
+    "claude-opus-5-5": (4.00, 20.00),
+    "claude-opus-5": (5.00, 25.00),
     "claude-opus-4-8": (5.00, 25.00),
     "claude-opus-4-7": (5.00, 25.00),
-    "claude-opus-5": (5.00, 25.00),
+    "claude-opus-4-6": (5.00, 25.00),
+    "claude-opus-4-5-20251101": (5.00, 25.00),
+    "claude-opus-4-5": (5.00, 25.00),
+    "claude-sonnet-5-5": (2.00, 10.00),
+    "claude-sonnet-5": (2.00, 10.00),
+    "claude-sonnet-4-6": (3.00, 15.00),
+    "claude-sonnet-4-5-20250929": (3.00, 15.00),
+    "claude-sonnet-4-5": (3.00, 15.00),
     "claude-haiku-4-5-20251001": (1.00, 5.00),
 }
 

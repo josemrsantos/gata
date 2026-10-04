@@ -1,27 +1,5 @@
 # TODO
 
-## Model currency refresh II — *new Spec (number TBD)*
-
-**Goal:** Update the default models, fallback chains and pricing tables for all
-three providers (Claude, Gemini, Grok) to the latest releases, covering both
-the defaults in `providers.yaml` and the cost tables used for run-cost reporting.
-
-**Reason:** Providers keep releasing and retiring models, so defaults and
-pricing go stale — retired models can break runs and out-of-date prices make
-cost reports wrong. Spec 039 did this once; it needs repeating to keep up.
-
-**Confirmed:** Covers all three providers, both defaults and pricing. A new
-spec (Flow-Forward, per RULE 18), not an amendment to Spec 039 — kept as a
-separate historical record of this refresh.
-
-**Things to figure out:**
-- Which specific models are the current releases per provider (verify against
-  each provider's docs, not memory).
-- Whether any currently configured model is already retired or deprecated.
-- Whether fallback chain ordering should change alongside the new defaults.
-
----
-
 ## Single-audience default for `gata` — *new Spec (number TBD)*
 
 **Goal:** Running `gata` generates for one audience by default — `uk-tech-engineers`
