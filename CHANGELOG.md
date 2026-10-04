@@ -1,6 +1,34 @@
 # CHANGELOG
 
 
+## v1.31.0 (2026-10-04)
+
+### Changes
+
+* feat: spec 055 — single-audience default for `gata`
+
+`gata "<topic>"` used to guess several audiences for the topic with Gemini and then
+always add a "UK public" audience, so a typical run paid for about two cartoons. It now
+generates one cartoon, for the built-in `uk-tech-engineers` audience (British software
+engineers and developers, English, dry British wit), with no audience-guessing call.
+A one-audience run costs roughly $0.13–$0.20 and takes a few minutes (a real smoke run
+measured $0.13 and 155 s), so the default saves about that much per run.
+
+* New repeatable `--audience NAME` option: names of communities in `communities.yaml`
+  (read from the current folder). It replaces the default, runs one cartoon per
+  distinct name in the order given, and rejects an unknown or empty name before any
+  paid call, listing the valid names. Named audiences get file-safe names.
+* New `--infer-audiences` option restores the previous behaviour exactly (audiences
+  guessed for the topic, with the UK public added when none is UK). It cannot be
+  combined with `--audience`.
+* `--research-only` runs once, for the first selected audience (the default, the first
+  `--audience` value, or the first guessed audience with `--infer-audiences`).
+* `newsletter_merge.py` now defaults to reading each story's `uk-tech-engineers`
+  folder, so it finds default `gata` output; use `--audience uk` for editions built
+  before this change.
+* This supersedes, for default runs, the rule from specs 010 and 015 that a UK audience
+  is always present; both still describe the behaviour under `--infer-audiences`.
+
 ## v1.30.0 (2026-10-04)
 
 ### Changes

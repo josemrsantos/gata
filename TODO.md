@@ -1,36 +1,5 @@
 # TODO
 
-## Single-audience default for `gata` — *new Spec (number TBD)*
-
-**Goal:** Running `gata` generates for one audience by default — `uk-tech-engineers`
-only — instead of today's topic-inferred audiences plus the always-added UK
-public audience. A repeatable `--audience` flag overrides the default and
-accepts more than one audience.
-
-**Reason:** Each extra audience is a full paid pipeline run (Strategist,
-Satirist, image, evaluator), so the current ~2-audience default doubles cost
-and time. Most runs need one; multi-audience stays available on request.
-
-**Confirmed:**
-- Default is a fixed audience definition for `gata` (language/tone of
-  `uk-tech-engineers`), replacing the "UK public" fallback in `_ensure_uk`.
-- `--audience` is repeatable (multiple values).
-- A new spec (Flow-Forward, per RULE 18), not an amendment — it changes a
-  default and evolves Specs 008 (multi-audience CLI), 015 (single main
-  audience) and possibly 010 (dynamic audiences).
-
-**Things to figure out:**
-- What `--audience` accepts: community names from `communities.yaml`,
-  free-text audience descriptions, or both.
-- Whether the default reads `uk-tech-engineers` from `communities.yaml` or
-  hardcodes an equivalent in `gata`.
-- Whether `--audience` replaces the default or adds to it, and how to get
-  the old behaviour (topic-inferred audiences) back, if at all.
-- Interaction with `--research-only`, which today uses the first inferred
-  audience — should it use the new default?
-
----
-
 ## Image-prompt-only mode — *new Spec (number TBD)*
 
 **Goal:** A new `--image-prompt-only` flag, on both `pipeline.py` and `gata`,

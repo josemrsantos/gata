@@ -44,8 +44,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--audience",
-        default="uk",
-        help="audience sub-folder name to read from each story (default: uk)",
+        default="uk-tech-engineers",
+        help=(
+            "audience sub-folder name to read from each story"
+            " (default: uk-tech-engineers; use --audience uk for editions built"
+            " before the single-audience default)"
+        ),
     )
     parser.add_argument(
         "-o",

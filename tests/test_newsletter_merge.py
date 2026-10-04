@@ -1,3 +1,4 @@
+import inspect
 import json
 import logging
 from pathlib import Path
@@ -720,3 +721,52 @@ def test_cli_help_never_implies_auto_publish(capsys):
     assert "draft" in help_text
     for phrase in ("posts to linkedin", "automatically publishes", "auto-publish"):
         assert phrase not in help_text
+
+
+# -- default audience folder (Spec 055) --
+
+
+def _run_cli(tmp_path, extra_args):
+    # Runs the script's main() against an empty edition folder with the merge call
+    # mocked, and returns that mock so tests can read the audience it received.
+    edition_dir = tmp_path / "edition"
+    edition_dir.mkdir()
+    result = EditionMergeResult(
+        article_text="merged text", notification_text=None, engagement_image_path=None
+    )
+    with (
+        patch.dict("os.environ", ENV),
+        patch("newsletter_merge.load_dotenv"),
+        patch("newsletter_merge._find_providers_config", return_value=None),
+        patch("newsletter_merge.merge_edition", return_value=result) as mock_merge,
+        patch("sys.argv", ["newsletter_merge.py", str(edition_dir), *extra_args]),
+    ):
+        newsletter_merge.main()
+    return mock_merge
+
+
+def test_merge_edition_default_audience_is_the_gata_default():
+    # Default `gata` runs write their output under uk-tech-engineers/, so the merge
+    # function must look there unless told otherwise (Spec 055 FR-013).
+    default = inspect.signature(merge_edition).parameters["audience"].default
+    assert default == "uk-tech-engineers"
+
+
+def test_cli_default_audience_is_the_gata_default_and_documented(tmp_path, capsys):
+    # The script's own default and --help text must say uk-tech-engineers, so a
+    # merge of default `gata` output works with no --audience (FR-013, SC-009).
+    mock_merge = _run_cli(tmp_path, [])
+    assert mock_merge.call_args.kwargs["audience"] == "uk-tech-engineers"
+    with (
+        patch("sys.argv", ["newsletter_merge.py", "--help"]),
+        pytest.raises(SystemExit),
+    ):
+        newsletter_merge.main()
+    assert "default: uk-tech-engineers" in capsys.readouterr().out
+
+
+def test_cli_explicit_audience_is_passed_through_for_older_editions(tmp_path):
+    # Regression guard: editions built before Spec 055 keep working with an
+    # explicit --audience uk.
+    mock_merge = _run_cli(tmp_path, ["--audience", "uk"])
+    assert mock_merge.call_args.kwargs["audience"] == "uk"

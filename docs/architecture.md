@@ -63,11 +63,17 @@ flowchart TD
     PIPE["pipeline.py\n(--topic optional)"]
     DEC{{"--topic\nsupplied?"}}
     TS["Trend Scout\n(picks today's top topic)"]
+    DEF["default audience\n(uk-tech-engineers, built in)"]
+    NAMED["--audience NAME\n(community in communities.yaml)"]
     AUD["audience inference\n(Gemini — single call)"]
     CS["Cultural Strategist\n(and rest of pipeline)"]
-    UK["+ UK audience\n(always added)"]
+    UK["+ UK audience\n(always added when inferring)"]
 
-    GATA --> AUD
+    GATA -->|"default"| DEF
+    GATA -->|"--audience"| NAMED
+    GATA -->|"--infer-audiences"| AUD
+    DEF --> CS
+    NAMED --> CS
     PIPE --> DEC
     DEC -->|"Yes"| AUD
     DEC -->|"No"| TS
@@ -76,8 +82,14 @@ flowchart TD
     UK --> CS
 ```
 
-For both entry points, audience inference runs after the topic is known (one Gemini call)
-and the result feeds into the Cultural Strategist alongside the UK audience.
+`gata` (Spec 055) generates for one built-in audience, `uk-tech-engineers`, by default
+and makes no audience-inference call. `--audience NAME` (repeatable) replaces it with
+the named communities from `communities.yaml` in the current folder — validated before
+any paid call, de-duplicated, one pipeline run each, with file-safe audience names;
+`--infer-audiences` restores the earlier behaviour (one Gemini call to infer the
+audiences, with the UK audience always added). The two options cannot be combined.
+`pipeline.py` is unchanged: when no community or audience is given, audience inference
+runs after the topic is known (one Gemini call) and feeds the Cultural Strategist.
 
 `pipeline.py` additionally supports `--community`, `--audience`, `--language`,
 `--tone`, `--panels`, `--layout`, `--html`, `--no-title`, `--direct`, `--providers`,
@@ -96,7 +108,9 @@ helper) and always invokes the LinkedIn Post agent's `generate_linkedin_post()`
 regardless of `--linkedin-post`'s own value — that flag now only picks the assembly
 format: branded `linkedin_post.md` when set, or a neutral `research_report.md` when
 not. On the `gata` CLI, `--research-only` runs the pipeline exactly once (using only
-the first inferred audience) instead of once per inferred audience, since a single
+the first selected audience — the default, the first `--audience` value, or with
+`--infer-audiences` the first inferred audience — and a warning names any further
+`--audience` values) instead of once per audience, since a single
 report has no per-audience image variants to produce.
 
 `--providers PATH` loads a `providers.yaml` file that overrides the built-in LLM
@@ -116,28 +130,22 @@ gata "UK Prime Minister resigns over housing scandal"
 _Output_
 
 ```
-[INFO] inferred audience: uk-politics (British adults, dry wit)
-[INFO] adding UK audience
-[INFO] running pipeline for 2 audience(s)
+[1/1] uk-tech-engineers — English
 
 Saved:
   uk_prime_minister_resigns_over_housing/
-    uk-politics.png          ← cartoon PNG (written by Image Generator)
-    uk-politics/             ← bundle folder (written by Bundle Writer)
+    uk-tech-engineers.png    ← cartoon PNG (written by Image Generator)
+    uk-tech-engineers/       ← bundle folder (written by Bundle Writer)
         agent0_log.txt
         bc_log.txt
         prompt_card.txt
         telemetry.json
         summary.txt
-    uk.png
-    uk/
-        agent0_log.txt
-        bc_log.txt
-        prompt_card.txt
-        telemetry.json
-        summary.txt
-    summary.txt              ← aggregated cost + time across both audiences
+    summary.txt              ← cost + time for the run
 ```
+
+With `--audience A --audience B` (or `--infer-audiences`) there is one PNG and bundle
+folder per audience, and `summary.txt` aggregates across all of them.
 
 ---
 
@@ -168,7 +176,7 @@ merge-call fallback chain.
 
 ```bash
 python newsletter_merge.py gata/newsletter/03_special_edition
-python newsletter_merge.py gata/newsletter/03_special_edition --audience uk -o custom.md
+python newsletter_merge.py gata/newsletter/03_special_edition --audience uk -o custom.md   # editions built before Spec 055 (default is now uk-tech-engineers)
 python newsletter_merge.py gata/newsletter/03_special_edition --no-image
 ```
 
@@ -883,7 +891,7 @@ uk_prime_minister_resigns_over_housing/
             Image Evaluator: 2.1s — 1 iteration(s) — $0.0021
 
             TOTAL: 22.5s — $0.0644
-    uk.png                                  ← UK audience PNG (separate pipeline run)
+    uk.png                                  ← second audience PNG (separate pipeline run)
     uk/
         ...
     summary.txt                             ← aggregated across all audiences (written by CLI)

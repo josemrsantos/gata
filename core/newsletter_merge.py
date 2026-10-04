@@ -229,7 +229,7 @@ def write_output(text: str, output_path: Path) -> None:
 
 def merge_edition(
     edition_dir: Path,
-    audience: str = "uk",
+    audience: str = "uk-tech-engineers",
     max_tokens: int = _DEFAULT_MAX_TOKENS,
     generate_image: bool = True,
     providers_config: ProvidersConfig | None = None,
