@@ -1,11 +1,16 @@
 # Gata Newsroom — Project Constitution
 
-**Version**: 1.3
+**Version**: 1.4
 **Ratified**: 2026-06-22
 **Ratified by**: Jose Santos (project lead)
 **Status**: Active
 
 **Amendment log**:
+- v1.4 (2026-10-04) — Governance change (no spec): §1 and §6 no longer name specific
+  models. §1 now states the SDK rules and the rules every default model must follow,
+  and points at the code where defaults live; §6 describes the Grok aggregator and the
+  Grok panelist by role. A routine provider model release therefore no longer needs a
+  constitution amendment. Approved by the project lead, 2026-10-04.
 - v1.3 (2026-10-04) — Spec 054: §1 model names refreshed to what each provider
   currently serves — primary creative model `claude-sonnet-4-6` →
   `claude-sonnet-5-5`; Gemini image primary `gemini-3.1-flash-image-preview`
@@ -48,16 +53,22 @@ the plan's Complexity Tracking table and explicitly accepted by the project lead
 
 ### §1 — SDK and Model Rules
 
-- Claude SDK: `import anthropic`; primary creative model `claude-sonnet-5-5`
-- Gemini SDK: `from google import genai` (google-genai package); never use the
-  deprecated `google-generativeai` package
-- Gemini image generation: `gemini-3.1-flash-image` (primary); fallback
-  chain defined in `core/image_generation.py`
-- Gemini text models: `gemini-2.5-flash` (primary for most agents);
-  `gemini-2.5-pro` for evaluator tasks
-- Grok SDK: `from openai import OpenAI` with `base_url="https://api.x.ai/v1"`;
-  primary model `grok-4.3`
+- SDKs: Claude via `import anthropic`; Gemini via `from google import genai`
+  (google-genai package; never the deprecated `google-generativeai` package); Grok via
+  `from openai import OpenAI` with `base_url="https://api.x.ai/v1"`
 - No other LLM providers or SDKs without a constitution amendment
+- Default models are NOT named in this constitution. They live in code:
+  `providers.yaml` (operator-facing), the chain constants in `core/runner.py`,
+  `core/image_generation.py` and `core/newsletter_merge.py`,
+  `agents/agent_cultural_strategist.py`, `agents/trend_scout.py`, and the price tables
+  in `llm/claude.py`, `llm/gemini.py` and `llm/grok.py`
+- Rules every default model must follow: (a) a model its provider currently serves,
+  verified against official documentation plus one real call at the time of change;
+  (b) the newest stable model of the same tier as the one it replaces — never a
+  preview-only successor, and never a higher tier without the project lead's approval;
+  (c) priced in the provider's cost table; (d) image generation uses stable models
+- Changing defaults under these rules is an ordinary spec and needs no amendment;
+  changing these rules does
 
 ### §2 — Image Output Rule
 
@@ -128,14 +139,14 @@ The Satirist's `<verdict>` block contains valid JSON with this schema:
 Iteration rules:
 
 - Maximum 5 iterations per Satirist/Co-Satirist exchange
-- Grok (`grok-4.3`) is the aggregator/decider across all `ParallelPanel` agents.
-  Grok's `grok-build-0.1` participates as panelist alongside Claude and Gemini, kept
-  deliberately distinct from the aggregator model. The Final Say Protocol
+- The Grok aggregator model is the aggregator/decider across all `ParallelPanel`
+  agents. The Grok panelist participates alongside Claude and Gemini and is kept
+  deliberately distinct from the aggregator model (a different model, never the same). The Final Say Protocol
   (acknowledge → override rationale → synthesis) is expressed in Grok's aggregator
   prompt rather than in the DualPersonaLoop.
 - Gemini (as Co-Satirist or critic) cannot force rejection past iteration 5
-- The ParallelPanel topology (Claude + grok-build-0.1 + Gemini as independent
-  panelists; grok-4.3 as aggregator) is the current implementation for Satirist,
+- The ParallelPanel topology (Claude + a Grok panelist + Gemini as independent
+  panelists; the Grok aggregator as decider) is the current implementation for Satirist,
   Cultural Strategist, and Explainer agents
 
 ### §7 — Language Rule
@@ -228,3 +239,4 @@ Rules:
 | 1.1 | 2026-06-22 | §6 | Grok-3 replaces Claude as aggregator across all ParallelPanel agents; Grok-3-mini becomes the Grok panelist | Jose Santos |
 | 1.2 | 2026-08-03 | §10 | Corrected env var names to match code: `GROK_API_KEY` → `XAI_API_KEY`, `NEWSAPI_KEY` → `NEWSAPI_ORG_KEY` | Jose Santos |
 | 1.3 | 2026-10-04 | §1 | Model names refreshed (Spec 054): Claude primary `claude-sonnet-5-5`; Gemini image primary `gemini-3.1-flash-image`; image-chain pointer corrected to `core/image_generation.py`; Gemini text and Grok unchanged | Jose Santos |
+| 1.4 | 2026-10-04 | §1, §6 | Models no longer named: §1 states SDK rules and default-model rules and points at the code; §6 describes Grok roles (aggregator vs distinct panelist) instead of model names. Governance change, no spec | Jose Santos |

@@ -9,9 +9,10 @@ Read the constitution before starting any new stage.
 - `spec-template.md` — blank spec
 - `plan-template.md` — blank plan (includes 13-row Constitution Check table)
 - `tasks-template.md` — blank phase-based task breakdown
+- `plan-summary-template.md` — the one-page human summary approved at gate G2
 
-**Spec artifacts**: `specs/NNN-feature-name/` (spec.md, plan.md, research.md,
-data-model.md, contracts/, tasks.md, quickstart.md)
+**Spec artifacts**: `specs/NNN-feature-name/` (spec.md, plan.md, plan-summary.md,
+research.md, data-model.md, contracts/, tasks.md, quickstart.md)
 
 **Active stage**: See TODO.md for candidate next features; the table below reflects
 what has already merged to `main`.
@@ -64,24 +65,56 @@ what has already merged to `main`.
 | 054 | Model currency refresh II — default models, fallback chains and cost tables refreshed for Claude, Gemini and Grok (verified against official docs plus a live call per default); Claude defaults → `claude-sonnet-5-5`/`claude-opus-5-5`, Gemini Flash-Lite → `gemini-3.5-flash-lite`, image chain → `gemini-3.1-flash-image` → `gemini-3-pro-image`; constitution v1.3 | ✅ |
 <!-- SPECKIT END -->
 
-LLM REVIEW PROTOCOL — this is a hard stop, not a suggestion. Violating it is not acceptable under any circumstances,
-even when the task feels straightforward or the next step seems obvious.
+LLM REVIEW PROTOCOL — approval gates. These are hard stops; nothing else is. Violating a gate is not acceptable.
 
-SELF-REVIEW BEFORE STOPPING FOR HUMAN REVIEW — this is a hard rule, not a suggestion, even when the task feels
-straightforward or the next step seems obvious. You MUST self-review 3 times assuming on each iteration that you have
-made a mistake in the previous iteration, no exceptions:
+STOP and wait for an explicit "approved"/"proceed" at exactly these gates:
 
-After completing the 3 self-review passes, STOP. Name the file(s) you have changed and wait for explicit human
-approval before touching anything else. Do not proceed, do not summarise the code, do not start the next task.
+  G1  SPEC        after /speckit-specify + /speckit-clarify. The spec is the contract.
+  G2  PLAN SUMMARY after /speckit-plan + /speckit-tasks + /speckit-analyze (findings fixed or
+                  listed). The human approves ONE page of plain English, `specs/NNN/plan-summary.md`
+                  (template: `.specify/templates/plan-summary-template.md`). The plan and tasks stay
+                  LLM-facing and are the source of truth; if they disagree with the summary, the
+                  plan wins and the summary is regenerated.
+  G3  GOVERNANCE  any constitution amendment, any CLAUDE.md rule change, any TODO.md add/remove/
+                  reorder (RULE 8), any new spec number (RULE 18). G3 fires only when one of these
+                  actually happens, not on every spec.
+  G4  PR READY    after implementation, the self-review below, and the PR is opened. Merging or
+                  approving a PR happens only on an explicit instruction.
 
-HOW TO NOTIFY — name the file path(s) only. Do not show file contents, do not summarise the code. Example: "Please
-review tests/test_agent_satirist.py before I proceed."
+STOP and ask, mid-work, only when:
+  - a result contradicts the approved spec/plan or an earlier decision (e.g. a live check fails, or a
+    plan assumption turns out wrong);
+  - the work would exceed the approved scope or the stated cost estimate;
+  - the next action is destructive or outward-facing beyond the stage branch (anything on main,
+    deleting branches, spending money not covered by the plan).
+
+Do NOT stop for approval between tasks, between phases, or before commits on the stage branch. Once G2
+is approved, run /speckit-implement to PR-ready without asking to continue. Pushing the stage branch
+and opening the PR are part of G4.
+
+SELF-REVIEW — before presenting G1, G2 or G4, self-review 3 times, assuming on each pass that the
+previous pass made a mistake; fix what you find. Not after every task.
+
+HOW TO PRESENT A GATE — list the files to review as clickable links, list the decisions needed from the
+human, and state what was verified (tests, lint, live checks) and what was not. Do not summarise the code.
+
+PLAN SUMMARY RULES — plain English, about one page. It MUST contain: (1) what and why in 3 lines;
+(2) what changes for the human — behaviour, cost, risk, reversibility; (3) decisions needed, each with a
+recommendation; (4) decisions already made, with where they were made; (5) in scope / out of scope;
+(6) cost and time estimate; (7) what was verified versus only assumed; (8) what would surprise the human —
+every deviation from the spec and every unfixed /speckit-analyze finding; (9) links to the spec, plan,
+tasks and analyze result. Nothing in the plan may be hidden from it.
+
+SPEC-KIT FLOW — use the full sequence: specify → clarify → plan → tasks → analyze → implement.
+/speckit-analyze runs after tasks and before implement; its CRITICAL and HIGH findings are fixed (with the
+human's approval of the edits) before G2. /speckit-checklist only when the human asks for it.
 
 RULE 3 — Every test function must have a plain-English comment at the top (one sentence) explaining what the test is
 checking and why it matters.
 
-RULE 4 — Never proceed to the next task without an explicit 'approved' or 'proceed' from the human. Enthusiasm,
-momentum, and task context are not substitutes for explicit approval.
+RULE 4 — Never cross a gate (G1–G4) without an explicit 'approved' or 'proceed' from the human.
+Enthusiasm, momentum and task context are not approval. A standing instruction from the human
+("run to PR-ready") is approval for that spec only.
 
 RULE 5 — Every new stage (whether SDD/Speckit-driven) must start with a new git branch. No stage work
 on main.
