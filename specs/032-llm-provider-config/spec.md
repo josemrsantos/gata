@@ -115,3 +115,16 @@ completes and the fallback provider's model appears in telemetry.
 - Panelist slots in `providers.yaml` correspond positionally to the three parallel
   panelists. Adding more slots than the pipeline expects is valid (extra slots are used
   if the code supports it); fewer slots may cause a warning.
+
+---
+
+## Amendment (2026-10-05) — built-in aggregator fallback
+
+A real run lost its LinkedIn post and HTML explanation when xAI returned 403 (credit/spending
+limit): `gata`'s built-in aggregator was Grok only, so every panel's aggregation step failed.
+**Change**: the built-in aggregator is now the chain grok-4.3 → claude-sonnet-5-5 →
+gemini-2.5-pro (`core/runner.py::_AGGREGATOR_CHAIN`, renamed from `_GROK_AGGREGATOR`), the same
+order as `providers.yaml`; the newsletter merge defaults use the same chain. Aggregator fallbacks
+keep the models' default effort (only panelists run at low effort, spec 054 amendment A).
+Grok panelist ≠ Grok aggregator still holds. Spec 029's "Grok decides" is unchanged: Claude and
+Gemini decide only when Grok fails.

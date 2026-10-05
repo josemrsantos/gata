@@ -39,14 +39,18 @@ _CLAUDE_MODELS = ["claude-haiku-4-5-20251001", "claude-sonnet-5-5", "claude-opus
 _GROK_MODELS = ["grok-build-0.1", "grok-4.3", "grok-4.5"]
 
 # Default engagement-image deliberation providers, mirroring core/runner.py's
-# _PARALLEL_PANELISTS / _GROK_AGGREGATOR defaults — used when no providers.yaml
+# _PARALLEL_PANELISTS / _AGGREGATOR_CHAIN defaults — used when no providers.yaml
 # override is supplied (Spec 041 FR-002).
 _DEFAULT_PANELIST_PROVIDERS: list[LLMProvider] = [
     ClaudeProvider("claude-sonnet-5-5", effort=PANELIST_CLAUDE_EFFORT),
     GrokProvider("grok-build-0.1"),
     GeminiProvider("gemini-2.5-flash"),
 ]
-_DEFAULT_AGGREGATOR_PROVIDERS: list[LLMProvider] = [GrokProvider("grok-4.3")]
+_DEFAULT_AGGREGATOR_PROVIDERS: list[LLMProvider] = [
+    GrokProvider("grok-4.3"),
+    ClaudeProvider("claude-sonnet-5-5"),
+    GeminiProvider("gemini-2.5-pro"),
+]
 
 
 class NewsletterMergeError(Exception):

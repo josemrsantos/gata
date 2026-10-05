@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import time
+from pathlib import Path
 from urllib.parse import urlparse
 
 import duckdb
@@ -1292,6 +1293,40 @@ def _assemble_article(
     return "\n\n".join(parts)
 
 
+def _save_research_checkpoint(
+    checkpoint_dir: Path,
+    digests: list[ResearchDigest | None],
+    panelist_providers: list[list[LLMProvider]],
+) -> None:
+    """Write each provider's research to linkedin_research.json (best effort).
+
+    The research is the expensive part of a run; a later stage failing (for example
+    an exhausted provider credit) used to discard all of it. Never raises.
+    """
+    try:
+        records = [
+            {
+                "provider": panelist_providers[i][0].model_id
+                if i < len(panelist_providers) and panelist_providers[i]
+                else f"panelist-{i + 1}",
+                "summary": digest.summary if digest else None,
+                "sources": [
+                    {"title": s.title, "url": s.url}
+                    for s in (digest.sources if digest else [])
+                ],
+            }
+            for i, digest in enumerate(digests)
+        ]
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        (checkpoint_dir / "linkedin_research.json").write_text(
+            json.dumps(records, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+    except OSError as exc:
+        logger.warning(
+            "linkedin_post: could not save the research checkpoint — %s", exc
+        )
+
+
 def generate_linkedin_post(
     brief: EnrichedBrief,
     topic: str,
@@ -1300,8 +1335,13 @@ def generate_linkedin_post(
     aggregator_providers: list[LLMProvider],
     angles: list[str] | None = None,
     branded: bool = True,
+    checkpoint_dir: Path | None = None,
 ) -> tuple[str, str]:
     """Generate the researched article markdown and notification text.
+
+    When `checkpoint_dir` is given, the research digests are saved there as
+    linkedin_research.json right after the research stage, so a later failure does
+    not lose them.
 
     Returns (article_md, notification_txt). Never raises — a total failure at
     the research, angle-planning, or writing stage returns empty strings so the
@@ -1319,6 +1359,8 @@ def generate_linkedin_post(
         panelist_providers, topic, clean_angles, aggregator_providers
     )
     telemetry.agents.extend(research_tels)
+    if checkpoint_dir is not None and any(digests):
+        _save_research_checkpoint(checkpoint_dir, digests, panelist_providers)
     if all(digest is None for digest in digests):
         logger.warning("linkedin_post: every provider's research failed — no article")
         return "", ""

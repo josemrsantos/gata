@@ -247,6 +247,46 @@ def test_overlay_title_preserves_image_width(tmp_path):
         assert result.width == 512
 
 
+def _banner_edge_has_text(path: str, margin: int = 6) -> bool:
+    # True when any light (text) pixel sits within `margin` px of the banner's left or
+    # right edge, i.e. the title touches or runs past the image border.
+    with Image.open(path) as result:
+        banner_h = max(50, int(result.height / 1.08 * 0.08))
+        for y in range(banner_h):
+            for x in list(range(margin)) + list(
+                range(result.width - margin, result.width)
+            ):
+                if sum(result.getpixel((x, y))) > 600:
+                    return True
+    return False
+
+
+def test_overlay_title_shrinks_a_long_title_to_fit_a_narrow_image(tmp_path):
+    # A six-word title on a narrow vertical cartoon was clipped at the right edge
+    # ("Hook" lost its k); the text must shrink until it fits inside the image.
+    img_path = str(tmp_path / "narrow.png")
+    _make_real_png(img_path, width=848, height=1365)
+    _overlay_title(img_path, "Human in the Loop, Mostly the Hook")
+    assert not _banner_edge_has_text(img_path)
+
+
+def test_overlay_title_keeps_the_normal_size_for_a_short_title(tmp_path):
+    # A title that already fits must keep the original font size, so the shrink-to-fit
+    # change does not make every banner smaller: it is drawn the same as before.
+    img_path = str(tmp_path / "wide.png")
+    _make_real_png(img_path, width=1200, height=644)
+    _overlay_title(img_path, "G7 Lets AI Self-Regulate")
+    with Image.open(img_path) as result:
+        banner_h = max(50, int(644 * 0.08))
+        lit = [
+            y
+            for y in range(banner_h)
+            if any(sum(result.getpixel((x, y))) > 600 for x in range(result.width))
+        ]
+    # unshrunk text at this size is tall: at least 30% of the banner height
+    assert lit and (max(lit) - min(lit) + 1) >= int(banner_h * 0.3)
+
+
 def test_generate_calls_overlay_when_show_title_true_and_title_set(tmp_path):
     # generate() must invoke _overlay_title when show_title=True and a title is
     # supplied — the title banner must physically reach the saved image file.

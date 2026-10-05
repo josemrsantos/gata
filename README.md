@@ -202,6 +202,7 @@ Each run writes a bundle folder containing:
 | `agent0_log.txt` | Cultural Strategist negotiation history |
 | `bc_log.txt` | Satirist panel exchange log |
 | `prompt_card.txt` | Verbatim image prompt for standalone reuse |
+| `linkedin_research.json` | With `--linkedin-post`/`--research-only`: each provider's research findings and sources, saved as soon as research ends so a later failure does not lose them |
 | `telemetry.json` | Per-agent timing, token counts, and cost (machine-readable) |
 | `summary.txt` | Per-agent time, iterations, and cost (human-readable) |
 | `explanation.html` | In-language explanation of the joke (`--html` only) |
@@ -235,7 +236,7 @@ folder); `gata`'s default audience, `uk-tech-engineers`, is also built in, so a 
 
 `providers.yaml` controls which LLM models handle each agent role and in what fallback order. It is optional — if absent, Gata uses its built-in defaults (Claude Sonnet, Grok grok-build-0.1, and Gemini Flash as panelists; Grok grok-4.3 as aggregator).
 
-Each panelist slot is an ordered fallback chain. If the primary model fails, the next model in the slot is tried — including across provider boundaries (cross-provider fallback). The aggregator entry works the same way. Claude panelists on the Claude 5 models run at low reasoning effort to keep their thinking short and cheap; the aggregator and other roles use the model's default.
+Each panelist slot is an ordered fallback chain. If the primary model fails, the next model in the slot is tried — including across provider boundaries (cross-provider fallback). The aggregator entry works the same way. The built-in aggregator is a fallback chain — Grok, then Claude, then Gemini — so one provider outage does not stop a run. Claude panelists on the Claude 5 models run at low reasoning effort to keep their thinking short and cheap; the aggregator and other roles use the model's default.
 
 ```yaml
 panelists:

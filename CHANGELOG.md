@@ -1,6 +1,26 @@
 # CHANGELOG
 
 
+## v1.32.0 (2026-10-05)
+
+### Fixes
+
+* fix: run resilience — aggregator fallback, research checkpoint, title fit, test isolation
+
+A real edition run (4 angles, `--html`, `--linkedin-post`) lost its LinkedIn post and explanation pages
+when xAI answered 403 ("credits used / monthly spending limit"), and showed two more flaws. Fixed:
+
+* **Aggregator fallback.** `gata`'s built-in aggregator was Grok only, so one Grok outage failed every
+  panel's final step (source classification, angle planning, the HTML editor). It is now Grok, then
+  Claude, then Gemini — the same order `providers.yaml` already used. The newsletter merge uses the same chain.
+* **Research checkpoint.** The paid web research ($0.42 of a $0.61 run) was thrown away when a later stage
+  failed. `--linkedin-post` / `--research-only` now save each provider's findings and sources to
+  `linkedin_research.json` in the run's bundle folder as soon as the research ends.
+* **Long titles are no longer clipped.** A long title on a narrow, vertical cartoon ran past the right
+  edge ("Hook" lost its k). The title now shrinks until it fits.
+* **Tests no longer write into `output/`.** The `pipeline.py` tests left zero-telemetry "runs" in your
+  real output folder; they now run from a temporary folder.
+
 ## v1.31.1 (2026-10-04)
 
 ### Fixes

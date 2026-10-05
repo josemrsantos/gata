@@ -93,8 +93,18 @@ def _overlay_title(image_path: str, title: str) -> None:
     canvas = Image.new("RGB", (width, height + banner_h), (26, 26, 26))
     canvas.paste(rgb, (0, banner_h))
     draw = ImageDraw.Draw(canvas)
-    # center title text horizontally and vertically within the banner
+    # shrink a long title until it fits inside the image with a small margin, so it is
+    # never clipped at the edges (a six-word title overflowed a narrow vertical cartoon)
+    margin = max(8, int(width * 0.02))
     bbox = draw.textbbox((0, 0), title, font=font)
+    while bbox[2] - bbox[0] > width - 2 * margin and font_size > 12:
+        font_size -= 2
+        try:
+            font = ImageFont.load_default(size=font_size)
+        except TypeError:
+            break
+        bbox = draw.textbbox((0, 0), title, font=font)
+    # center title text horizontally and vertically within the banner
     text_w = bbox[2] - bbox[0]
     text_h = bbox[3] - bbox[1]
     x = max(0, (width - text_w) // 2)
