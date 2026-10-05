@@ -652,3 +652,14 @@ indefinitely at the `with` block boundary, exactly matching the observed hang.
   completes (or soft-fails per FR-005/FR-008) without hanging, confirmed by
   the process exiting and `run.log`/terminal output showing no gap longer
   than a few minutes between consecutive log lines.
+
+---
+
+## Amendment (2026-10-05) — research checkpoint
+
+A run paid $0.42 for three providers' web research and then lost all of it when a later stage
+(angle planning) failed, because nothing was saved. **Change**: `generate_linkedin_post` takes an
+optional `checkpoint_dir`; right after the research stage it writes `linkedin_research.json`
+(per provider: model, summary, sources with title and URL) into the run's bundle folder. The
+runner passes the bundle directory. Best effort: a write error is logged and never fails the run.
+Only the saving is added — re-using a checkpoint to resume is not part of this amendment.

@@ -119,3 +119,12 @@ write, if `show_title and concept.title`, it calls `_overlay_title`.
 - `python pipeline.py --topic "..." --audience "..." --language "..." --tone "..."` runs end-to-end
 - Generated PNG has a dark title banner visible at the top
 - `--no-title` flag produces an image with no banner
+
+---
+
+## Amendment (2026-10-05) — long titles shrink to fit
+
+A six-word title (918 px of text) was clipped on an 848 px wide vertical cartoon: the text was
+placed at x=0 and ran past the right edge. **Change**: `_overlay_title` now reduces the font size
+in steps of 2 px, down to a floor of 12 px, until the text fits inside the image width minus a 2%
+margin (minimum 8 px). A title that already fits keeps its original size.

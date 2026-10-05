@@ -113,7 +113,7 @@ the first selected audience — the default, the first `--audience` value, or wi
 `--audience` values) instead of once per audience, since a single
 report has no per-audience image variants to produce.
 
-`ClaudeProvider` (Spec 054 amendment A) returns the text blocks of a reply — Claude 5 models may start a reply with a thinking block, which is ignored — raises a clear error when a reply has no text, and warns when a reply stops at `max_tokens` (thinking shares that budget). Claude panelists, built with the `panelist` flag in `core/runner.py` and `core/newsletter_merge.py`, request `effort: low` on the models that support it (Sonnet 5.5, Opus 5.5); other roles and Haiku 4.5 are unchanged.
+The built-in aggregator (`core/runner.py::_AGGREGATOR_CHAIN`, mirrored by the newsletter merge defaults) is the fallback chain grok-4.3 → claude-sonnet-5-5 → gemini-2.5-pro, matching `providers.yaml`, so a Grok outage or exhausted credit no longer fails every panel's final step. `ClaudeProvider` (Spec 054 amendment A) returns the text blocks of a reply — Claude 5 models may start a reply with a thinking block, which is ignored — raises a clear error when a reply has no text, and warns when a reply stops at `max_tokens` (thinking shares that budget). Claude panelists, built with the `panelist` flag in `core/runner.py` and `core/newsletter_merge.py`, request `effort: low` on the models that support it (Sonnet 5.5, Opus 5.5); other roles and Haiku 4.5 are unchanged.
 
 `--providers PATH` loads a `providers.yaml` file that overrides the built-in LLM
 assignments. Each provider slot is an ordered fallback chain — if the primary provider
@@ -379,7 +379,7 @@ flowchart LR
 ```
 
 The image binary is written atomically using `tempfile + os.replace()` (constitution §2).
-The title overlay is suppressed when `--no-title` is set.
+The title overlay is suppressed when `--no-title` is set. A title wider than the image shrinks (2 px steps, floor 12 px, 2% margin) until it fits.
 
 `ImageGeneration.generate()` takes an opt-in `target_size: tuple[int, int] | None`
 parameter (Spec 045). When supplied, the Gemini call also gets a best-effort

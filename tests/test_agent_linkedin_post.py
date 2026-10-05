@@ -1,3 +1,4 @@
+import json
 import threading
 from unittest.mock import MagicMock, patch
 
@@ -1870,3 +1871,97 @@ def test_generate_linkedin_post_strips_empty_angle_strings():
         )
     call_angles = mock_research.call_args.args[2]
     assert call_angles is None
+
+
+# ---------------------------------------------------------------------------
+# research checkpoint (fix: paid research must survive a later failure)
+# ---------------------------------------------------------------------------
+
+
+def _digests_with_sources():
+    return [
+        ResearchDigest(
+            summary="finding A",
+            sources=[ResearchSource(title="Page A", url="https://a.example/x")],
+        ),
+        None,
+        ResearchDigest(summary="finding C", sources=[]),
+    ]
+
+
+def test_research_is_saved_even_when_angle_planning_fails(tmp_path):
+    # A run lost $0.42 of paid research because a later stage failed and nothing was
+    # kept; the research digests must be on disk before angle planning starts.
+    providers = _panelist_providers()
+    with (
+        patch(
+            "agents.agent_linkedin_post.research_all_panelists",
+            return_value=(_digests_with_sources(), []),
+        ),
+        patch(
+            "agents.agent_linkedin_post._plan_angles",
+            return_value=(
+                None,
+                AgentTelemetry(agent_name="p", duration_seconds=0, iterations=0),
+            ),
+        ),
+    ):
+        article, _ = alp.generate_linkedin_post(
+            BRIEF,
+            "Topic",
+            RunTelemetry(),
+            providers,
+            [_provider("agg")],
+            checkpoint_dir=tmp_path,
+        )
+    assert article == ""
+    saved = json.loads((tmp_path / "linkedin_research.json").read_text())
+    assert [d["provider"] for d in saved] == ["model-a", "model-b", "model-c"]
+    assert saved[0]["summary"] == "finding A"
+    assert saved[0]["sources"] == [{"title": "Page A", "url": "https://a.example/x"}]
+    assert saved[1]["summary"] is None
+    assert saved[1]["sources"] == []
+
+
+def test_no_checkpoint_is_written_without_a_directory(tmp_path, monkeypatch):
+    # By default nothing is written, so existing callers behave exactly as before.
+    monkeypatch.chdir(tmp_path)
+    providers = _panelist_providers()
+    with patch(
+        "agents.agent_linkedin_post.research_all_panelists",
+        return_value=([None, None, None], []),
+    ):
+        alp.generate_linkedin_post(
+            BRIEF, "Topic", RunTelemetry(), providers, [_provider("agg")]
+        )
+    assert not list(tmp_path.iterdir())
+
+
+def test_a_failing_checkpoint_write_never_breaks_the_run(tmp_path):
+    # Saving the checkpoint is best effort: when the target cannot be written the run
+    # carries on instead of failing for a convenience file.
+    blocker = tmp_path / "not_a_directory"
+    blocker.write_text("x")
+    providers = _panelist_providers()
+    with (
+        patch(
+            "agents.agent_linkedin_post.research_all_panelists",
+            return_value=(_digests_with_sources(), []),
+        ),
+        patch(
+            "agents.agent_linkedin_post._plan_angles",
+            return_value=(
+                None,
+                AgentTelemetry(agent_name="p", duration_seconds=0, iterations=0),
+            ),
+        ),
+    ):
+        article, _ = alp.generate_linkedin_post(
+            BRIEF,
+            "Topic",
+            RunTelemetry(),
+            providers,
+            [_provider("agg")],
+            checkpoint_dir=blocker / "sub",
+        )
+    assert article == ""

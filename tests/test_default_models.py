@@ -49,7 +49,7 @@ def _all_default_ids() -> set[str]:
         | set(_ids(runner._GEMINI_PRO_CHAIN))
         | set(_ids(runner._GEMINI_EVAL_CHAIN))
         | set(_ids(runner._PARALLEL_PANELISTS))
-        | set(_ids(runner._GROK_AGGREGATOR))
+        | set(_ids(runner._AGGREGATOR_CHAIN))
         | set(image_generation._MODELS)
         | set(newsletter_merge._GEMINI_TEXT_MODELS)
         | set(newsletter_merge._CLAUDE_MODELS)
@@ -116,7 +116,11 @@ def test_parallel_panelists_and_aggregator_defaults():
         "grok-build-0.1",
         "gemini-2.5-flash",
     ]
-    assert _ids(runner._GROK_AGGREGATOR) == ["grok-4.3"]
+    assert _ids(runner._AGGREGATOR_CHAIN) == [
+        "grok-4.3",
+        "claude-sonnet-5-5",
+        "gemini-2.5-pro",
+    ]
 
 
 def test_grok_panelist_and_aggregator_stay_distinct_models():
@@ -125,7 +129,7 @@ def test_grok_panelist_and_aggregator_stay_distinct_models():
     panel_grok = {
         p.model_id for p in runner._PARALLEL_PANELISTS if p.model_id.startswith("grok-")
     }
-    agg_grok = set(_ids(runner._GROK_AGGREGATOR))
+    agg_grok = {m for m in _ids(runner._AGGREGATOR_CHAIN) if m.startswith("grok-")}
     assert panel_grok and agg_grok
     assert panel_grok.isdisjoint(agg_grok)
     cfg = _yaml_defaults()
@@ -168,7 +172,9 @@ def test_newsletter_merge_lists_use_current_models():
         "grok-build-0.1",
         "gemini-2.5-flash",
     ]
-    assert _ids(newsletter_merge._DEFAULT_AGGREGATOR_PROVIDERS) == ["grok-4.3"]
+    assert _ids(newsletter_merge._DEFAULT_AGGREGATOR_PROVIDERS) == _ids(
+        runner._AGGREGATOR_CHAIN
+    )
 
 
 def test_providers_yaml_defaults_keep_order_and_use_current_models():
@@ -263,3 +269,19 @@ def test_bundle_writer_fallback_panelists_use_the_shared_effort_constant():
     # created inside a function).
     text = (_REPO / "core" / "bundle_writer.py").read_text()
     assert "PANELIST_CLAUDE_EFFORT" in text
+
+
+def test_default_aggregator_falls_back_across_providers_in_providers_yaml_order():
+    # A Grok outage or exhausted credit once took down every panel's aggregation
+    # step, because gata's built-in aggregator had no fallback. The built-in chain
+    # must match providers.yaml's aggregator chain: grok, then claude, then gemini.
+    providers = [p.__class__.__name__ for p in runner._AGGREGATOR_CHAIN]
+    assert providers == ["GrokProvider", "ClaudeProvider", "GeminiProvider"]
+    cfg = _yaml_defaults()
+    assert [m["model"] for m in cfg["aggregator"]] == _ids(runner._AGGREGATOR_CHAIN)
+
+
+def test_the_claude_aggregator_fallback_keeps_the_default_effort():
+    # Only panelists run at low effort; the aggregator decides the final answer and
+    # keeps the model's default behaviour even when it is only a fallback.
+    assert all(p.effort is None for p in _claude_only(runner._AGGREGATOR_CHAIN))

@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from google.genai.errors import APIError as GeminiAPIError
 
@@ -98,7 +99,14 @@ _PARALLEL_PANELISTS = [
     GrokProvider("grok-build-0.1"),
     GeminiProvider("gemini-2.5-flash"),
 ]
-_GROK_AGGREGATOR = [GrokProvider("grok-4.3")]
+# Aggregator chain: Grok decides, with Claude then Gemini as fallbacks (the same order
+# as providers.yaml) so a Grok outage or exhausted credit no longer takes down the
+# aggregation step of every panel. Aggregators keep the default effort.
+_AGGREGATOR_CHAIN = [
+    GrokProvider("grok-4.3"),
+    ClaudeProvider("claude-sonnet-5-5"),
+    GeminiProvider("gemini-2.5-pro"),
+]
 _GEMINI_EVAL_CHAIN = _GEMINI_PRO_CHAIN  # same model priority as evaluator chain
 
 
@@ -131,7 +139,7 @@ def run_pipeline(
         ]
     else:
         panelist_providers = [[p] for p in _PARALLEL_PANELISTS]
-        aggregator_providers = _GROK_AGGREGATOR
+        aggregator_providers = _AGGREGATOR_CHAIN
 
     agent0_log: ConversationLog | None = None
     bc_log: ConversationLog | None = None
@@ -261,6 +269,7 @@ def run_pipeline(
                 aggregator_providers,
                 angles=angles,
                 branded=_branded,
+                checkpoint_dir=Path(output_path).parent / Path(output_path).stem,
             )
             if article_md:
                 if _branded:

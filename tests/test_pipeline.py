@@ -1,5 +1,6 @@
 import logging
 import re
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -15,6 +16,28 @@ from core.types import (
     Headline,
     StrategyBrief,
 )
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+@pytest.fixture(autouse=True)
+def _isolated_working_dir(tmp_path, monkeypatch):
+    # pipeline.py writes bundles under a relative output/ path, so these tests used to
+    # fill the real output/ folder with zero-telemetry "runs"; each test now runs from
+    # its own temporary folder instead, holding copies of the repo's config files that
+    # pipeline.py looks for in the current folder (communities, humor, providers).
+    for name in ("communities.yaml", "humor.yaml", "providers.yaml"):
+        source = _REPO_ROOT / name
+        if source.exists():
+            (tmp_path / name).write_text(source.read_text())
+    monkeypatch.chdir(tmp_path)
+
+
+def test_pipeline_tests_never_run_from_the_repo_root():
+    # Guard for the isolation fixture above: if a test here ran from the repo root,
+    # it would write into the real output/ folder and pollute the user's runs.
+    assert Path.cwd().resolve() != _REPO_ROOT
+
 
 FAKE_CONCEPT = CartoonConcept(
     full_text="A cat at the UN.",
@@ -2548,3 +2571,24 @@ def test_no_linkedin_post_leaves_target_size_none():
     ):
         run_pipeline("AI hype", _DIRECT_SEED, "out.png")
     assert mock_gen.call_args.kwargs["target_size"] is None
+
+
+def test_runner_passes_the_bundle_directory_as_the_research_checkpoint(tmp_path):
+    # The runner must hand generate_linkedin_post the same directory the bundle is
+    # written to, so the saved research lands next to the run's other files.
+    from core.runner import run_pipeline
+
+    with (
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("article", "notification"),
+        ) as mock_post,
+        patch("core.bundle_writer.write_bundle", return_value=""),
+    ):
+        run_pipeline(
+            "AI regulation",
+            _RESEARCH_SEED,
+            str(tmp_path / "out.md"),
+            research_only=True,
+        )
+    assert mock_post.call_args.kwargs["checkpoint_dir"] == tmp_path / "out"

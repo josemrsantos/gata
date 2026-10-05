@@ -519,14 +519,14 @@ def test_runner_parallel_panelists_excludes_grok4_3():
     assert "grok-4.3" not in model_ids
 
 
-def test_runner_grok_aggregator_constant_uses_grok4_3():
-    # _GROK_AGGREGATOR must exist and contain grok-4.3 (spec 039: grok-3 is
+def test_runner_aggregator_chain_starts_with_grok4_3():
+    # _AGGREGATOR_CHAIN must exist and start with grok-4.3 (spec 039: grok-3 is
     # confirmed retired and redirects here) so all ParallelPanel agents can
-    # reference a single authoritative aggregator constant from the runner.
-    from core.runner import _GROK_AGGREGATOR
+    # reference a single authoritative aggregator chain from the runner; the
+    # fallbacks behind it are covered in tests/test_default_models.py.
+    from core.runner import _AGGREGATOR_CHAIN
 
-    model_ids = [p.model_id for p in _GROK_AGGREGATOR]
-    assert "grok-4.3" in model_ids
+    assert _AGGREGATOR_CHAIN[0].model_id == "grok-4.3"
 
 
 # ---------------------------------------------------------------------------
