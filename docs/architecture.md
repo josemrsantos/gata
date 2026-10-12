@@ -961,6 +961,9 @@ initial_input
   opening `<verdict>` tag but no closing tag (a `max_tokens` truncation, not a
   protocol violation) is recovered instead of dropped (Spec 052) — only a response
   missing the opening tag entirely counts as a failure
+- Spec 057: a reply that is entirely valid JSON with no `<verdict>` tags is accepted as the
+  verdict (WARNING logged), and a reply with no usable verdict is retried once with a format
+  reminder (retry cost counted) before the panelist is dropped
 - Default: `iterations=2` (one round of peer sharing before aggregation)
 - Per-provider timeout (Spec 036): each provider in a fallback chain can have its own
   `timeout` field in `providers.yaml`; if it stalls, the next provider starts fresh

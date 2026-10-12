@@ -64,6 +64,7 @@ what has already merged to `main`.
 | 052 | FairParallelPanel verdict truncation fix — `_extract_proposer_verdict()` recovers a response truncated before its closing `</verdict>` tag (max_tokens cutoff) instead of dropping the panelist; LinkedIn Angle Planning's `max_tokens` raised 1200→2500, the one call site with live-proven evidence | ✅ |
 | 054 | Model currency refresh II — default models, fallback chains and cost tables refreshed for Claude, Gemini and Grok (verified against official docs plus a live call per default); Claude defaults → `claude-sonnet-5-5`/`claude-opus-5-5`, Gemini Flash-Lite → `gemini-3.5-flash-lite`, image chain → `gemini-3.1-flash-image` → `gemini-3-pro-image`; constitution v1.3; amendment A (1.31.1): Claude 5 thinking-block crash fixed, Claude panelists run at low effort | ✅ |
 | 055 | Single-audience default for `gata` — `gata "topic"` generates one cartoon for the built-in `uk-tech-engineers` audience (no audience guessing, no always-added UK); repeatable `--audience NAME` (community names, replaces the default) and `--infer-audiences` (restores the old behaviour); `newsletter_merge.py` defaults to the `uk-tech-engineers` folder | ✅ |
+| 057 | Verdict tag tolerance — `_extract_proposer_verdict()` accepts a wholly-JSON reply with no `<verdict>` tags; `FairParallelPanel` retries an unusable panelist reply once before dropping it | ✅ |
 <!-- SPECKIT END -->
 
 LLM REVIEW PROTOCOL — approval gates. These are hard stops; nothing else is. Violating a gate is not acceptable.
