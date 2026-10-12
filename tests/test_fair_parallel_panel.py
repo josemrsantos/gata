@@ -560,3 +560,79 @@ def test_per_provider_timeout_all_timeout_raises():
     panel = FairParallelPanel([persona], _make_aggregator())
     with pytest.raises(RuntimeError, match="all providers exhausted"):
         panel._call_persona(persona, [{"role": "user", "content": "q"}])
+
+
+def test_panelist_with_unusable_reply_is_retried_once_and_kept():
+    # Spec 057: a reply with no usable verdict gets one retry with a format
+    # reminder; if the retry is well-formed the panelist stays in the panel.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [
+                (_verdict("concept-a"), _make_usage()),
+                (_verdict("concept-a2"), _make_usage()),
+            ],
+            "pb": [
+                ("Sorry, here is prose with no tags.", _make_usage()),
+                (_verdict("concept-b"), _make_usage()),
+                (_verdict("concept-b2"), _make_usage()),
+            ],
+            "agg": [(_pick(1, "x"), _make_usage())],
+        }
+    )
+    panel = FairParallelPanel(_make_panelists(), _make_aggregator(), "P", iterations=2)
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        panel.run("topic")
+    pb_calls = [m for name, m in mock.calls if name == "pb"]
+    # round 1 + retry + round 2: pb was not dropped
+    assert len(pb_calls) == 3
+    retry_messages = pb_calls[1]
+    assert retry_messages[-1]["role"] == "user"
+    assert "<verdict>" in retry_messages[-1]["content"]
+
+
+def test_panelist_failing_the_retry_is_dropped():
+    # Spec 057: the retry is a single extra attempt; a second unusable reply
+    # still drops the panelist so a broken model cannot stall the run.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [
+                (_verdict("concept-a"), _make_usage()),
+                (_verdict("concept-a2"), _make_usage()),
+            ],
+            "pb": [
+                ("no tags", _make_usage()),
+                ("still no tags", _make_usage()),
+            ],
+            "agg": [(_pick(1, "x"), _make_usage())],
+        }
+    )
+    panel = FairParallelPanel(_make_panelists(), _make_aggregator(), "P", iterations=2)
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        panel.run("topic")
+    assert len([n for n, _ in mock.calls if n == "pb"]) == 2
+
+
+def test_retry_cost_is_counted_in_telemetry():
+    # Spec 057: both the unusable first reply and the retry were paid for, so the
+    # run's cost report must include both calls.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [(_verdict("concept-a"), _make_usage(cost=0.01))],
+            "agg": [(_pick(1, "x"), _make_usage(cost=0.01))],
+        }
+    )
+    mock._queues["pb"] = [
+        ("no tags", _make_usage(cost=0.01)),
+        (_verdict("concept-b"), _make_usage(cost=0.01)),
+    ]
+    panel = FairParallelPanel(_make_panelists(), _make_aggregator(), "P", iterations=1)
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        result = panel.run("topic")
+    total = sum(c.cost_usd for c in result.telemetry.calls)
+    assert abs(total - 0.04) < 1e-9

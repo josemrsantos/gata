@@ -279,6 +279,45 @@ def test_missing_opening_tag_still_raises():
         _extract_proposer_verdict("No tags here at all.")
 
 
+def test_bare_json_without_tags_is_accepted_as_the_verdict(caplog):
+    # Spec 057: Gemini sometimes returns the JSON verdict with no <verdict> tags at
+    # all; a reply that is entirely valid JSON is recovered instead of dropping the
+    # panelist, and the recovery is logged.
+    from llm.dual_loop import _extract_proposer_verdict
+
+    bare = '{\n "panels": 3,\n "layout": "vertical"\n}'
+    with caplog.at_level(logging.WARNING):
+        assert _extract_proposer_verdict(bare) == bare
+    assert any("without <verdict> tags" in rec.message for rec in caplog.records)
+
+
+def test_fenced_json_without_tags_is_accepted_without_the_fences():
+    # Spec 057: the same recovery must work when the model wraps the bare JSON in a
+    # markdown fence, and the fence characters must not leak into the verdict.
+    from llm.dual_loop import _extract_proposer_verdict
+
+    fenced = '```json\n{"panels": 2}\n```'
+    assert _extract_proposer_verdict(fenced) == '{"panels": 2}'
+
+
+def test_json_with_surrounding_prose_but_no_tags_still_raises():
+    # Spec 057 guard: only a reply that is wholly JSON is recovered; prose around
+    # JSON is ambiguous and must stay a protocol violation.
+    from llm.dual_loop import _extract_proposer_verdict
+
+    with pytest.raises(ValueError):
+        _extract_proposer_verdict('Here you go: {"panels": 2}')
+
+
+def test_invalid_json_without_tags_still_raises():
+    # Spec 057 guard: text that merely starts with a brace but is not valid JSON
+    # (e.g. cut off) is not recovered, so garbage never becomes a verdict.
+    from llm.dual_loop import _extract_proposer_verdict
+
+    with pytest.raises(ValueError):
+        _extract_proposer_verdict('{"panels": 3, "layout": ')
+
+
 def test_verdict_tag_content_extracted_with_dotall():
     # The <verdict> tag content may span multiple lines; re.DOTALL must be used so
     # newlines inside the tag are preserved in the returned string.

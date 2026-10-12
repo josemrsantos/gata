@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import re
 import time
@@ -65,7 +66,30 @@ def _extract_proposer_verdict(text: str) -> str:
             text[:200],
         )
         return unclosed.group(1).strip()
+    # Spec 057: Gemini sometimes obeys "return ONLY valid JSON" and drops the tags.
+    # A reply that is wholly valid JSON (optionally in a markdown fence) is
+    # unambiguous, so it is used as the verdict; prose around JSON still raises.
+    bare = _strip_json_fence(text)
+    if bare.startswith(("{", "[")):
+        try:
+            json.loads(bare)
+        except ValueError:
+            pass
+        else:
+            logger.warning(
+                "proposer response had JSON without <verdict> tags — using it"
+                " as the verdict: %r",
+                text[:200],
+            )
+            return bare
     raise ValueError(f"proposer response missing <verdict> tag: {text[:200]!r}")
+
+
+def _strip_json_fence(text: str) -> str:
+    # Removes one surrounding ```json ... ``` fence so the JSON can be parsed.
+    stripped = text.strip()
+    fenced = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", stripped, re.DOTALL)
+    return fenced.group(1) if fenced else stripped
 
 
 def _parse_reviewer_verdict(text: str) -> str:

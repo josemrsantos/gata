@@ -19,6 +19,11 @@ from llm.dual_loop import _extract_proposer_verdict
 
 logger = logging.getLogger(__name__)
 
+_FORMAT_REMINDER = (
+    "Your last reply could not be used because it was not wrapped in <verdict> tags. "
+    "Reply again with the same content, wrapped as <verdict>...</verdict>."
+)
+
 
 class FairParallelPanel(ConversationProtocol):
     """Multi-round parallel panel with peer-response sharing between rounds.
@@ -183,10 +188,32 @@ class FairParallelPanel(ConversationProtocol):
                     for panelist, messages in zip(active, messages_per)
                 ]
                 new_active: list[PersonaConfig] = []
-                for panelist, future in zip(active, futures):
+                for panelist, messages, future in zip(active, messages_per, futures):
                     try:
                         response, usage = future.result(timeout=self._panelist_timeout)
-                        verdict_content = _extract_proposer_verdict(response)
+                        try:
+                            verdict_content = _extract_proposer_verdict(response)
+                        except ValueError as exc:
+                            # Spec 057: one retry with a format reminder before
+                            # dropping the panelist; the unusable call was paid for.
+                            logger.warning(
+                                "%s: panelist %s gave an unusable reply in round %d"
+                                " — retrying once: %s",
+                                self._panel_name,
+                                panelist.name,
+                                round_num,
+                                exc,
+                            )
+                            token_calls.append(usage)
+                            response, usage = self._call_persona(
+                                panelist,
+                                messages
+                                + [
+                                    {"role": "assistant", "content": response},
+                                    {"role": "user", "content": _FORMAT_REMINDER},
+                                ],
+                            )
+                            verdict_content = _extract_proposer_verdict(response)
                         token_calls.append(usage)
                         final_results[panelist.name] = (
                             verdict_content,

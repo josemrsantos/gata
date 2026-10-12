@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## v1.32.1 (2026-10-12)
+
+### Fixes
+
+* fix: spec 057 — a panelist that forgot the `<verdict>` tags is no longer dropped
+
+In a real run Gemini answered the Satirist panel with correct JSON but no `<verdict>` tags, so it was
+silently dropped for the rest of the run (the prompt says both "wrap in tags" and "only valid JSON").
+Two fixes: a reply that is entirely valid JSON (plain or in a markdown fence) is now accepted as the
+verdict, with a warning in `run.log`; and a reply that is still unusable gets one retry with a format
+reminder before the panelist is dropped. The retry's cost is included in the run's cost report.
+
 
 ## v1.32.0 (2026-10-05)
 
