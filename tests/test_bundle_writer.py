@@ -858,3 +858,67 @@ def test_format_summary_multiple_agents_each_have_own_model_lines():
     ]
     assert len(model_lines_between) == 1
     assert "claude-sonnet-4-6" in model_lines_between[0]
+
+
+# -- write_bundle: image_prompt.txt (Spec 056) --
+
+
+def test_write_bundle_writes_image_prompt_file_when_given(tmp_path):
+    # image_prompt.txt must hold exactly the text handed in, so the operator can
+    # paste the saved request into Gemini unchanged.
+    from core.bundle_writer import write_bundle
+
+    write_bundle(
+        str(tmp_path / "cartoon.png"),
+        None,
+        None,
+        None,
+        "concept text",
+        image_prompt_file="header\n=====\nthe request",
+    )
+    saved = (tmp_path / "cartoon" / "image_prompt.txt").read_text()
+    assert saved == "header\n=====\nthe request"
+
+
+def test_write_bundle_skips_image_prompt_file_by_default(tmp_path):
+    # A normal run must not create image_prompt.txt — the file exists only in
+    # --image-prompt-only mode (constitution section 2).
+    from core.bundle_writer import write_bundle
+
+    write_bundle(str(tmp_path / "cartoon.png"), None, None, None, "concept text")
+    assert not (tmp_path / "cartoon" / "image_prompt.txt").exists()
+
+
+def test_write_bundle_prompt_card_unchanged_with_image_prompt_file(tmp_path):
+    # prompt_card.txt must be written exactly as before even in prompt-only mode
+    # (FR-015), so adding the new file never alters the existing one.
+    from core.bundle_writer import write_bundle
+
+    write_bundle(
+        str(tmp_path / "cartoon.png"),
+        None,
+        None,
+        None,
+        "concept text",
+        image_prompt_file="the request",
+    )
+    assert (tmp_path / "cartoon" / "prompt_card.txt").read_text() == "concept text"
+
+
+def test_write_bundle_overwrites_existing_image_prompt_file(tmp_path):
+    # A second run in the same folder must replace an older image_prompt.txt, like
+    # every other bundle file, so a stale prompt is never left behind.
+    from core.bundle_writer import write_bundle
+
+    bundle = tmp_path / "cartoon"
+    bundle.mkdir()
+    (bundle / "image_prompt.txt").write_text("old")
+    write_bundle(
+        str(tmp_path / "cartoon.png"),
+        None,
+        None,
+        None,
+        None,
+        image_prompt_file="new",
+    )
+    assert (bundle / "image_prompt.txt").read_text() == "new"

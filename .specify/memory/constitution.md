@@ -1,11 +1,15 @@
 # Gata Newsroom — Project Constitution
 
-**Version**: 1.4
+**Version**: 1.5
 **Ratified**: 2026-06-22
 **Ratified by**: Jose Santos (project lead)
 **Status**: Active
 
 **Amendment log**:
+- v1.5 (2026-10-12) — Spec 056: §2 gains one exception — in `--image-prompt-only`
+  mode no PNG is made and the full image request is written to `image_prompt.txt` in the
+  run's bundle, at the operator's explicit request; every other mode still never writes
+  the image prompt to disk. Approved by the project lead, 2026-10-12.
 - v1.4 (2026-10-04) — Governance change (no spec): §1 and §6 no longer name specific
   models. §1 now states the SDK rules and the rules every default model must follow,
   and points at the code where defaults live; §6 describes the Grok aggregator and the
@@ -76,7 +80,10 @@ the plan's Complexity Tracking table and explicitly accepted by the project lead
   checking `part.inline_data`
 - The raw binary from `inline_data.data` is written atomically to disk using
   `tempfile.NamedTemporaryFile` + `os.replace()`
-- The image prompt text is NEVER written to disk; only the final PNG is persisted
+- The image prompt text is NEVER written to disk; only the final PNG is persisted —
+  with one exception: in `--image-prompt-only` mode no PNG is made, and the full image
+  request is written to `image_prompt.txt` in the run's bundle at the operator's
+  explicit request. No other mode writes the image prompt.
 - A partial or corrupt image file MUST NOT be left on disk if generation fails
 
 ### §3 — XML and Output Contract
@@ -240,3 +247,4 @@ Rules:
 | 1.2 | 2026-08-03 | §10 | Corrected env var names to match code: `GROK_API_KEY` → `XAI_API_KEY`, `NEWSAPI_KEY` → `NEWSAPI_ORG_KEY` | Jose Santos |
 | 1.3 | 2026-10-04 | §1 | Model names refreshed (Spec 054): Claude primary `claude-sonnet-5-5`; Gemini image primary `gemini-3.1-flash-image`; image-chain pointer corrected to `core/image_generation.py`; Gemini text and Grok unchanged | Jose Santos |
 | 1.4 | 2026-10-04 | §1, §6 | Models no longer named: §1 states SDK rules and default-model rules and points at the code; §6 describes Grok roles (aggregator vs distinct panelist) instead of model names. Governance change, no spec | Jose Santos |
+| 1.5 | 2026-10-12 | §2 | Exception: `--image-prompt-only` writes the full image request to `image_prompt.txt`; every other mode still never writes the image prompt (Spec 056) | Jose Santos |

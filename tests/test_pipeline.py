@@ -2592,3 +2592,288 @@ def test_runner_passes_the_bundle_directory_as_the_research_checkpoint(tmp_path)
             research_only=True,
         )
     assert mock_post.call_args.kwargs["checkpoint_dir"] == tmp_path / "out"
+
+
+# -- --image-prompt-only (Spec 056) --
+
+_GATA_PARAGRAPH = "Gata is a domestic shorthair calico-tabby mix"
+
+
+def _prompt_only_run(tmp_path, concept, layout, **kwargs):
+    """Run run_pipeline with every agent mocked; returns (printed lines, mocks)."""
+    from core.runner import run_pipeline
+
+    mock_gen = MagicMock()
+    mock_eval = MagicMock()
+    seed = StrategyBrief(
+        target_audience="UK tech workers", output_language="English", tone="dry wit"
+    )
+    with (
+        patch(
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
+        ),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(concept, FAKE_BC_LOG, FAKE_BC_TEL, layout),
+        ),
+        patch("core.runner.agent_image_generator.generate", mock_gen),
+        patch("core.runner.agent_image_evaluator.evaluate", mock_eval),
+        patch("builtins.print") as mock_print,
+    ):
+        telemetry = run_pipeline(
+            "AI regulation", seed, str(tmp_path / "out.png"), **kwargs
+        )
+    printed = [str(c.args[0]) if c.args else "" for c in mock_print.call_args_list]
+    return printed, mock_gen, mock_eval, telemetry
+
+
+_SINGLE_WITH_GATA = CartoonConcept(
+    full_text="x", image_prompt=f"{_GATA_PARAGRAPH}. She frowns.", iteration=1
+)
+_SINGLE_LAYOUT = CartoonLayout(panels=1, direction="horizontal")
+
+
+def test_prompt_only_makes_no_image_or_evaluator_call(tmp_path):
+    # With --image-prompt-only the image model and evaluator must never be called,
+    # and neither appears in telemetry, so there is no image cost (FR-002/008/010).
+    printed, mock_gen, mock_eval, telemetry = _prompt_only_run(
+        tmp_path, _SINGLE_WITH_GATA, _SINGLE_LAYOUT, image_prompt_only=True
+    )
+    mock_gen.assert_not_called()
+    mock_eval.assert_not_called()
+    names = [a.agent_name for a in telemetry.agents]
+    assert "Image Generator" not in names
+    assert "Image Evaluator" not in names
+
+
+def test_prompt_only_writes_file_and_prints_location_message(tmp_path):
+    # The run must save image_prompt.txt in the bundle and tell the operator that no
+    # image was generated, to use the file in Gemini, and where the file is (FR-006).
+    printed, _, _, _ = _prompt_only_run(
+        tmp_path, _SINGLE_WITH_GATA, _SINGLE_LAYOUT, image_prompt_only=True
+    )
+    saved = (tmp_path / "out" / "image_prompt.txt").resolve()
+    assert saved.exists()
+    output = "\n".join(printed)
+    assert "No image was auto-generated" in output
+    assert "Gemini" in output
+    assert str(saved) in output
+
+
+def test_prompt_only_off_still_generates_image_and_writes_no_prompt_file(tmp_path):
+    # Without the flag behaviour must be exactly as before: the image path runs and
+    # no image_prompt.txt appears (FR-001, SC-006).
+    from core.runner import run_pipeline
+
+    mock_gen = MagicMock(return_value=(str(tmp_path / "out.png"), FAKE_IMAGE_TEL))
+    seed = StrategyBrief(target_audience="a", output_language="English", tone="t")
+    with (
+        patch(
+            "core.runner.agent_cultural_strategist.run",
+            return_value=(FAKE_ENRICHED_BRIEF, FAKE_AGENT0_LOG, FAKE_AGENT0_TEL),
+        ),
+        patch(
+            "core.runner.agent_satirist.run",
+            return_value=(_SINGLE_WITH_GATA, FAKE_BC_LOG, FAKE_BC_TEL, _SINGLE_LAYOUT),
+        ),
+        patch("core.runner.agent_image_generator.generate", mock_gen),
+        patch(
+            "core.runner.agent_image_evaluator.evaluate",
+            return_value=(_FAKE_EVAL_RESULT, FAKE_EVAL_TEL),
+        ),
+        patch("builtins.print"),
+    ):
+        run_pipeline("AI regulation", seed, str(tmp_path / "out.png"))
+    assert mock_gen.call_count == 1
+    assert not (tmp_path / "out" / "image_prompt.txt").exists()
+
+
+def test_prompt_only_warns_when_request_lacks_gata_description(tmp_path, caplog):
+    # A request without the verbatim Gata paragraph (the parse-fallback case that
+    # produced a human instead of the cat) must warn but still write the file.
+    caplog.set_level(logging.WARNING)
+    broken = CartoonConcept(
+        full_text="x", image_prompt='<verdict>{"panels": 3', iteration=0
+    )
+    _prompt_only_run(tmp_path, broken, _SINGLE_LAYOUT, image_prompt_only=True)
+    assert any("Gata character description" in r.message for r in caplog.records)
+    assert (tmp_path / "out" / "image_prompt.txt").exists()
+
+
+def test_prompt_only_no_gata_warning_when_description_present(tmp_path, caplog):
+    # A request that includes the verbatim Gata paragraph must not raise the
+    # warning, so the warning stays meaningful.
+    from agents.agent_image_generator import _GATA_CHARACTER
+
+    caplog.set_level(logging.WARNING)
+    good = CartoonConcept(full_text="x", image_prompt=_GATA_CHARACTER, iteration=1)
+    _prompt_only_run(tmp_path, good, _SINGLE_LAYOUT, image_prompt_only=True)
+    assert not any("Gata character description" in r.message for r in caplog.records)
+
+
+def test_prompt_only_file_ends_with_exact_request_single_and_multi_panel(tmp_path):
+    # The saved file must end with the exact request a normal run would send, for
+    # single-panel and multi-panel concepts (FR-004, SC-002).
+    from agents.agent_image_generator import build_image_request
+    from core.types import PanelConcept
+
+    panels = [
+        PanelConcept(scene=f"Gata scene {i}", caption=f"cap {i}", beat="b")
+        for i in range(3)
+    ]
+    multi = CartoonConcept(full_text="t", image_prompt="", iteration=0, panels=panels)
+    multi_layout = CartoonLayout(panels=3, direction="horizontal")
+    for sub, (concept, layout) in {
+        "single": (_SINGLE_WITH_GATA, _SINGLE_LAYOUT),
+        "multi": (multi, multi_layout),
+    }.items():
+        folder = tmp_path / sub
+        folder.mkdir()
+        _prompt_only_run(folder, concept, layout, image_prompt_only=True)
+        saved = (folder / "out" / "image_prompt.txt").read_text()
+        assert saved.endswith(build_image_request(concept, layout))
+
+
+def test_prompt_only_header_states_linkedin_cover_size(tmp_path):
+    # With --linkedin-post on a horizontal cartoon the header must state 1200x644
+    # (FR-012); without it the header must say no size is pinned.
+    _prompt_only_run(
+        tmp_path,
+        _SINGLE_WITH_GATA,
+        _SINGLE_LAYOUT,
+        image_prompt_only=True,
+        generate_linkedin_post=False,
+    )
+    assert "no size pinned" in (tmp_path / "out" / "image_prompt.txt").read_text()
+    folder = tmp_path / "li"
+    folder.mkdir()
+    with patch(
+        "core.runner.agent_linkedin_post.generate_linkedin_post",
+        return_value=("a", "n"),
+    ):
+        _prompt_only_run(
+            folder,
+            _SINGLE_WITH_GATA,
+            _SINGLE_LAYOUT,
+            image_prompt_only=True,
+            generate_linkedin_post=True,
+        )
+    assert "1200x644" in (folder / "out" / "image_prompt.txt").read_text()
+
+
+def test_prompt_only_header_reflects_no_title(tmp_path):
+    # --no-title must be echoed in the header so the manual picture matches.
+    _prompt_only_run(
+        tmp_path,
+        _SINGLE_WITH_GATA,
+        _SINGLE_LAYOUT,
+        image_prompt_only=True,
+        show_title=False,
+    )
+    assert "--no-title" in (tmp_path / "out" / "image_prompt.txt").read_text()
+
+
+def test_prompt_only_still_generates_html_when_requested(tmp_path):
+    # Nothing in the explainer needs the picture, so --html must still produce its
+    # files in prompt-only mode (FR-009).
+    with patch(
+        "core.bundle_writer.agent_explainer.generate_html",
+        return_value=("<p>in</p>", "<p>en</p>"),
+    ):
+        _prompt_only_run(
+            tmp_path,
+            _SINGLE_WITH_GATA,
+            _SINGLE_LAYOUT,
+            image_prompt_only=True,
+            include_html=True,
+        )
+    assert (tmp_path / "out" / "explanation.html").exists()
+    assert (tmp_path / "out" / "deep_dive_en.html").exists()
+
+
+def test_prompt_only_ignored_with_research_only(tmp_path):
+    # With research_only there is no image step to skip, so the flag must change
+    # nothing and no image_prompt.txt may appear (FR-011).
+    from core.runner import run_pipeline
+
+    seed = StrategyBrief(target_audience="a", output_language="English", tone="t")
+    with (
+        patch(
+            "core.runner.agent_linkedin_post.generate_linkedin_post",
+            return_value=("report", ""),
+        ),
+        patch("builtins.print"),
+    ):
+        run_pipeline(
+            "AI regulation",
+            seed,
+            str(tmp_path / "out.md"),
+            research_only=True,
+            image_prompt_only=True,
+        )
+    assert not (tmp_path / "out" / "image_prompt.txt").exists()
+
+
+# -- pipeline.py --image-prompt-only passthrough (Spec 056) --
+
+_PROMPT_ONLY_MODES = {
+    "manual": _MANUAL_ARGV,
+    "community_topic": [
+        "pipeline.py",
+        "--community",
+        "uk-tech-engineers",
+        "--topic",
+        "AI overload",
+    ],
+    "named_community": ["pipeline.py", "--community", "uk-tech-engineers"],
+    "free_text": ["pipeline.py", "--community", _FREE_TEXT_DESC],
+}
+
+
+def _run_pipeline_main(argv):
+    """Run pipeline.main() with run_pipeline mocked; return that mock."""
+    with (
+        patch.dict("os.environ", ENV),
+        patch("pipeline.load_dotenv"),
+        patch("sys.argv", argv),
+        patch("os.path.exists", return_value=True),
+        patch("pipeline.load_communities", return_value=FAKE_COMMUNITIES),
+        patch(
+            "pipeline.trend_scout.get_topics",
+            return_value=([FAKE_HEADLINE], "seed"),
+        ),
+        patch(
+            "pipeline.trend_scout.get_topics_for_description",
+            return_value=([_FREE_TEXT_HEADLINE], _INFERRED_BRIEF, "trend_scout"),
+            create=True,
+        ),
+        patch("pipeline.run_pipeline", return_value=MagicMock()) as mock_run,
+        patch("os.makedirs"),
+    ):
+        pipeline.main()
+    return mock_run
+
+
+@pytest.mark.parametrize("mode", list(_PROMPT_ONLY_MODES))
+def test_pipeline_image_prompt_only_flag_reaches_run_pipeline_in_every_mode(mode):
+    # The flag must be forwarded in all four pipeline.py modes, or one mode would
+    # silently still pay for an image (FR-001).
+    mock_run = _run_pipeline_main(_PROMPT_ONLY_MODES[mode] + ["--image-prompt-only"])
+    assert mock_run.call_args.kwargs["image_prompt_only"] is True
+
+
+@pytest.mark.parametrize("mode", list(_PROMPT_ONLY_MODES))
+def test_pipeline_image_prompt_only_defaults_to_false_in_every_mode(mode):
+    # Without the flag each mode must pass False explicitly, so existing runs are
+    # unchanged (FR-001, SC-006).
+    mock_run = _run_pipeline_main(_PROMPT_ONLY_MODES[mode])
+    assert mock_run.call_args.kwargs["image_prompt_only"] is False
+
+
+def test_pipeline_image_prompt_only_with_research_only_warns(caplog):
+    # The flag has no effect in research-only mode, so the operator must be told
+    # rather than left to wonder why nothing changed (FR-011).
+    caplog.set_level(logging.WARNING)
+    _run_pipeline_main(_RESEARCH_ONLY_ARGV + ["--image-prompt-only"])
+    assert any("no effect" in r.message for r in caplog.records)

@@ -43,10 +43,10 @@ def test_section_1_states_the_default_model_rules():
         assert phrase in text, phrase
 
 
-def test_constitution_version_and_amendment_record_are_1_4():
+def test_constitution_version_and_amendment_record_are_1_5():
     # An amendment is only valid with a version bump and an amendment-record row,
     # per the constitution's own Amendment Procedure.
     text = _CONSTITUTION.read_text()
-    assert "**Version**: 1.4" in text
-    assert "- v1.4 (" in text
-    assert re.search(r"^\| 1\.4 \|", text, re.M)
+    assert "**Version**: 1.5" in text
+    assert "- v1.5 (" in text
+    assert re.search(r"^\| 1\.5 \|", text, re.M)

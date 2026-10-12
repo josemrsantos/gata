@@ -93,9 +93,10 @@ runs after the topic is known (one Gemini call) and feeds the Cultural Strategis
 
 `pipeline.py` additionally supports `--community`, `--audience`, `--language`,
 `--tone`, `--panels`, `--layout`, `--html`, `--no-title`, `--direct`, `--providers`,
-`--linkedin-post`, `--angle`, and `--research-only` flags. The `gata` command is a thin
-wrapper that supplies sensible defaults and exposes the most common flags, including
-`--linkedin-post`, `--angle`, and `--research-only`.
+`--linkedin-post`, `--angle`, `--research-only`, and `--image-prompt-only` flags. The
+`gata` command is a thin wrapper that supplies sensible defaults and exposes the most
+common flags, including `--linkedin-post`, `--angle`, `--research-only`, and
+`--image-prompt-only`.
 
 `--direct` skips the Cultural Strategist entirely and builds a minimal `EnrichedBrief`
 directly from the topic and seed brief. This removes one agent's latency and cost when
@@ -379,6 +380,18 @@ flowchart LR
 ```
 
 The image binary is written atomically using `tempfile + os.replace()` (constitution §2).
+
+`--image-prompt-only` (Spec 056) skips the whole Image Generator / Image Evaluator loop in
+`core/runner.run_pipeline()`. The exact request a normal run sends is built by
+`agent_image_generator.build_image_request(concept, layout)` — `generate()` and the
+prompt-only path both call it, so they cannot drift. The runner saves
+`build_prompt_file(...)` (a manual-use header giving title, picture size/aspect ratio and a
+note that the title banner and final crop are not applied, a separator line, then the
+request) as `image_prompt.txt` through `write_bundle(image_prompt_file=...)`, prints where
+it is, and logs a `WARNING` if the request lacks the verbatim Gata description (the
+parse-fallback case). The explainer HTML and LinkedIn outputs need no image, so they still
+run; `--research-only` ignores the flag. `prompt_card.txt` is unchanged. This is the one
+place the image prompt is written to disk (constitution §2 exception, v1.5).
 The title overlay is suppressed when `--no-title` is set. A title wider than the image shrinks (2 px steps, floor 12 px, 2% margin) until it fits.
 
 `ImageGeneration.generate()` takes an opt-in `target_size: tuple[int, int] | None`

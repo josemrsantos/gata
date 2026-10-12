@@ -99,6 +99,7 @@ def write_bundle(
     linkedin_post: "tuple[str, str] | None" = None,
     research_report: str | None = None,
     log_lines: list[str] | None = None,
+    image_prompt_file: str | None = None,
 ) -> str:
     """Create the bundle folder and write all output files. Never raises."""
     bundle_dir = Path(output_path).parent / Path(output_path).stem
@@ -110,6 +111,9 @@ def write_bundle(
         _write_text(bundle_dir / "bc_log.txt", format_log(bc_log))
     if image_prompt is not None:
         _write_text(bundle_dir / "prompt_card.txt", image_prompt)
+    # Prompt-only mode: the full image request is saved for manual use in Gemini
+    if image_prompt_file is not None:
+        _write_text(bundle_dir / "image_prompt.txt", image_prompt_file)
     if telemetry is not None:
         _write_text(bundle_dir / "telemetry.json", _serialise_telemetry(telemetry))
         _write_text(bundle_dir / "summary.txt", format_summary(telemetry))

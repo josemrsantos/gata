@@ -307,7 +307,7 @@ def test_help_states_default_audience_and_new_options(capsys):
     assert "--infer-audiences" in out
 
 
-def _run_gata(argv, *, infer_return=None):
+def _run_gata(argv, *, infer_return=None, run_side_effect=None):
     # Runs gata's main() with every external call mocked; returns the run_pipeline
     # and infer_audiences mocks so tests can inspect how they were called.
     with (
@@ -317,7 +317,11 @@ def _run_gata(argv, *, infer_return=None):
         patch(
             "core.cli.infer_audiences", return_value=infer_return or _AUDIENCES
         ) as mock_infer,
-        patch("core.cli.run_pipeline", return_value=_tel(5.0, 0.01)) as mock_run,
+        patch(
+            "core.cli.run_pipeline",
+            return_value=_tel(5.0, 0.01),
+            side_effect=run_side_effect,
+        ) as mock_run,
     ):
         cli.main()
     return mock_run, mock_infer
@@ -700,3 +704,89 @@ def test_audience_whose_name_has_no_safe_characters_is_rejected(
     assert code == 1
     assert "cannot be used as a file name" in caplog.text
     mock_run.assert_not_called()
+
+
+# -- --image-prompt-only (Spec 056) --
+
+
+def test_image_prompt_only_off_by_default_passes_false(tmp_path, monkeypatch):
+    # Without the flag run_pipeline must be told image_prompt_only=False, so every
+    # existing gata run behaves exactly as before (FR-001).
+    monkeypatch.chdir(tmp_path)
+    mock_run, _ = _run_gata(["AI regulation"])
+    assert mock_run.call_args.kwargs["image_prompt_only"] is False
+
+
+def test_image_prompt_only_two_audiences_each_run_gets_flag(tmp_path, monkeypatch):
+    # With several audiences every pipeline run must receive the flag with its own
+    # output path, so each audience bundle gets its own prompt file (FR-007).
+    monkeypatch.chdir(tmp_path)
+    _write_communities(tmp_path)
+    mock_run, _ = _run_gata(
+        [
+            "AI regulation",
+            "--audience",
+            "portuguese-adults",
+            "--audience",
+            "uk-politics",
+            "--image-prompt-only",
+        ]
+    )
+    assert mock_run.call_count == 2
+    assert all(c.kwargs["image_prompt_only"] is True for c in mock_run.call_args_list)
+    paths = [c.args[2] for c in mock_run.call_args_list]
+    assert paths[0] != paths[1]
+
+
+def test_image_prompt_only_second_audience_runs_after_first_fails(
+    tmp_path, monkeypatch
+):
+    # One audience failing must not stop the next one's prompt file (US4 scenario 2);
+    # the partial failure is still reported by a non-zero exit, as today.
+    monkeypatch.chdir(tmp_path)
+    _write_communities(tmp_path)
+    argv = [
+        "gata",
+        "AI regulation",
+        "--audience",
+        "portuguese-adults",
+        "--audience",
+        "uk-politics",
+        "--image-prompt-only",
+    ]
+    with (
+        patch.dict("os.environ", ENV),
+        patch("core.cli.load_dotenv"),
+        patch("sys.argv", argv),
+        patch(
+            "core.cli.run_pipeline",
+            side_effect=[RuntimeError("boom"), _tel(5.0, 0.01)],
+        ) as mock_run,
+        pytest.raises(SystemExit) as exc,
+    ):
+        cli.main()
+    assert exc.value.code == 1
+    assert mock_run.call_count == 2
+
+
+def test_image_prompt_only_final_line_says_prompts_not_images(
+    tmp_path, monkeypatch, capsys
+):
+    # The closing line must not claim images were saved when none were made.
+    monkeypatch.chdir(tmp_path)
+    _run_gata(["AI regulation", "--image-prompt-only"])
+    out = capsys.readouterr().out
+    assert "image prompt" in out.lower()
+    assert "image(s) saved" not in out
+
+
+def test_image_prompt_only_with_research_only_warns_and_still_runs_once(
+    tmp_path, monkeypatch, caplog
+):
+    # There is no image in research-only mode, so the flag must warn that it has no
+    # effect and the research run must go ahead unchanged (FR-011).
+    monkeypatch.chdir(tmp_path)
+    caplog.set_level(logging.WARNING)
+    mock_run, _ = _run_gata(["AI regulation", "--research-only", "--image-prompt-only"])
+    mock_run.assert_called_once()
+    assert any("no effect" in r.message for r in caplog.records)
