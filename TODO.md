@@ -162,3 +162,25 @@ hardcoded refresh; this item is a separate, later approach.
 - Constitution §1/§6 name specific models; a rule-based policy would need an
   amendment, and the relationship with operator overrides in `providers.yaml`
   must be defined.
+
+---
+
+## `gata` layout and panel control — *new Spec (number TBD)*
+
+**Goal:** Give `gata` the `--layout` and `--panels` options that `pipeline.py` already has, and make a
+vertical cartoon respect `--linkedin-post` (today only horizontal cartoons are pinned to 1200x644).
+
+**Reason:** `gata` passes no `--layout`/`--panels`, so the Satirist panel decides the layout. In the
+2026-10-12 governance run it chose three vertical panels, which the operator found strange and could not
+override without switching to `pipeline.py`. Vertical cartoons are also not sized to the LinkedIn cover.
+
+---
+
+## Satirist output-format wording — *new Spec (number TBD)*
+
+**Goal:** Remove the conflict in the Satirist `_OUTPUT_FORMAT_RULES` between "wrap in `<verdict>` tags"
+and "return ONLY valid JSON", and repeat the format rule at the end of the user message.
+
+**Reason:** Gemini 2.5 Flash sometimes obeys only the JSON instruction and drops the tags. Spec 057
+makes the parser tolerate and retry this, but the prompt still invites it, so each occurrence costs an
+extra call or a lost panelist. Check the same wording in the other panels that share this pattern.
