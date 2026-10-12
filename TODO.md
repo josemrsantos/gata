@@ -184,3 +184,17 @@ and "return ONLY valid JSON", and repeat the format rule at the end of the user 
 **Reason:** Gemini 2.5 Flash sometimes obeys only the JSON instruction and drops the tags. Spec 057
 makes the parser tolerate and retry this, but the prompt still invites it, so each occurrence costs an
 extra call or a lost panelist. Check the same wording in the other panels that share this pattern.
+
+---
+
+## `--output-dir` option for `gata` and `pipeline.py` — *new Spec (number TBD)*
+
+**Goal:** Add an `--output-dir PATH` flag to both entry points so the operator chooses where the run's
+bundle is written, instead of the hard-coded `output/...` (`pipeline.py`) or `<current folder>/<topic_slug>/`
+(`gata`). Decide whether `pipeline.py` should also write the `gata`-style `<audience>/` layout that
+`newsletter_merge.py` expects.
+
+**Reason:** On 2026-10-12 the operator needed a `pipeline.py` run (forced 3 vertical panels with
+`--image-prompt-only`) to land in `output/newsletter/`, but its output goes to `output/manual/` and can only
+be moved by hand afterwards. Newsletter editions are assembled from `output/newsletter/`, so the destination
+should be a first-class option.
