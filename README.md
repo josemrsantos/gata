@@ -129,6 +129,10 @@ gata "Vibe coding in production" --linkedin-post --angle "where it should not be
 # cost) and produce only a researched report — runs once, for the first selected audience
 gata "AI regulation in the EU" --research-only
 gata "AI regulation in the EU" --research-only --linkedin-post
+
+# Image-prompt-only mode: run every text stage but skip the image — you get an
+# image_prompt.txt to paste into Gemini yourself (no image or evaluator cost)
+gata "AI regulation in the EU" --image-prompt-only
 ```
 
 Output folder: `{cwd}/{topic_slug}/` — one PNG per audience (the default run writes
@@ -190,6 +194,7 @@ python pipeline.py --community uk-politics --research-only --linkedin-post
 | `--linkedin-post` | — | off | Generate a researched LinkedIn article (`linkedin_post.md`) and notification snippet (`linkedin_notification.txt`) in the output bundle |
 | `--angle` | text, repeatable | none | An angle the `--linkedin-post` article should explore (e.g. `--angle "X" --angle "Y"`); has no effect without `--linkedin-post` |
 | `--research-only` | — | off | Skip the entire satirical pipeline (Cultural Strategist, Satirist, Image Generator, Image Evaluator) and produce only a researched report — neutral `research_report.md` by default, or the branded `linkedin_post.md` when combined with `--linkedin-post`. On the `gata` CLI, runs once using the first selected audience (the default, the first `--audience`, or the first inferred audience with `--infer-audiences`) instead of looping per audience |
+| `--image-prompt-only` | — | off | Run every stage except image creation and evaluation. Each audience's bundle gets `image_prompt.txt` — a short header (title, picture size such as 1200x644 with `--linkedin-post`, a note that the title banner and crop are not applied), a separator line, then the exact request a normal run sends to Gemini — and the terminal says no image was auto-generated and where the file is. Warns if the request has no Gata description. Has no effect with `--research-only`. Available on both `gata` and `pipeline.py` |
 | `--verbose` / `-v` | — | off | Show the full per-agent/per-model cost breakdown and `INFO`-level logs on screen (default: a single `TOTAL:` line and `WARNING`+ only). Full detail is always saved to `summary.txt` regardless of this flag |
 
 ### Output bundle
@@ -201,7 +206,8 @@ Each run writes a bundle folder containing:
 | `cartoon.png` | The generated image |
 | `agent0_log.txt` | Cultural Strategist negotiation history |
 | `bc_log.txt` | Satirist panel exchange log |
-| `prompt_card.txt` | Verbatim image prompt for standalone reuse |
+| `prompt_card.txt` | The Satirist's cartoon concept (for a multi-panel cartoon this is the concept text, not the full request sent to Gemini — see `image_prompt.txt`) |
+| `image_prompt.txt` | With `--image-prompt-only`: the full image request to paste into Gemini by hand, behind a short header and a separator line |
 | `linkedin_research.json` | With `--linkedin-post`/`--research-only`: each provider's research findings and sources, saved as soon as research ends so a later failure does not lose them |
 | `telemetry.json` | Per-agent timing, token counts, and cost (machine-readable) |
 | `summary.txt` | Per-agent time, iterations, and cost (human-readable) |
@@ -340,4 +346,5 @@ communication protocol framework.
 | 53 | LinkedIn Post panel `max_tokens` follow-up — a real run's persisted `run.log` showed the same truncation mechanism at two more `FairParallelPanel` call sites; Domain Classification's `max_tokens` raised 1000→2000 and LinkedIn Article Writing's raised 3000→4000 | ✅ |
 | 54 | Model currency refresh II — defaults, fallback chains and cost tables updated to what each provider serves today (verified against official docs and one live call per default): Claude defaults move to `claude-sonnet-5-5` / `claude-opus-5-5`, Gemini Flash-Lite to `gemini-3.5-flash-lite`, the image chain to the stable `gemini-3.1-flash-image` → `gemini-3-pro-image`; Claude/Gemini/Grok price tables completed (and the `claude-sonnet-5` price corrected to $2/$10); constitution v1.3 | ✅ |
 | 55 | Single-audience default for `gata` — `gata "topic"` now generates one cartoon for the built-in `uk-tech-engineers` audience instead of guessing audiences and always adding the UK public; new repeatable `--audience NAME` (community names from `communities.yaml`, replaces the default) and `--infer-audiences` (restores the previous behaviour); `newsletter_merge.py` now defaults to reading the `uk-tech-engineers` audience folder (use `--audience uk` for older editions); named audiences get file-safe names | ✅ |
+| 56 | Image-prompt-only mode — `--image-prompt-only` (on `gata` and `pipeline.py`) runs every stage except image creation and evaluation and saves the exact Gemini request as `image_prompt.txt` (header with size/title/banner notes, separator, request built by the same function a normal run uses) so it can be pasted into Gemini by hand; warns if the request lacks the Gata description; constitution v1.5 (§2 exception) | ✅ |
 | 57 | Verdict tag tolerance — a panelist reply that is entirely valid JSON but lacks `<verdict>` tags (Gemini does this intermittently) is accepted instead of dropping the panelist, and an otherwise unusable reply gets one retry with a format reminder; cost of the retry is counted | ✅ |

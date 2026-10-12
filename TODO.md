@@ -1,46 +1,5 @@
 # TODO
 
-## Image-prompt-only mode — *new Spec (number TBD)*
-
-**Goal:** A new `--image-prompt-only` flag, on both `pipeline.py` and `gata`,
-runs the whole text pipeline but skips only the actual image creation (the
-Gemini image call). Instead it writes the full image-generation request to a
-file and prints a message that no image was auto-generated, that it must be
-generated manually using that file as input in Gemini, and the file's location.
-
-**Reason:** Image generation is the slowest, most expensive and sometimes
-failing step. Prompt-only mode lets you pay only for the text stages, see
-exactly what Gemini would receive, and paste it into Gemini yourself. It also
-lets you use a monthly plan you are already paying for (the Gemini app)
-instead of spending more money on direct API calls for image generation.
-
-**Confirmed:**
-- Skips ONLY the image creation; every other stage still runs (and so the text
-  bundle is still produced).
-- On `gata` with multiple audiences: one prompt file per audience, each
-  location printed.
-- A new spec (Flow-Forward, per RULE 18), not an amendment to Spec 004.
-- Finding: today's `prompt_card.txt` is not the full request. For multi-panel
-  cartoons it holds `concept.full_text` while Gemini receives
-  `_build_multi_panel_prompt(panels, layout)`; and the aspect-ratio config
-  (only when `target_size` is pinned), the title banner overlay and the final
-  crop are applied in Python, outside the prompt text.
-
-**Things to figure out:**
-- Whether the file should be the exact string `ImageGeneration.generate()`
-  sends (from one shared builder used by both paths) plus a header with the
-  manual-use settings (aspect ratio/target size, title, note that banner and
-  crop are not applied) — and whether to fix `prompt_card.txt` to the same
-  string in this spec.
-- The file's name and location in the bundle (new file vs. reusing
-  `prompt_card.txt`).
-- What the Image Evaluator and its retry loop do when no image exists
-  (presumably skipped entirely).
-- How the flag interacts with `--linkedin-post`, whose cartoon is pinned to
-  1200x644 (the header would need to state that size).
-
----
-
 ## FairParallelPanel executor hang risk — *new Spec (number TBD)*
 
 **Goal:** Fix the same `ThreadPoolExecutor` context-manager hang pattern in

@@ -187,6 +187,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--image-prompt-only",
+        action="store_true",
+        help=(
+            "run every stage except image creation and evaluation, and write the"
+            " full image request to image_prompt.txt in each audience's output"
+            " bundle so it can be pasted into Gemini by hand"
+        ),
+    )
+    parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -206,6 +215,11 @@ def main() -> None:
         level=logging.INFO if args.verbose else logging.WARNING,
         format="%(levelname)s: %(message)s",
     )
+    if args.image_prompt_only and args.research_only:
+        logger.warning(
+            "--image-prompt-only has no effect with --research-only"
+            " (no image is generated in research-only mode)"
+        )
     # Both options choose the audiences, so they cannot be combined — stop before
     # any key check or paid call.
     if args.infer_audiences and args.audience:
@@ -276,6 +290,7 @@ def main() -> None:
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
                 verbose=args.verbose,
+                image_prompt_only=args.image_prompt_only,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("research-only run failed: %s", exc)
@@ -314,6 +329,7 @@ def main() -> None:
                 generate_linkedin_post=args.linkedin_post,
                 angles=args.angle,
                 verbose=args.verbose,
+                image_prompt_only=args.image_prompt_only,
             )
             audience_telemetry.append((audience.name, telemetry))
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
@@ -327,7 +343,12 @@ def main() -> None:
             Path(output_dir, "summary.txt").write_text(summary, encoding="utf-8")
         except OSError as exc:
             logger.error("could not write summary.txt: %s", exc)
-    if failures == 0:
+    if failures == 0 and args.image_prompt_only:
+        print(
+            f"\nAll {len(audiences)} image prompt(s) saved to {output_dir}"
+            " (no images generated)"
+        )
+    elif failures == 0:
         print(f"\nAll {len(audiences)} image(s) saved to {output_dir}")
     elif failures < len(audiences):
         n = len(audiences)

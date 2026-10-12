@@ -110,6 +110,21 @@ _AGGREGATOR_CHAIN = [
 _GEMINI_EVAL_CHAIN = _GEMINI_PRO_CHAIN  # same model priority as evaluator chain
 
 
+def _report_prompt_file(bundle_dir: str) -> None:
+    """Tell the operator no image was made and where the Gemini request is."""
+    # absolute, so the operator can open it from any folder
+    prompt_path = (Path(bundle_dir) / "image_prompt.txt").resolve()
+    if not prompt_path.exists():
+        logger.error("image_prompt.txt could not be written to %s", bundle_dir)
+        return
+    print(
+        "No image was auto-generated (--image-prompt-only).\n"
+        "Generate it manually: give this file to Gemini as the prompt:\n"
+        f"  {prompt_path}",
+        flush=True,
+    )
+
+
 def run_pipeline(
     topic: str,
     seed_brief: StrategyBrief,
@@ -125,6 +140,7 @@ def run_pipeline(
     angles: list[str] | None = None,
     research_only: bool = False,
     verbose: bool = False,
+    image_prompt_only: bool = False,
 ) -> RunTelemetry:
     """Run the full pipeline for a single topic and write the output image."""
     # Build provider lists from config when supplied; otherwise wrap hardcoded defaults
@@ -146,6 +162,7 @@ def run_pipeline(
     enriched_brief = None
     concept = None
     telemetry = RunTelemetry()
+    image_prompt_file: str | None = None
     log_handler = _ListLogHandler()
     logging.getLogger().addHandler(log_handler)
     try:
@@ -191,7 +208,6 @@ def run_pipeline(
                 layout_override=layout,
             )
             telemetry.agents.append(bc_tel)
-            print("  Image Generator...", flush=True)
             _MAX_IMAGE_RETRIES = 2
             # A --linkedin-post cartoon becomes the LinkedIn cover, so it must be
             # pinned to LinkedIn's exact size — but only when its layout is
@@ -203,41 +219,57 @@ def run_pipeline(
                 and chosen_layout.direction == "horizontal"
                 else None
             )
-            for _attempt in range(_MAX_IMAGE_RETRIES + 1):
-                _image_path, image_tel = agent_image_generator.generate(
-                    concept,
-                    output_path,
-                    layout=chosen_layout,
-                    show_title=show_title,
-                    target_size=_image_target_size,
+            if image_prompt_only:
+                # Prompt-only mode: save the exact request for manual use in Gemini
+                # instead of paying for an image and an evaluation.
+                print("  Image prompt (no image will be generated)...", flush=True)
+                image_prompt_file = agent_image_generator.build_prompt_file(
+                    concept, chosen_layout, show_title, _image_target_size
                 )
-                telemetry.agents.append(image_tel)
-                print("  Image Evaluator...", flush=True)
-                _eval_result, eval_tel = agent_image_evaluator.evaluate(
-                    _image_path,
-                    concept,
-                    enriched_brief,
-                    evaluator_providers=_GEMINI_EVAL_CHAIN,
-                    layout=chosen_layout,
-                )
-                telemetry.agents.append(eval_tel)
-                if _eval_result.verdict == "APPROVED":
-                    break
-                if _attempt < _MAX_IMAGE_RETRIES:
+                if not agent_image_generator.request_has_gata_description(
+                    agent_image_generator.build_image_request(concept, chosen_layout)
+                ):
                     logger.warning(
-                        "image evaluator: REJECTED (attempt %d/%d)"
-                        " artifacts=%r funny=%s — regenerating",
-                        _attempt + 1,
-                        _MAX_IMAGE_RETRIES + 1,
-                        _eval_result.artifacts,
-                        _eval_result.is_funny,
+                        "image request has no Gata character description — the"
+                        " image will probably not show Gata"
                     )
-                else:
-                    logger.warning(
-                        "image evaluator: REJECTED after %d attempt(s)"
-                        " — using last image",
-                        _MAX_IMAGE_RETRIES + 1,
+            else:
+                print("  Image Generator...", flush=True)
+                for _attempt in range(_MAX_IMAGE_RETRIES + 1):
+                    _image_path, image_tel = agent_image_generator.generate(
+                        concept,
+                        output_path,
+                        layout=chosen_layout,
+                        show_title=show_title,
+                        target_size=_image_target_size,
                     )
+                    telemetry.agents.append(image_tel)
+                    print("  Image Evaluator...", flush=True)
+                    _eval_result, eval_tel = agent_image_evaluator.evaluate(
+                        _image_path,
+                        concept,
+                        enriched_brief,
+                        evaluator_providers=_GEMINI_EVAL_CHAIN,
+                        layout=chosen_layout,
+                    )
+                    telemetry.agents.append(eval_tel)
+                    if _eval_result.verdict == "APPROVED":
+                        break
+                    if _attempt < _MAX_IMAGE_RETRIES:
+                        logger.warning(
+                            "image evaluator: REJECTED (attempt %d/%d)"
+                            " artifacts=%r funny=%s — regenerating",
+                            _attempt + 1,
+                            _MAX_IMAGE_RETRIES + 1,
+                            _eval_result.artifacts,
+                            _eval_result.is_funny,
+                        )
+                    else:
+                        logger.warning(
+                            "image evaluator: REJECTED after %d attempt(s)"
+                            " — using last image",
+                            _MAX_IMAGE_RETRIES + 1,
+                        )
     except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
         logger.error("pipeline failed: %s", exc)
         raise
@@ -279,7 +311,7 @@ def run_pipeline(
             else:
                 logger.warning("linkedin_post: generation failed — files not written")
         logging.getLogger().removeHandler(log_handler)
-        bundle_writer.write_bundle(
+        bundle_dir = bundle_writer.write_bundle(
             output_path,
             agent0_log,
             bc_log,
@@ -292,10 +324,13 @@ def run_pipeline(
             linkedin_post=linkedin_post,
             research_report=research_report,
             log_lines=log_handler.lines,
+            image_prompt_file=image_prompt_file,
         )
         print(
             bundle_writer.format_summary(telemetry)
             if verbose
             else bundle_writer.format_total_line(telemetry)
         )
+        if image_prompt_file is not None:
+            _report_prompt_file(bundle_dir)
     return telemetry

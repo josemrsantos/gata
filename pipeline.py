@@ -130,6 +130,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--image-prompt-only",
+        action="store_true",
+        help=(
+            "run every stage except image creation and evaluation, and write the"
+            " full image request to image_prompt.txt in the output bundle so it can"
+            " be pasted into Gemini by hand"
+        ),
+    )
+    parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -143,6 +152,11 @@ def main() -> None:
     args = parser.parse_args()
     if args.angle and not args.linkedin_post:
         logger.info("--angle has no effect without --linkedin-post")
+    if args.image_prompt_only and args.research_only:
+        logger.warning(
+            "--image-prompt-only has no effect with --research-only"
+            " (no image is generated in research-only mode)"
+        )
     if args.direct and args.research_only:
         logger.info(
             "--direct has no additional effect under --research-only"
@@ -271,6 +285,7 @@ def main() -> None:
                 angles=args.angle,
                 research_only=args.research_only,
                 verbose=args.verbose,
+                image_prompt_only=args.image_prompt_only,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -325,6 +340,7 @@ def main() -> None:
                 angles=args.angle,
                 research_only=args.research_only,
                 verbose=args.verbose,
+                image_prompt_only=args.image_prompt_only,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -421,6 +437,7 @@ def main() -> None:
                 angles=args.angle,
                 research_only=args.research_only,
                 verbose=args.verbose,
+                image_prompt_only=args.image_prompt_only,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)
@@ -478,6 +495,7 @@ def main() -> None:
                 angles=args.angle,
                 research_only=args.research_only,
                 verbose=args.verbose,
+                image_prompt_only=args.image_prompt_only,
             )
         except (TimeoutError, ValueError, RuntimeError, OSError, GeminiAPIError) as exc:
             logger.error("pipeline failed: %s", exc)

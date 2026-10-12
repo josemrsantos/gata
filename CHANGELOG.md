@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## v1.33.0 (2026-10-12)
+
+### Features
+
+* feat: `--image-prompt-only` — run everything except the picture, get the Gemini request as a file
+
+Making the image is the slowest, most expensive and least reliable step, and you could never see what
+Gemini was actually asked to draw. A real run lost Gata entirely — the concept failed to parse, the
+request had no description of the cat, the picture showed a human, and three paid attempts were shipped.
+
+* **New flag** `--image-prompt-only` on both `gata` and `pipeline.py`. All text stages run and the usual
+  text bundle is written, but no image is made and the Image Evaluator does not run, so there is no
+  image cost.
+* **New file** `image_prompt.txt` in each audience's bundle folder: a short header (title, picture size
+  such as 1200x644 with `--linkedin-post`, and a note that the title banner and crop are not applied),
+  a line saying "paste everything below this line into Gemini", then the exact request a normal run
+  sends. The terminal says no image was auto-generated and where the file is.
+* **Same text as a real run.** The request is now built in one place that normal runs and this mode both
+  use, so the file cannot drift from what Gemini really receives.
+* **Warning when Gata is missing.** If the request does not contain the Gata description, you get a
+  visible warning (the file is still written).
+* With `--research-only` the flag does nothing (there is no image) and you are told so. `prompt_card.txt`
+  is unchanged; the explanation pages and LinkedIn outputs still work.
+* Constitution v1.5: §2 ("the image prompt is never written to disk") gains this one exception.
+
 ## v1.32.1 (2026-10-12)
 
 ### Fixes

@@ -2,6 +2,7 @@ import inspect
 from unittest.mock import MagicMock, patch
 
 from agents import agent_image_generator
+from core.image_generation import LINKEDIN_FEATURE_IMAGE_SIZE
 from core.types import AgentTelemetry, CartoonConcept, CartoonLayout, PanelConcept
 
 CONCEPT = CartoonConcept(
@@ -218,3 +219,110 @@ def test_generate_defaults_target_size_to_none(tmp_path):
     with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
         agent_image_generator.generate(CONCEPT, output_path=str(out_file))
     assert captured["target_size"] is None
+
+
+# ---------------------------------------------------------------------------
+# Shared request builder (Spec 056 FR-004) — normal and prompt-only paths agree
+# ---------------------------------------------------------------------------
+
+_FALLBACK_CONCEPT = CartoonConcept(
+    full_text='<verdict>{"panels": 3, "content": [{"scene": "Gata stands',
+    image_prompt='<verdict>{"panels": 3, "content": [{"scene": "Gata stands',
+    iteration=0,
+)
+
+
+def test_build_image_request_single_panel_is_image_prompt_verbatim():
+    # Single-panel requests must be exactly concept.image_prompt, so the saved file
+    # for a prompt-only run matches what a normal run would send.
+    assert agent_image_generator.build_image_request(CONCEPT, None) == (
+        CONCEPT.image_prompt
+    )
+
+
+def test_build_image_request_multi_panel_is_the_composite_prompt():
+    # Multi-panel requests must be the composite prompt (scenes, Gata description,
+    # style), not the Satirist's concept text that prompt_card.txt holds.
+    request = agent_image_generator.build_image_request(_MULTI_CONCEPT_3H, _LAYOUT_3H)
+    assert request == agent_image_generator._build_multi_panel_prompt(
+        _3_PANELS, _LAYOUT_3H
+    )
+    assert agent_image_generator._GATA_CHARACTER in request
+
+
+def test_generate_sends_exactly_what_build_image_request_returns(tmp_path):
+    # generate() must send the very string build_image_request returns for every
+    # concept shape, including the parse-fallback one, so the two paths cannot drift.
+    cases = [
+        (CONCEPT, None),
+        (_MULTI_CONCEPT_3H, _LAYOUT_3H),
+        (_MULTI_CONCEPT_2V, _LAYOUT_2V),
+        (_FALLBACK_CONCEPT, CartoonLayout(panels=1, direction="horizontal")),
+    ]
+    for concept, layout in cases:
+        out_file = tmp_path / "x.png"
+        mock_cls, captured = _capture_generate(str(out_file))
+        with patch("agents.agent_image_generator.ImageGeneration", mock_cls):
+            agent_image_generator.generate(
+                concept, output_path=str(out_file), layout=layout
+            )
+        assert captured["prompt"] == agent_image_generator.build_image_request(
+            concept, layout
+        )
+
+
+# ---------------------------------------------------------------------------
+# Manual-use header and prompt file (Spec 056 FR-005, FR-012)
+# ---------------------------------------------------------------------------
+
+
+def test_manual_header_states_title_and_banner_note_when_title_shown():
+    # The header must name the title and say the banner is not in the request, so a
+    # person pasting into Gemini knows the title has to be added separately.
+    header = agent_image_generator.build_manual_header("Big Headline", True, None)
+    assert "Big Headline" in header
+    assert "banner" in header.lower()
+    assert "not part of the request" in header
+
+
+def test_manual_header_says_no_banner_when_title_suppressed():
+    # With --no-title the header must say no banner would have been applied, so the
+    # manual result matches what the automatic run would have produced.
+    header = agent_image_generator.build_manual_header("Big Headline", False, None)
+    assert "--no-title" in header
+
+
+def test_manual_header_states_pinned_size_and_aspect_ratio():
+    # A pinned size (the LinkedIn cover) must appear with its closest Gemini aspect
+    # ratio so the operator can request the right shape (FR-012).
+    header = agent_image_generator.build_manual_header(
+        "T", True, LINKEDIN_FEATURE_IMAGE_SIZE
+    )
+    assert "1200x644" in header
+    assert "16:9" in header
+
+
+def test_manual_header_says_no_size_pinned_when_target_size_none():
+    # Without a pinned size the header must say so, rather than inventing one.
+    header = agent_image_generator.build_manual_header("T", True, None)
+    assert "no size pinned" in header
+
+
+def test_manual_header_handles_missing_title():
+    # A concept with an empty title must not print a blank value; the header says
+    # there is no title.
+    header = agent_image_generator.build_manual_header("", True, None)
+    assert "Title: none" in header
+
+
+def test_build_prompt_file_is_header_separator_then_exact_request():
+    # The saved file must be header, one clear separator line, then the request
+    # byte-for-byte, so everything below the separator can be pasted unedited.
+    text = agent_image_generator.build_prompt_file(
+        CONCEPT, None, show_title=True, target_size=None
+    )
+    separator = agent_image_generator.PROMPT_SEPARATOR
+    assert separator == "===== PASTE EVERYTHING BELOW THIS LINE INTO GEMINI ====="
+    head, _, tail = text.partition("\n" + separator + "\n")
+    assert tail == agent_image_generator.build_image_request(CONCEPT, None)
+    assert "Title:" in head
