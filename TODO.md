@@ -198,3 +198,41 @@ bundle is written, instead of the hard-coded `output/...` (`pipeline.py`) or `<c
 `--image-prompt-only`) to land in `output/newsletter/`, but its output goes to `output/manual/` and can only
 be moved by hand afterwards. Newsletter editions are assembled from `output/newsletter/`, so the destination
 should be a first-class option.
+
+---
+
+## FairParallelPanel probability scorer — *Living Spec amendment to 034/042, or new Spec (number TBD)*
+
+**Goal:** Add an opt-in "Probability Assessor" role to FairParallelPanel that
+returns a probability (0-1) per concept for one or more fixed questions instead
+of text — e.g. "will this be funny to this audience?" (Satirist) or "is this
+relevant / is this accurate?" (LinkedIn article content).
+
+**Reason:** A cheap, fast, structured opinion on each panelist's output could
+steer the panel (or inform the aggregator) without another round of free-text
+debate. Probabilities are opinions, not facts.
+
+**Inspiration:** OpenAI's Decisions API (public beta, `POST /v1/decisions`, model
+`gpt-6-luna`) — typed `predicate` / `choice` / `score` questions returning
+probabilities, billed at $0.10 per 1M input tokens. Docs:
+https://developers.openai.com/api/docs/guides/decisions
+
+**Things to figure out:**
+- Find other similar models — ideally small and able to run locally (laptop),
+  not tied to an OpenAI account (none yet). Candidates to evaluate: zero-shot /
+  NLI classifiers (e.g. DeBERTa-MNLI), small instruct models via Ollama read for
+  yes/no token log-probs, embeddings + a tiny classifier trained on past run
+  bundles. Hosted-only models (incl. the Decisions API) are a fallback, not the goal.
+- Placement: (a) as a `round_validator` (Spec 042 hook) giving each panelist
+  its rating before they review each other; (b) as a step before the
+  aggregator; or (c) log-only, shown to no one. (b) risks the number acting as
+  a "dictator" that anchors the aggregator before it decides; (a) keeps
+  reasoning in text; (c) has zero influence but yields data to judge the scorer.
+- A number must be turned into text feedback for (a), since `round_validator`
+  returns strings.
+- Calibration: verbalised LLM probabilities are poorly calibrated; prefer
+  token log-probs or averaged samples. Needs a provider that exposes them.
+- Accuracy questions need the research evidence/Sources list, not just the
+  text; use a different provider from the panelist being scored.
+- Whether it extends Spec 034/042 in place (Living Spec) or is a new spec
+  (RULE 18).
