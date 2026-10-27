@@ -1,5 +1,69 @@
 # TODO
 
+## Tag-free, JSON-free panel responses — *Living Spec amendment to 052/057, or new Spec (number TBD)*
+
+**Goal:** Stop asking panelists and aggregators to wrap their answer in
+`<verdict>…</verdict>` tags or to return JSON. Ask for plain text in a simple
+`LABEL: value` form and have the code parse it, so format compliance no longer
+decides whether a panelist's work is usable.
+
+**Reason:** Models routinely ignore the format. A 2026-10-27 run logged
+repeated "missing closing </verdict> tag" warnings (Claude/Grok) and a Gemini
+2.5 Flash reply with bare fenced JSON and no tags, forcing a retry. Specs 052
+and 057 added tolerant fallbacks, but the prompt still invites the failure, so
+every occurrence costs a retry, a lost panelist or a noisy warning. A model
+that drops XML tags cannot be trusted to return valid JSON either, so JSON is
+replaced as well, not just the tags.
+
+**Direction (payloads to be validated before the spec is written):**
+- Panel replies (Cultural Strategist, Explainer, Engagement Image, LinkedIn
+  Angle Planning/Writing): no wrapper; the whole reply is the answer.
+- Aggregator: `PICK: N` on its own line, then the chosen answer as the rest of
+  the reply.
+- Satirist: one `LABEL: value` per line, value running until the next label:
+  `PANELS: 3`, `LAYOUT: vertical`, `TITLE: ...`, then repeated
+  `PANEL n` blocks each with `SCENE:`, `CAPTION:`, `BEAT:`. Panel count is
+  derived from the number of `PANEL n` blocks; a missing/odd `LAYOUT` falls
+  back to the CLI value or auto layout; every multi-panel `BEAT` must still be
+  non-empty, otherwise the reply is unusable and triggers the one retry.
+- LinkedIn Domain Classification: one line per domain, e.g.
+  `nytimes.com: paywalled, high` / `some-blog.com: free, low`; the parser looks
+  for `paywalled`/`free` and `high`/`low` in any order, ignoring case, bullets
+  and extra spaces; an absent domain gets today's default.
+- Parsers are tolerant of label drift (`Scene 1:`, `**CAPTION**:`,
+  `## Panel 1`), markdown emphasis and a surrounding code fence.
+
+**Explicit parse-failure logging:** every parse failure or fallback must emit a
+log line (WARNING, and so persisted to `run.log` per Spec 050) that states:
+- the agent/panel (e.g. `Satirist/Co-Satirist`) and the panel round;
+- the LLM provider and model that produced the reply;
+- what failed to parse (which label or field was missing/malformed, which
+  domain line was unreadable) and what default or fallback was applied;
+- a short excerpt of the offending reply.
+Today's `_extract_proposer_verdict()` warnings carry only a 200-character
+excerpt and no provider/model, so they cannot be traced to a panelist; the
+caller (which knows the provider) must supply that context.
+
+**Tests:** parsing-tolerance tests use the 2026-10-27 log replies (unclosed
+`<verdict>`, bare fenced Satirist JSON) as fixtures, plus label-drift cases and
+assertions that the failure log names the provider/model and the failed field.
+
+**Things to figure out:**
+- Whether the missing closing tags are format-ignoring or max_tokens
+  truncation (Spec 052's case): tag-free output only fixes the former, and the
+  new logging should make the two distinguishable (e.g. record stop reason /
+  output length when the provider exposes it).
+- Whether to keep the Spec 052/057 fallbacks as a safety net during rollout.
+- Whether `DualPersonaLoop`'s `_parse_reviewer_verdict()` (APPROVED / NEEDS
+  REVISION) moves to the same plain-text style.
+- Overlap with the existing "Satirist output-format wording" TODO item: this
+  supersedes it (that item is a subset), so it would be removed in the same PR
+  (RULE 19), with your approval under RULE 8.
+- Living Spec vs new spec number (RULE 18); Specs 052/057 are the likely
+  amendment targets.
+
+---
+
 ## FairParallelPanel executor hang risk — *new Spec (number TBD)*
 
 **Goal:** Fix the same `ThreadPoolExecutor` context-manager hang pattern in
