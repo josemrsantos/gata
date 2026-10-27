@@ -181,7 +181,7 @@ default and excerpt, plus stop reason / output length where the provider exposes
 - [x] T043 [P] Update `README.md`: status table row for Spec 058, and any text describing the `<verdict>` format or JSON output (RULE 6, RULE 17)
 - [x] T044 [P] Update `docs/architecture.md`: replace `<verdict>`/JSON descriptions with the plain-text contract, add `llm/reply_parsing.py` and the `reply_check`/`format_reminder` arguments, and update `CLAUDE.md`'s completed-stages table with row 058 (RULE 6, RULE 17; the CLAUDE.md edit is a governance change and needs G3 approval — ask before editing it)
 - [x] T045 Run the live check from `quickstart.md` step 4 (real API spend — only after the project lead agrees, per the plan's cost note) and record the result; if it is not run, say so in the PR
-- [ ] T046 Self-review three times, assuming each pass missed something (G4 requirement); fix findings; push the branch and open the PR (G4)
+- [x] T046 Self-review three times, assuming each pass missed something (G4 requirement); fix findings; push the branch and open the PR (G4)
 
 ---
 
