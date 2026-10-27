@@ -201,9 +201,7 @@ def _build_framer_system_prompt(humor: HumorConfig | None = None) -> str:
         "Each iteration must make measurable progress; repeating a previous position"
         " is not permitted.",
         "",
-        "Wrap your entire output in <verdict>...</verdict> tags"
-        " using exactly this structure:",
-        "<verdict>",
+        "Reply with exactly this structure and nothing else:",
         "CULTURAL ANGLE: [one paragraph]",
         "REFERENCES:",
         "- [reference 1]",
@@ -211,7 +209,6 @@ def _build_framer_system_prompt(humor: HumorConfig | None = None) -> str:
     ]
     if humor:
         lines.append(f"JOKE TYPE: [{' | '.join(humor.framer.joke_types)}]")
-    lines.append("</verdict>")
     if humor and humor.framer.inconvenience > 0:
         directive = inconvenience_directive(humor.framer.inconvenience)
         if directive:
@@ -228,18 +225,16 @@ _CS_AGGREGATOR_SYSTEM = (
     "2. Pick the single strongest proposal, or synthesise the best elements from"
     " multiple proposals into one superior angle.\n"
     "3. Output a PICK: N line (N = the proposal number you selected as primary), then"
-    " your final cultural angle in the exact format below, wrapped in"
-    " <verdict>...</verdict>:\n\n"
-    "<verdict>\n"
+    " your final cultural angle in the exact format below:\n\n"
+    "PICK: N\n"
     "CULTURAL ANGLE: [one paragraph]\n"
     "REFERENCES:\n"
     "- [reference 1]\n"
     "- [reference 2]\n"
-    "JOKE TYPE: [type]\n"
-    "</verdict>\n\n"
+    "JOKE TYPE: [type]\n\n"
     "If a JOKE TYPE field was present in the proposals, carry the best one forward.\n"
     "If none was present, omit the field.\n"
-    "Do not add preamble. Output only PICK: N and the <verdict> block."
+    "Do not add preamble. Output only the PICK: N line and the fields above."
 )
 
 

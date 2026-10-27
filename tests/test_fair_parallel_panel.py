@@ -562,26 +562,40 @@ def test_per_provider_timeout_all_timeout_raises():
         panel._call_persona(persona, [{"role": "user", "content": "q"}])
 
 
+def _needs_label(reply):
+    return None if "LABEL:" in reply else "no LABEL: line"
+
+
+_REMINDER = "Reply again using the LABEL: value format."
+
+
 def test_panelist_with_unusable_reply_is_retried_once_and_kept():
-    # Spec 057: a reply with no usable verdict gets one retry with a format
-    # reminder; if the retry is well-formed the panelist stays in the panel.
+    # Spec 057/058: a reply the agent's reply_check rejects gets one retry with the
+    # agent's own format reminder; if the retry passes the panelist stays in the panel.
     from llm.fair_parallel_panel import FairParallelPanel
 
     mock = _CallMock(
         {
             "pa": [
-                (_verdict("concept-a"), _make_usage()),
-                (_verdict("concept-a2"), _make_usage()),
+                ("LABEL: concept-a", _make_usage()),
+                ("LABEL: concept-a2", _make_usage()),
             ],
             "pb": [
-                ("Sorry, here is prose with no tags.", _make_usage()),
-                (_verdict("concept-b"), _make_usage()),
-                (_verdict("concept-b2"), _make_usage()),
+                ("Sorry, here is prose.", _make_usage()),
+                ("LABEL: concept-b", _make_usage()),
+                ("LABEL: concept-b2", _make_usage()),
             ],
-            "agg": [(_pick(1, "x"), _make_usage())],
+            "agg": [(_pick(1, "LABEL: x"), _make_usage())],
         }
     )
-    panel = FairParallelPanel(_make_panelists(), _make_aggregator(), "P", iterations=2)
+    panel = FairParallelPanel(
+        _make_panelists(),
+        _make_aggregator(),
+        "P",
+        iterations=2,
+        reply_check=_needs_label,
+        format_reminder=_REMINDER,
+    )
     with patch.object(FairParallelPanel, "_call_persona", mock):
         panel.run("topic")
     pb_calls = [m for name, m in mock.calls if name == "pb"]
@@ -589,50 +603,271 @@ def test_panelist_with_unusable_reply_is_retried_once_and_kept():
     assert len(pb_calls) == 3
     retry_messages = pb_calls[1]
     assert retry_messages[-1]["role"] == "user"
-    assert "<verdict>" in retry_messages[-1]["content"]
+    assert retry_messages[-1]["content"] == _REMINDER
 
 
 def test_panelist_failing_the_retry_is_dropped():
-    # Spec 057: the retry is a single extra attempt; a second unusable reply
+    # Spec 057/058: the retry is a single extra attempt; a second unusable reply
     # still drops the panelist so a broken model cannot stall the run.
     from llm.fair_parallel_panel import FairParallelPanel
 
     mock = _CallMock(
         {
             "pa": [
-                (_verdict("concept-a"), _make_usage()),
-                (_verdict("concept-a2"), _make_usage()),
+                ("LABEL: concept-a", _make_usage()),
+                ("LABEL: concept-a2", _make_usage()),
             ],
             "pb": [
-                ("no tags", _make_usage()),
-                ("still no tags", _make_usage()),
+                ("no label", _make_usage()),
+                ("still no label", _make_usage()),
             ],
-            "agg": [(_pick(1, "x"), _make_usage())],
+            "agg": [(_pick(1, "LABEL: x"), _make_usage())],
         }
     )
-    panel = FairParallelPanel(_make_panelists(), _make_aggregator(), "P", iterations=2)
+    panel = FairParallelPanel(
+        _make_panelists(),
+        _make_aggregator(),
+        "P",
+        iterations=2,
+        reply_check=_needs_label,
+        format_reminder=_REMINDER,
+    )
     with patch.object(FairParallelPanel, "_call_persona", mock):
         panel.run("topic")
     assert len([n for n, _ in mock.calls if n == "pb"]) == 2
 
 
 def test_retry_cost_is_counted_in_telemetry():
-    # Spec 057: both the unusable first reply and the retry were paid for, so the
+    # Spec 057/058: both the unusable first reply and the retry were paid for, so the
     # run's cost report must include both calls.
     from llm.fair_parallel_panel import FairParallelPanel
 
     mock = _CallMock(
         {
-            "pa": [(_verdict("concept-a"), _make_usage(cost=0.01))],
-            "agg": [(_pick(1, "x"), _make_usage(cost=0.01))],
+            "pa": [("LABEL: concept-a", _make_usage(cost=0.01))],
+            "agg": [(_pick(1, "LABEL: x"), _make_usage(cost=0.01))],
         }
     )
     mock._queues["pb"] = [
-        ("no tags", _make_usage(cost=0.01)),
-        (_verdict("concept-b"), _make_usage(cost=0.01)),
+        ("no label", _make_usage(cost=0.01)),
+        ("LABEL: concept-b", _make_usage(cost=0.01)),
     ]
-    panel = FairParallelPanel(_make_panelists(), _make_aggregator(), "P", iterations=1)
+    panel = FairParallelPanel(
+        _make_panelists(),
+        _make_aggregator(),
+        "P",
+        iterations=1,
+        reply_check=_needs_label,
+        format_reminder=_REMINDER,
+    )
     with patch.object(FairParallelPanel, "_call_persona", mock):
         result = panel.run("topic")
     total = sum(c.cost_usd for c in result.telemetry.calls)
     assert abs(total - 0.04) < 1e-9
+
+
+# ---------------------------------------------------------------------------
+# Spec 058: tag-free replies
+# ---------------------------------------------------------------------------
+
+
+def test_tag_free_reply_is_used_without_retry_or_warning(caplog):
+    # Spec 058: a panelist reply with no wrapper is the answer itself, so it must be
+    # used with no retry call and no warning in the log.
+    import logging
+
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [("plain concept-a", _make_usage())],
+            "agg": [("PICK: 1\nplain concept-a", _make_usage())],
+        }
+    )
+    panel = FairParallelPanel(_make_panelists(["pa"]), _make_aggregator(), iterations=1)
+    with caplog.at_level(logging.WARNING):
+        with patch.object(FairParallelPanel, "_call_persona", mock):
+            result = panel.run("topic")
+    assert len([n for n, _ in mock.calls if n == "pa"]) == 1
+    assert result.verdict == "plain concept-a"
+    assert caplog.records == []
+
+
+def test_unclosed_verdict_reply_is_used_without_retry():
+    # Spec 058 / SC-001: the 2026-10-27 unclosed <verdict> reply must be used, not
+    # retried or dropped.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [("Here you go.\n<verdict>\nconcept cut off", _make_usage())],
+            "agg": [("PICK: 1\nconcept cut off", _make_usage())],
+        }
+    )
+    panel = FairParallelPanel(_make_panelists(["pa"]), _make_aggregator(), iterations=1)
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        panel.run("topic")
+    assert len([n for n, _ in mock.calls if n == "pa"]) == 1
+    agg_prompt = [c for c in mock.calls if c[0] == "agg"][0][1][0]["content"]
+    assert "concept cut off" in agg_prompt
+
+
+def test_empty_reply_is_retried_once_without_a_reply_check():
+    # Spec 058 FR-008a: an agent with no reply_check is retried only for an empty
+    # reply, re-sent as the original request (APIs reject an empty assistant turn).
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [("   ", _make_usage()), ("recovered", _make_usage())],
+            "agg": [("PICK: 1\nrecovered", _make_usage())],
+        }
+    )
+    panel = FairParallelPanel(
+        _make_panelists(["pa"]),
+        _make_aggregator(),
+        iterations=1,
+        format_reminder=_REMINDER,
+    )
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        result = panel.run("topic")
+    pa_calls = [m for n, m in mock.calls if n == "pa"]
+    assert len(pa_calls) == 2
+    assert pa_calls[1] == pa_calls[0]
+    assert result.verdict == "recovered"
+
+
+def test_peer_round_prompt_has_no_verdict_tag_instruction():
+    # Spec 058 FR-001: the round-2 peer prompt must not ask for <verdict> tags any more.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [("a-r1", _make_usage()), ("a-r2", _make_usage())],
+            "pb": [("b-r1", _make_usage()), ("b-r2", _make_usage())],
+            "agg": [("PICK: 1\na-r2", _make_usage())],
+        }
+    )
+    panel = FairParallelPanel(_make_panelists(), _make_aggregator(), iterations=2)
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        panel.run("topic")
+    r2_prompt = [c for c in mock.calls if c[0] == "pa"][1][1][0]["content"]
+    assert "verdict" not in r2_prompt.lower()
+
+
+def test_aggregator_verdict_is_text_after_pick_line_and_pick_is_recorded():
+    # Spec 058 FR-002: the verdict is what follows the PICK line, and the pick number
+    # is recorded on the Aggregator turn of the log.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [("concept-a", _make_usage())],
+            "pb": [("concept-b", _make_usage())],
+            "agg": [("**PICK: 2**\nconcept-b chosen", _make_usage())],
+        }
+    )
+    panel = FairParallelPanel(_make_panelists(), _make_aggregator(), iterations=1)
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        result = panel.run("topic")
+    assert result.verdict == "concept-b chosen"
+    agg_turn = [t for t in result.log.turns if t.role == "Aggregator"][0]
+    assert agg_turn.verdict == "PICK: 2"
+
+
+def test_unusable_aggregator_reply_is_retried_once():
+    # Spec 058 FR-008a: an aggregator reply the reply_check rejects gets the same
+    # single retry as a panelist, so one bad aggregator reply does not end the run.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [("LABEL: a", _make_usage())],
+            "agg": [
+                ("PICK: 1\nno label here", _make_usage()),
+                ("PICK: 1\nLABEL: a", _make_usage()),
+            ],
+        }
+    )
+    panel = FairParallelPanel(
+        _make_panelists(["pa"]),
+        _make_aggregator(),
+        iterations=1,
+        reply_check=_needs_label,
+        format_reminder=_REMINDER,
+    )
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        result = panel.run("topic")
+    assert len([n for n, _ in mock.calls if n == "agg"]) == 2
+    assert result.verdict == "LABEL: a"
+
+
+def test_aggregator_failing_the_retry_still_returns_its_reply():
+    # Spec 058: a second unusable aggregator reply must not abort the run; the agent's
+    # own last-resort parser decides, so the reply is returned as the verdict.
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    mock = _CallMock(
+        {
+            "pa": [("LABEL: a", _make_usage())],
+            "agg": [
+                ("PICK: 1\nbad one", _make_usage()),
+                ("PICK: 1\nbad two", _make_usage()),
+            ],
+        }
+    )
+    panel = FairParallelPanel(
+        _make_panelists(["pa"]),
+        _make_aggregator(),
+        iterations=1,
+        reply_check=_needs_label,
+        format_reminder=_REMINDER,
+    )
+    with patch.object(FairParallelPanel, "_call_persona", mock):
+        result = panel.run("topic")
+    assert result.verdict == "bad two"
+
+
+def test_parse_failure_log_names_agent_round_model_and_stop_reason(caplog):
+    # Spec 058 FR-007/FR-008 (parse_failure_log): the retry WARNING must name the
+    # panel, panelist, round, the model that answered and the provider stop reason.
+    import logging
+
+    from llm.fair_parallel_panel import FairParallelPanel
+
+    cut_off = TokenUsage(
+        model="gemini-2.5-flash",
+        input_tokens=1,
+        output_tokens=100,
+        cost_usd=0.0,
+        stop_reason="MAX_TOKENS",
+    )
+    mock = _CallMock(
+        {
+            "pa": [("prose only", cut_off), ("LABEL: ok", _make_usage())],
+            "agg": [("PICK: 1\nLABEL: ok", _make_usage())],
+        }
+    )
+    panel = FairParallelPanel(
+        _make_panelists(["pa"]),
+        _make_aggregator(),
+        "Satirist/Co-Satirist",
+        iterations=1,
+        reply_check=_needs_label,
+        format_reminder=_REMINDER,
+    )
+    with caplog.at_level(logging.WARNING):
+        with patch.object(FairParallelPanel, "_call_persona", mock):
+            panel.run("topic")
+    message = " ".join(r.getMessage() for r in caplog.records)
+    for expected in [
+        "Satirist/Co-Satirist",
+        "pa",
+        "round 1",
+        "gemini-2.5-flash",
+        "stop_reason=MAX_TOKENS",
+        "100/100",
+        "no LABEL: line",
+        "prose only",
+    ]:
+        assert expected in message

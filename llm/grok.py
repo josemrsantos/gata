@@ -87,9 +87,11 @@ class GrokProvider(LLMProvider):
         out_tok = getattr(usage, "completion_tokens", 0) or 0
         rates = _COST_PER_M.get(self._model, (0.0, 0.0))
         cost = (in_tok * rates[0] + out_tok * rates[1]) / 1_000_000
+        finish_reason = getattr(response.choices[0], "finish_reason", None)
         return text, TokenUsage(
             model=self._model,
             input_tokens=in_tok,
             output_tokens=out_tok,
             cost_usd=cost,
+            stop_reason=finish_reason if isinstance(finish_reason, str) else None,
         )

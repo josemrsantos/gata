@@ -228,16 +228,18 @@ def test_satirist_prompt_includes_joke_type_from_brief():
 
 
 def test_satirist_prompt_includes_joke_explanation_instruction_when_enabled():
-    # When joke_explanation is True, the prompt must mention the joke_explanation block.
+    # When joke_explanation is True, the prompt must ask for a JOKE EXPLANATION line
+    # (a label, not an XML block, since Spec 058 removed tags from replies).
     prompt = _build_satirist_system_prompt(_BRIEF_WITH_JOKE_TYPE, _HUMOR)
-    assert "joke_explanation" in prompt
+    assert "JOKE EXPLANATION:" in prompt
+    assert "<joke_explanation>" not in prompt
 
 
 def test_satirist_prompt_unchanged_without_humor():
     # Without humor config, the Satirist prompt must not contain comedy directives.
     prompt = _build_satirist_system_prompt(BRIEF)
     assert "COMEDY STYLE" not in prompt
-    assert "joke_explanation" not in prompt
+    assert "JOKE EXPLANATION" not in prompt
 
 
 # -- aggregator prompt --
@@ -264,11 +266,11 @@ def test_aggregator_prompt_instructs_pick():
     assert "PICK:" in prompt
 
 
-def test_aggregator_prompt_has_verdict_tags():
-    # Aggregator must wrap its output in <verdict> tags so _extract_proposer_verdict
-    # can parse the final concept without additional format handling.
+def test_aggregator_prompt_has_no_verdict_tags():
+    # Spec 058: the aggregator writes PICK: N then the concept, with no wrapper tags.
     prompt = _build_aggregator_prompt(BRIEF)
-    assert "<verdict>" in prompt
+    assert "<verdict>" not in prompt
+    assert "PICK:" in prompt
 
 
 # ---------------------------------------------------------------------------
@@ -310,11 +312,11 @@ def test_satirist_prompt_mentions_comic_strip_when_multi_panel():
     assert "comic strip" in prompt.lower() or "3-panel" in prompt.lower()
 
 
-def test_satirist_prompt_mentions_json_when_multi_panel():
-    # When layout.panels > 1 the TASK section must instruct the model to return JSON
-    # so the verdict can be parsed deterministically.
+def test_satirist_prompt_asks_for_labels_not_json_when_multi_panel():
+    # Spec 058: the multi-panel prompt must ask for LABEL: value lines, never JSON.
     prompt = _build_satirist_system_prompt(BRIEF, layout_override=_LAYOUT_3H)
-    assert "JSON" in prompt
+    assert "SCENE:" in prompt
+    assert "JSON" not in prompt
 
 
 def test_satirist_prompt_single_panel_unchanged_without_layout():
@@ -487,10 +489,10 @@ def test_run_falls_back_to_topic_when_title_missing():
 
 
 def test_satirist_prompt_includes_title_instruction():
-    # The output format rules must mention "title" so the Satirist knows to include it
-    # in the JSON — without this the field would never be generated.
+    # The output format rules must ask for a TITLE line so the Satirist knows to
+    # include it — without this the field would never be generated.
     prompt = _build_satirist_system_prompt(BRIEF)
-    assert '"title"' in prompt
+    assert "TITLE:" in prompt
 
 
 # ---------------------------------------------------------------------------
@@ -541,3 +543,153 @@ def test_runner_gemini_pro_chain_excludes_dead_gemini_2_0_flash():
 
     model_ids = [p.model_id for p in _GEMINI_PRO_CHAIN]
     assert "gemini-2.0-flash" not in model_ids
+
+
+# ---------------------------------------------------------------------------
+# Spec 058 — LABEL: value verdicts (satirist_labels)
+# ---------------------------------------------------------------------------
+
+_LABELLED_3 = (
+    "PANELS: 3\nLAYOUT: horizontal\nTITLE: Pager Duty\n"
+    "PANEL 1\nSCENE: Gata reads the headline\nCAPTION: Day one.\nBEAT: setup\n"
+    "PANEL 2\nSCENE: Gata raises an eyebrow\nCAPTION: Really?\nBEAT: escalation\n"
+    "PANEL 3\nSCENE: Gata flips board\nCAPTION: Done.\nBEAT: punchline\n"
+)
+# The shape of the 2026-10-27 bare fenced reply (reconstructed; see TODO evidence).
+_BARE_FENCED_JSON = f"```json\n{_VALID_3_PANEL_JSON}\n```"
+
+
+def _panels_of(verdict, layout_override=None):
+    import agents.agent_satirist as sat
+
+    concept, layout = sat._parse_verdict(verdict, layout_override)
+    return [(p.scene, p.caption, p.beat) for p in concept.panels or []], layout
+
+
+def test_satirist_labels_match_the_json_result():
+    # Spec 058 FR-003/FR-010: a labelled reply must give the same panels and layout
+    # the equivalent JSON gave before, so nothing downstream changes.
+    labelled = _panels_of(_LABELLED_3, _LAYOUT_3H)
+    legacy = _panels_of(_VALID_3_PANEL_JSON, _LAYOUT_3H)
+    assert labelled == legacy
+    assert labelled[1] == _LAYOUT_3H
+
+
+def test_satirist_labels_panel_count_comes_from_the_blocks():
+    # Spec 058 FR-003: PANELS: says 4 but only two PANEL blocks exist, so the blocks
+    # win and the disagreement is logged.
+    import agents.agent_satirist as sat
+
+    reply = _LABELLED_3.replace("PANELS: 3", "PANELS: 4").split("PANEL 3")[0]
+    concept, layout = sat._parse_verdict(reply, None)
+    assert layout.panels == 2
+    assert len(concept.panels) == 2
+
+
+@pytest.mark.parametrize(
+    "drifted",
+    [
+        _LABELLED_3.replace("SCENE:", "Scene 1:"),
+        _LABELLED_3.replace("CAPTION:", "**CAPTION**:"),
+        _LABELLED_3.replace("PANEL 1", "## Panel 1")
+        .replace("PANEL 2", "## Panel 2")
+        .replace("PANEL 3", "## Panel 3"),
+        f"```\n{_LABELLED_3}```",
+    ],
+)
+def test_satirist_labels_tolerate_drift(drifted):
+    # Spec 058 FR-005/SC-003: drifted labels, emphasis, headings and a code fence must
+    # parse to the same panels as the canonical reply.
+    assert _panels_of(drifted, _LAYOUT_3H) == _panels_of(_LABELLED_3, _LAYOUT_3H)
+
+
+def test_satirist_labels_legacy_json_still_parses():
+    # Spec 058 FR-009: the 2026-10-27 bare fenced JSON shape stays accepted.
+    panels, layout = _panels_of(_BARE_FENCED_JSON, _LAYOUT_3H)
+    assert len(panels) == 3
+
+
+@pytest.mark.parametrize(
+    "reply, reason",
+    [
+        ("just a sentence about a cat", "PANEL"),
+        ("PANELS: 1\nPANEL 1\nCAPTION: c", "SCENE"),
+        ("PANEL 1\nSCENE: a\nBEAT: setup\nPANEL 2\nSCENE: b\nBEAT:", "BEAT"),
+    ],
+)
+def test_satirist_reply_check_flags_unusable_replies(reply, reason):
+    # Spec 058 FR-006: no panel, a panel without SCENE, or an empty BEAT in a
+    # multi-panel reply makes the reply unusable (so the panel retries it once).
+    from agents.agent_satirist import satirist_reply_check
+
+    assert reason in satirist_reply_check(reply)
+
+
+def test_satirist_reply_check_accepts_good_replies():
+    # Spec 058: a complete labelled reply, a single panel without BEAT, and legacy JSON
+    # are all usable.
+    from agents.agent_satirist import satirist_reply_check
+
+    assert satirist_reply_check(_LABELLED_3) is None
+    assert satirist_reply_check("PANEL 1\nSCENE: only panel\nCAPTION: c") is None
+    assert satirist_reply_check(_VALID_3_PANEL_JSON) is None
+
+
+def test_satirist_labels_missing_caption_and_layout_fall_back_and_log(caplog):
+    # Spec 058 FR-006/FR-007: a missing CAPTION becomes empty and a missing LAYOUT
+    # becomes horizontal, each with a WARNING naming the field.
+    reply = "PANEL 1\nSCENE: a\nCAPTION: c\nBEAT: setup\nPANEL 2\nSCENE: b\nBEAT: punch"
+    with caplog.at_level(logging.WARNING):
+        panels, layout = _panels_of(reply)
+    assert panels[1][1] == ""
+    assert layout.direction == "horizontal"
+    messages = " ".join(r.getMessage() for r in caplog.records)
+    assert "CAPTION" in messages and "LAYOUT" in messages
+
+
+def test_satirist_labels_missing_title_falls_back_to_topic_and_logs(caplog):
+    # Spec 058 FR-006: with no TITLE the run uses the topic and says so in the log.
+    reply = "PANEL 1\nSCENE: only panel\nCAPTION: c"
+    out = LoopOutput(verdict=reply, log=ConversationLog(loop_name="Satirist"))
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = out
+        with caplog.at_level(logging.WARNING):
+            concept, *_ = run(TOPIC, BRIEF, [], [])
+    assert concept.title == TOPIC
+    assert any("TITLE" in r.getMessage() for r in caplog.records)
+
+
+def test_satirist_labels_last_resort_is_single_panel_with_log(caplog):
+    # Spec 058: a reply with no readable panel after the retry still produces a
+    # single-panel concept (raw text as the image prompt) and a WARNING.
+    import agents.agent_satirist as sat
+
+    with caplog.at_level(logging.WARNING):
+        concept, layout = sat._parse_verdict("nothing usable here", None)
+    assert concept.image_prompt == "nothing usable here"
+    assert layout.panels == 1
+    assert any("single-panel" in r.getMessage() for r in caplog.records)
+
+
+def test_satirist_run_passes_check_and_reminder_to_the_panel():
+    # Spec 058 FR-008a: the Satirist panel must be built with its own reply check and
+    # a reminder that lists the required labels.
+    with patch("agents.agent_satirist.FairParallelPanel") as MockPanel:
+        MockPanel.return_value.run.return_value = _LOOP_OUTPUT
+        run(TOPIC, BRIEF, [], [])
+    kwargs = MockPanel.call_args.kwargs
+    assert kwargs["reply_check"] is not None
+    for label in ("PANEL", "SCENE", "BEAT"):
+        assert label in kwargs["format_reminder"]
+
+
+def test_satirist_prompts_are_tag_free_and_json_free_but_keep_the_rules():
+    # Spec 058 FR-001/§4/§7: no tags or JSON wording, yet Gata's description and the
+    # output-language rules must remain in the prompt.
+    from agents.agent_satirist import _GATA_CHARACTER
+
+    prompt = _build_satirist_system_prompt(BRIEF, layout_override=_LAYOUT_3H)
+    assert "<verdict>" not in prompt
+    assert "valid JSON" not in prompt
+    assert _GATA_CHARACTER in prompt
+    assert "output language" in prompt.lower()

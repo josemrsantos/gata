@@ -45,8 +45,8 @@ _PANELIST_SYSTEM = (
     " collage of the individual stories.\n\n"
     f"{_GATA_CHARACTER}\n\n"
     f"{_VISUAL_STYLE}\n\n"
-    "Wrap your entire output in <verdict>...</verdict> tags. The verdict content"
-    " must be nothing but the complete image-generation prompt itself — vivid"
+    "Your entire reply must be nothing but the complete image-generation prompt"
+    " itself, with no wrapper — vivid"
     " visual description, no labels, no preamble, ready to hand directly to an"
     " image-generation model. Your prompt text must itself restate the visual style"
     " constraints above so the image model receives them directly."
@@ -64,10 +64,9 @@ _AGGREGATOR_SYSTEM = (
     " proposal drifted from it, correct that in your final synthesis rather than"
     " carrying the drift forward.\n"
     "Output a PICK: N line (N = the proposal number you selected as primary), then"
-    " the final image-generation prompt wrapped in <verdict>...</verdict> — the"
-    " verdict content must be nothing but the final prompt text, ready to hand"
-    " directly to an image-generation model.\n"
-    "Do not add any preamble outside the PICK line and the verdict block."
+    " the final image-generation prompt on the lines after it — nothing but the"
+    " final prompt text, ready to hand directly to an image-generation model.\n"
+    "Do not add any preamble outside the PICK line and the prompt."
 )
 
 

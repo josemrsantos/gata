@@ -43,10 +43,20 @@ def test_section_1_states_the_default_model_rules():
         assert phrase in text, phrase
 
 
-def test_constitution_version_and_amendment_record_are_1_5():
+def test_constitution_version_and_amendment_record_are_1_6():
     # An amendment is only valid with a version bump and an amendment-record row,
     # per the constitution's own Amendment Procedure.
     text = _CONSTITUTION.read_text()
-    assert "**Version**: 1.5" in text
-    assert "- v1.5 (" in text
-    assert re.search(r"^\| 1\.5 \|", text, re.M)
+    assert "**Version**: 1.6" in text
+    assert "- v1.6 (" in text
+    assert re.search(r"^\| 1\.6 \|", text, re.M)
+
+
+def test_section_3_and_6_no_longer_require_verdict_tags_or_json():
+    # Spec 058 (constitution v1.6): the Satirist contract is plain LABEL: value text,
+    # so §3 and §6 must not demand <verdict> tags or a JSON schema any more.
+    contract = _section("### §3", "### §4") + _section("### §6", "### §7")
+    assert "LABEL: value" in contract
+    assert "PICK: N" in contract
+    assert "```json" not in contract
+    assert "re.search(r'<verdict>" not in contract

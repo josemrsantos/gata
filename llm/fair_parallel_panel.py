@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import concurrent.futures
 import logging
-import re
 import time
 from typing import Callable
 
@@ -15,13 +14,15 @@ from core.types import (
     TokenUsage,
 )
 from llm.base import ConversationProtocol
-from llm.dual_loop import _extract_proposer_verdict
+from llm.reply_parsing import ParseContext, log_parse_issue, split_pick, unwrap_reply
 
 logger = logging.getLogger(__name__)
 
+# Spec 058: agents with a specific format pass their own reminder; this generic one
+# only names no tags or JSON, since the panel no longer asks for either.
 _FORMAT_REMINDER = (
-    "Your last reply could not be used because it was not wrapped in <verdict> tags. "
-    "Reply again with the same content, wrapped as <verdict>...</verdict>."
+    "Your last reply could not be used. Reply again with the same content in the"
+    " format originally requested."
 )
 
 
@@ -43,6 +44,8 @@ class FairParallelPanel(ConversationProtocol):
         iterations: int = 2,
         panelist_timeout: float = 60.0,
         round_validator: Callable[[dict[str, str]], dict[str, str]] | None = None,
+        reply_check: Callable[[str], str | None] | None = None,
+        format_reminder: str = _FORMAT_REMINDER,
     ) -> None:
         self._panelists = panelists
         self._aggregator = aggregator
@@ -55,6 +58,84 @@ class FairParallelPanel(ConversationProtocol):
         # {panelist_name: verdict_content}; any entry in its returned dict is
         # appended as extra guidance to that panelist's next-round prompt.
         self._round_validator = round_validator
+        # Spec 058: reply_check(reply) returns None when a reply is usable, else a
+        # short reason; None (the default) means only an empty reply is unusable.
+        self._reply_check = reply_check
+        self._format_reminder = format_reminder
+
+    def _context(
+        self, persona: PersonaConfig, round_num: int, usage: TokenUsage
+    ) -> ParseContext:
+        # usage.model names the model that really answered, even after a fallback.
+        return ParseContext(
+            agent=self._panel_name,
+            role=persona.name,
+            round=round_num,
+            model=usage.model,
+            stop_reason=usage.stop_reason,
+            output_tokens=usage.output_tokens,
+            max_tokens=persona.max_tokens,
+        )
+
+    def _read_reply(
+        self,
+        response: str,
+        ctx: ParseContext,
+        prepare: Callable[[str], str],
+    ) -> str:
+        verdict = unwrap_reply(prepare(response), ctx)
+        reason = self._reply_check(verdict) if self._reply_check else None
+        if reason:
+            raise ValueError(reason)
+        return verdict
+
+    def _resolve_reply(
+        self,
+        persona: PersonaConfig,
+        messages: list[dict],
+        response: str,
+        usage: TokenUsage,
+        round_num: int,
+        prepare: Callable[[str], str] = lambda text: text,
+        fatal: bool = True,
+    ) -> tuple[str, str, TokenUsage, list[TokenUsage]]:
+        """Turn a reply into its answer, with one retry if it is unusable.
+
+        Returns (answer, raw reply, usage of the reply used, usages of earlier paid
+        calls). A second unusable reply raises ValueError when `fatal`; otherwise
+        the reply is used as it is and the agent's own parser decides (Spec 058).
+        """
+        ctx = self._context(persona, round_num, usage)
+        try:
+            return self._read_reply(response, ctx, prepare), response, usage, []
+        except ValueError as exc:
+            log_parse_issue(ctx, str(exc), "one retry", response)
+        if response.strip():
+            retry_messages = messages + [
+                {"role": "assistant", "content": response},
+                {"role": "user", "content": self._format_reminder},
+            ]
+        else:
+            # An empty assistant turn is rejected by the APIs; ask again as before.
+            retry_messages = messages
+        paid = [usage]
+        response, usage = self._call_persona(persona, retry_messages)
+        ctx = self._context(persona, round_num, usage)
+        try:
+            return self._read_reply(response, ctx, prepare), response, usage, paid
+        except ValueError as exc:
+            log_parse_issue(
+                ctx,
+                str(exc),
+                "panelist dropped" if fatal else "the reply as is",
+                response,
+            )
+            if fatal:
+                raise
+        answer = prepare(response).strip()
+        if not answer:
+            raise RuntimeError(f"{persona.name}: empty reply after retry") from None
+        return answer, response, usage, paid
 
     def _call_persona(
         self,
@@ -122,7 +203,7 @@ class FairParallelPanel(ConversationProtocol):
             "Given the perspectives above, please revise your proposal or confirm"
             " it stands."
         )
-        lines.append("Wrap your final response in <verdict>…</verdict> tags as before.")
+        lines.append("Reply in the same format as before.")
         return "\n".join(lines)
 
     def run(self, initial_input: str) -> LoopOutput:
@@ -191,29 +272,12 @@ class FairParallelPanel(ConversationProtocol):
                 for panelist, messages, future in zip(active, messages_per, futures):
                     try:
                         response, usage = future.result(timeout=self._panelist_timeout)
-                        try:
-                            verdict_content = _extract_proposer_verdict(response)
-                        except ValueError as exc:
-                            # Spec 057: one retry with a format reminder before
-                            # dropping the panelist; the unusable call was paid for.
-                            logger.warning(
-                                "%s: panelist %s gave an unusable reply in round %d"
-                                " — retrying once: %s",
-                                self._panel_name,
-                                panelist.name,
-                                round_num,
-                                exc,
-                            )
-                            token_calls.append(usage)
-                            response, usage = self._call_persona(
-                                panelist,
-                                messages
-                                + [
-                                    {"role": "assistant", "content": response},
-                                    {"role": "user", "content": _FORMAT_REMINDER},
-                                ],
-                            )
-                            verdict_content = _extract_proposer_verdict(response)
+                        # Spec 057/058: one retry for an unusable reply before the
+                        # panelist is dropped; the unusable first call was paid for.
+                        verdict_content, response, usage, paid = self._resolve_reply(
+                            panelist, messages, response, usage, round_num
+                        )
+                        token_calls.extend(paid)
                         token_calls.append(usage)
                         final_results[panelist.name] = (
                             verdict_content,
@@ -268,14 +332,25 @@ class FairParallelPanel(ConversationProtocol):
             lines.append(verdict_content)
             lines.append("")
         aggregation_message = "\n".join(lines).strip()
+        agg_messages = [{"role": "user", "content": aggregation_message}]
         aggregator_response, agg_usage = self._call_persona(
-            self._aggregator,
-            [{"role": "user", "content": aggregation_message}],
+            self._aggregator, agg_messages
         )
+        # The aggregator's PICK line is not part of the answer; a second unusable
+        # reply is used as it is (fatal=False) so the agent's own parser decides.
+        final_verdict, aggregator_response, agg_usage, agg_paid = self._resolve_reply(
+            self._aggregator,
+            agg_messages,
+            aggregator_response,
+            agg_usage,
+            self._iterations,
+            prepare=lambda text: split_pick(text)[1],
+            fatal=False,
+        )
+        token_calls.extend(agg_paid)
         token_calls.append(agg_usage)
-        final_verdict = _extract_proposer_verdict(aggregator_response)
-        pick_match = re.search(r"PICK:\s*(\d+)", aggregator_response)
-        pick_label = f"PICK: {pick_match.group(1)}" if pick_match else "PICK: ?"
+        pick_number = split_pick(aggregator_response)[0]
+        pick_label = f"PICK: {pick_number}" if pick_number is not None else "PICK: ?"
         log.turns.append(
             ConversationTurn(
                 iteration=self._iterations,

@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## v1.34.0 (2026-10-27)
+
+### Features
+
+* feat: plain-text panel replies — no more `<verdict>` tags or JSON, and failures you can trace
+
+Models kept ignoring the tags and the "return JSON" instruction. Each slip cost a retry, a lost
+panelist or a noisy warning, and the warnings did not say which model had slipped.
+
+* **No tags, no JSON.** Panelists just answer. The aggregator writes `PICK: N` and then its answer.
+  The Satirist writes plain `LABEL: value` lines (`PANELS`, `LAYOUT`, `TITLE`, then one `PANEL n` block
+  with `SCENE`, `CAPTION`, `BEAT`) — the same information the JSON held. Source-domain classification
+  is one line per domain, e.g. `nytimes.com: paywalled, high`.
+* **Forgiving readers.** Label drift (`Scene 1:`, `**CAPTION**:`, `## Panel 1`), bold, code fences and
+  the old `<verdict>` tags or JSON are all still understood, so a model that ignores the new format
+  does not lose its work.
+* **Satirist rules.** The panel count is the number of `PANEL n` blocks. A panel without a `SCENE`, or
+  (in a multi-panel cartoon) an empty `BEAT`, makes the reply unusable and triggers the one retry; a
+  missing title becomes the topic, a missing caption is left empty, a missing layout is horizontal.
+  Each fallback is logged.
+* **Traceable failures.** Every parse failure or fallback writes a WARNING to `run.log` naming the
+  panel, who answered, the round, the model, why the reply was cut off if the provider says so
+  (`stop_reason`, output tokens), what was wrong, what we did, and the first 400 characters of the reply.
+* **Retries.** The one retry now uses a reminder written for each agent's own format. An unusable
+  aggregator reply gets the same single retry (new); a second failure is used as it is.
+* Constitution v1.6: §3 and §6 describe the plain-text contract. `DualPersonaLoop` and `ParallelPanel`
+  (unused by any agent) keep the old strict reader.
+
 ## v1.33.0 (2026-10-12)
 
 ### Features

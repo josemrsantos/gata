@@ -133,4 +133,5 @@ class ClaudeProvider(LLMProvider):
             input_tokens=in_tok,
             output_tokens=out_tok,
             cost_usd=cost,
+            stop_reason=stop_reason if isinstance(stop_reason, str) else None,
         )

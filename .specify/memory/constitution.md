@@ -1,11 +1,16 @@
 # Gata Newsroom — Project Constitution
 
-**Version**: 1.5
+**Version**: 1.6
 **Ratified**: 2026-06-22
 **Ratified by**: Jose Santos (project lead)
 **Status**: Active
 
 **Amendment log**:
+- v1.6 (2026-10-27) — Spec 058: §3 and §6 no longer require the Satirist to wrap
+  JSON in `<verdict>` tags. Panel replies are plain text, the aggregator writes a
+  `PICK: N` line followed by its answer, and the Satirist's verdict is `LABEL: value`
+  text with the same fields as the old JSON. Parsers tolerate legacy `<verdict>` tags
+  and JSON. Approved by the project lead, 2026-10-27.
 - v1.5 (2026-10-12) — Spec 056: §2 gains one exception — in `--image-prompt-only`
   mode no PNG is made and the full image request is written to `image_prompt.txt` in the
   run's bundle, at the operator's explicit request; every other mode still never writes
@@ -86,13 +91,19 @@ the plan's Complexity Tracking table and explicitly accepted by the project lead
   explicit request. No other mode writes the image prompt.
 - A partial or corrupt image file MUST NOT be left on disk if generation fails
 
-### §3 — XML and Output Contract
+### §3 — Output Contract
 
-- The Satirist wraps its cartoon concept in `<verdict>…</verdict>` tags containing
-  valid JSON (see §6 for the JSON schema)
-- No other XML tags are used for inter-agent communication
-- Parsers use `re.search(r'<verdict>(.*?)</verdict>', text, re.DOTALL)` to extract
-  the verdict block
+- Panel replies are plain text: the whole reply is the answer, with no wrapper tags
+  and no JSON
+- An aggregator reply is a `PICK: N` line followed by the chosen answer
+- The Satirist's cartoon concept is `LABEL: value` text (see §6 for the labels)
+- No XML tags are used for inter-agent communication
+- Parsers are tolerant: they accept label drift, markdown emphasis and a surrounding
+  code fence, and still accept the legacy `<verdict>…</verdict>` wrapper and a
+  wholly-JSON reply
+- Every parse failure or fallback is logged as a WARNING naming the agent, round,
+  provider and model, the failed field, the default applied and an excerpt of the
+  reply (`llm/reply_parsing.py`)
 
 ### §4 — Character Rules
 
@@ -128,20 +139,26 @@ Every image prompt MUST enforce the following aesthetic:
 - **Never reference**: copyrighted artists or characters; describe visual
   characteristics only
 
-### §6 — Verdict JSON Schema and Iteration Rules
+### §6 — Satirist Verdict Format and Iteration Rules
 
-The Satirist's `<verdict>` block contains valid JSON with this schema:
+The Satirist's verdict is `LABEL: value` text with this shape (a value runs until the
+next label):
 
-```json
-{
-  "panels": "<integer 1–4>",
-  "layout": "horizontal | vertical",
-  "title": "<punchy 3–8 word editorial headline in the output language>",
-  "content": [
-    {"scene": "...", "caption": "...", "beat": "..."}
-  ]
-}
+```text
+PANELS: <integer 1–4>
+LAYOUT: horizontal | vertical
+TITLE: <punchy 3–8 word editorial headline in the output language>
+PANEL 1
+SCENE: ...
+CAPTION: ...
+BEAT: ...
+PANEL 2
+...
 ```
+
+The panel count is the number of `PANEL n` blocks. Every panel needs a `SCENE`, and
+every panel of a multi-panel cartoon needs a non-empty `BEAT`; a missing `TITLE`,
+`CAPTION` or `LAYOUT` falls back to a default and is logged.
 
 Iteration rules:
 
@@ -248,3 +265,4 @@ Rules:
 | 1.3 | 2026-10-04 | §1 | Model names refreshed (Spec 054): Claude primary `claude-sonnet-5-5`; Gemini image primary `gemini-3.1-flash-image`; image-chain pointer corrected to `core/image_generation.py`; Gemini text and Grok unchanged | Jose Santos |
 | 1.4 | 2026-10-04 | §1, §6 | Models no longer named: §1 states SDK rules and default-model rules and points at the code; §6 describes Grok roles (aggregator vs distinct panelist) instead of model names. Governance change, no spec | Jose Santos |
 | 1.5 | 2026-10-12 | §2 | Exception: `--image-prompt-only` writes the full image request to `image_prompt.txt`; every other mode still never writes the image prompt (Spec 056) | Jose Santos |
+| 1.6 | 2026-10-27 | §3, §6 | Panel replies are plain text, aggregator uses `PICK: N`, Satirist verdict is `LABEL: value` text (same fields as the old JSON); legacy `<verdict>`/JSON still tolerated by parsers (Spec 058) | Jose Santos |

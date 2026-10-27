@@ -123,3 +123,28 @@ def test_cost_table_keeps_models_that_are_still_served():
         assert model in _COST_PER_M, model
     assert _COST_PER_M["gemini-3.1-flash-image"] == (0.50, 60.00)
     assert _COST_PER_M["gemini-3-pro-image"] == (2.00, 120.00)
+
+
+def test_generate_reports_the_finish_reason_in_token_usage():
+    # Spec 058 FR-008 (provider): Gemini's finish reason (an enum with a name) must
+    # reach TokenUsage.stop_reason so MAX_TOKENS truncation is visible in the log.
+    provider = GeminiProvider("gemini-2.5-flash")
+    fake_resp = _make_response("cut off")
+    finish = MagicMock()
+    finish.name = "MAX_TOKENS"
+    fake_resp.candidates = [MagicMock(finish_reason=finish)]
+    with patch("llm.gemini._get_client") as mock_client_fn:
+        mock_client_fn.return_value.models.generate_content.return_value = fake_resp
+        _, usage = provider.generate("system", [{"role": "user", "content": "go"}])
+    assert usage.stop_reason == "MAX_TOKENS"
+
+
+def test_generate_stop_reason_is_none_without_candidates():
+    # Spec 058: a response with no candidates must leave stop_reason as None.
+    provider = GeminiProvider("gemini-2.5-flash")
+    fake_resp = _make_response("fine")
+    fake_resp.candidates = None
+    with patch("llm.gemini._get_client") as mock_client_fn:
+        mock_client_fn.return_value.models.generate_content.return_value = fake_resp
+        _, usage = provider.generate("system", [{"role": "user", "content": "go"}])
+    assert usage.stop_reason is None

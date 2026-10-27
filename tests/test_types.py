@@ -5,7 +5,15 @@ from core.types import (
     FramerHumor,
     PanelConcept,
     SatiristHumor,
+    TokenUsage,
 )
+
+
+def test_token_usage_stop_reason_defaults_to_none():
+    # Spec 058: stop_reason is optional so four-argument TokenUsage calls still work.
+    usage = TokenUsage(model="m", input_tokens=1, output_tokens=2, cost_usd=0.1)
+    assert usage.stop_reason is None
+    assert TokenUsage("m", 1, 2, 0.1, "max_tokens").stop_reason == "max_tokens"
 
 
 def test_panel_concept_holds_scene_caption_beat():

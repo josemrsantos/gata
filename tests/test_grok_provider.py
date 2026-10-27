@@ -284,3 +284,32 @@ def test_cost_table_has_newer_grok_models_at_published_rates():
     assert _COST_PER_M["grok-4.5"] == (2.00, 6.00)
     assert _COST_PER_M["grok-4.3"] == (1.25, 2.50)
     assert _COST_PER_M["grok-build-0.1"] == (1.00, 2.00)
+
+
+def test_generate_reports_the_finish_reason_in_token_usage():
+    # Spec 058 FR-008 (provider): Grok's finish_reason ("length" = truncated) must
+    # reach TokenUsage.stop_reason so truncation shows in the parse-failure log.
+    import llm.grok as grok_mod
+
+    resp = _make_response("cut off")
+    resp.choices[0].finish_reason = "length"
+    grok_mod._client = MagicMock()
+    grok_mod._client.chat.completions.create.return_value = resp
+    _, usage = GrokProvider("grok-4.3").generate(
+        "sys", [{"role": "user", "content": "x"}]
+    )
+    assert usage.stop_reason == "length"
+
+
+def test_generate_stop_reason_is_none_when_not_a_string():
+    # Spec 058: a missing or non-string finish_reason must leave stop_reason as None.
+    import llm.grok as grok_mod
+
+    resp = _make_response("fine")
+    resp.choices[0].finish_reason = None
+    grok_mod._client = MagicMock()
+    grok_mod._client.chat.completions.create.return_value = resp
+    _, usage = GrokProvider("grok-4.3").generate(
+        "sys", [{"role": "user", "content": "x"}]
+    )
+    assert usage.stop_reason is None
