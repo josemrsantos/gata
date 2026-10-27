@@ -334,3 +334,20 @@ def test_effort_is_ignored_for_models_that_do_not_support_it():
     _generate_with(provider, _make_response("x"))
     assert "extra_body" not in claude_mod._client.messages.create.call_args.kwargs
     assert provider.effort is None
+
+
+def test_generate_reports_the_stop_reason_in_token_usage():
+    # Spec 058 FR-008 (provider): the stop reason must reach TokenUsage so a truncated
+    # reply (max_tokens) can be told apart from one that ignored the format.
+    resp = _make_response("cut off")
+    resp.stop_reason = "max_tokens"
+    _, usage = _generate_with(ClaudeProvider("claude-sonnet-5-5"), resp)
+    assert usage.stop_reason == "max_tokens"
+
+
+def test_generate_stop_reason_is_none_when_not_a_string():
+    # Spec 058: an absent or odd stop reason must leave stop_reason None, not crash.
+    resp = _make_response("fine")
+    resp.stop_reason = None
+    _, usage = _generate_with(ClaudeProvider("claude-sonnet-5-5"), resp)
+    assert usage.stop_reason is None

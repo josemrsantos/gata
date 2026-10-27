@@ -16,8 +16,11 @@ from core.types import (
 )
 from llm import LLMProvider
 from llm.fair_parallel_panel import FairParallelPanel
+from llm.reply_parsing import ParseContext, log_parse_issue, parse_labelled
 
 logger = logging.getLogger(__name__)
+
+_JSON_START = re.compile(r"\s*(?:```(?:json)?\s*)?\{")
 
 
 # Verbatim from constitution.md Section 4
@@ -49,26 +52,50 @@ _VISUAL_STYLE = (
 )
 
 _OUTPUT_FORMAT_RULES = (
-    "OUTPUT FORMAT — wrap in <verdict>...</verdict> tags, return ONLY valid JSON:\n"
-    "{\n"
-    '  "panels": <integer 1–4>,\n'
-    '  "layout": "horizontal" or "vertical",\n'
-    '  "title": "<punchy 3-8 word headline in the output language>",\n'
-    '  "content": [\n'
-    '    {"scene": "...", "caption": "...", "beat": "..."},\n'
-    "    ...\n"
-    "  ]\n"
-    "}\n"
+    "OUTPUT FORMAT — plain text, one LABEL: value per line (a value may continue"
+    " onto the following lines until the next label), exactly in this shape:\n"
+    "PANELS: <integer 1–4>\n"
+    "LAYOUT: horizontal or vertical\n"
+    "TITLE: <punchy 3-8 word headline in the output language>\n"
+    "PANEL 1\n"
+    "SCENE: ...\n"
+    "CAPTION: ...\n"
+    "BEAT: ...\n"
+    "PANEL 2\n"
+    "SCENE: ...\n"
+    "CAPTION: ...\n"
+    "BEAT: ...\n"
+    "(one PANEL n block per panel)\n"
     "\n"
     "CONTENT RULES:\n"
-    '- panels = 1: "scene" MUST include Gata\'s full character description verbatim'
+    "- One panel: SCENE MUST include Gata's full character description verbatim"
     " and all visual style rules — it feeds directly into the image generator.\n"
-    '- panels ≥ 2: "scene" describes only the panel\'s action; character and style'
-    ' are added automatically. Each panel MUST have a non-empty "beat".\n'
-    '- "caption" must always be in the specified output language.\n'
-    '- "title" must always be in the specified output language — 3 to 8 words,'
+    "- Two or more panels: SCENE describes only the panel's action; character and"
+    " style are added automatically. Each panel MUST have a non-empty BEAT.\n"
+    "- CAPTION must always be in the specified output language.\n"
+    "- TITLE must always be in the specified output language — 3 to 8 words,"
     " editorial headline style, not a description of the image.\n"
     "- No preamble, no explanation, no markdown fences."
+)
+
+# Labels the verdict parser recognises; JOKE EXPLANATION only ends the last value.
+_SATIRIST_LABELS = [
+    "PANELS",
+    "PANEL",
+    "LAYOUT",
+    "TITLE",
+    "SCENE",
+    "CAPTION",
+    "BEAT",
+    "JOKE EXPLANATION",
+]
+
+# Spec 058 FR-008a: the one retry names this agent's own format.
+_SATIRIST_FORMAT_REMINDER = (
+    "Your last reply could not be used. Reply again with the same concept as plain"
+    " LABEL: value lines: PANELS, LAYOUT, TITLE, then one PANEL n block per panel"
+    " with SCENE, CAPTION and BEAT (BEAT is required when there are 2 or more"
+    " panels)."
 )
 
 
@@ -147,8 +174,9 @@ def _build_satirist_system_prompt(
     lines += ["", _OUTPUT_FORMAT_RULES]
     if humor and humor.satirist.joke_explanation:
         lines += [
-            "After the JSON, add a <joke_explanation>...</joke_explanation> block:",
-            "one sentence explaining why this joke lands for the target audience.",
+            "After the last panel, add one final line:",
+            "JOKE EXPLANATION: one sentence explaining why this joke lands for the"
+            " target audience.",
         ]
     if humor:
         directive = inconvenience_directive(humor.satirist.inconvenience)
@@ -169,62 +197,179 @@ def _build_aggregator_prompt(brief: EnrichedBrief) -> str:
         "",
         "Respond with ONLY:",
         "PICK: <number>",
-        "Then on the next line copy the chosen concept verbatim inside",
-        "<verdict>...</verdict> tags. No other text.",
+        "Then on the following lines copy the chosen concept verbatim, in the same",
+        "LABEL: value format as the proposals. No other text and no tags.",
     ]
     return "\n".join(lines)
+
+
+def _extract_panel_blocks(text: str) -> tuple[dict[str, str], list[dict[str, str]]]:
+    # Splits a labelled reply into its header fields and one dict per panel block.
+    header: dict[str, str] = {}
+    blocks: list[dict[str, str]] = []
+    for label, value in parse_labelled(text, _SATIRIST_LABELS):
+        if label == "PANEL":
+            # A new block starts here unless the previous one is still empty.
+            if not blocks or blocks[-1]:
+                blocks.append({})
+        elif label in ("SCENE", "CAPTION", "BEAT"):
+            # A repeated field (drifted headers like "Scene 1:") starts a new block.
+            if not blocks or label in blocks[-1]:
+                blocks.append({})
+            blocks[-1][label] = value
+        elif label not in header:
+            header[label] = value
+    return header, [b for b in blocks if b]
+
+
+def satirist_reply_check(text: str) -> str | None:
+    """Return why a Satirist reply is unusable, or None if it can be used."""
+    if _JSON_START.match(text):
+        # Legacy JSON (Spec 058 FR-009) is judged by the JSON parser later on.
+        return None
+    _, blocks = _extract_panel_blocks(text)
+    if not blocks:
+        return "no PANEL block found"
+    for number, block in enumerate(blocks, 1):
+        if not block.get("SCENE"):
+            return f"PANEL {number} has no SCENE"
+    if len(blocks) > 1:
+        for number, block in enumerate(blocks, 1):
+            if not block.get("BEAT"):
+                return f"PANEL {number} has an empty BEAT"
+    return None
+
+
+def _parse_json_verdict(
+    verdict_content: str,
+    layout_override: CartoonLayout | None,
+) -> tuple[CartoonConcept, CartoonLayout]:
+    # Legacy path (Spec 058 FR-009): the pre-058 JSON verdict, still accepted.
+    clean = verdict_content.strip()
+    clean = re.sub(r"^```(?:json)?\s*", "", clean)
+    clean = re.sub(r"\s*```$", "", clean)
+    parsed = json.loads(clean)
+    panels_chosen = int(parsed.get("panels", 1))
+    direction_chosen = str(parsed.get("layout", "horizontal"))
+    content = parsed.get("content", [])
+    title = str(parsed.get("title", ""))
+    # Caller-specified override wins over Satirist's choice
+    if layout_override is not None:
+        panels_chosen = layout_override.panels
+        direction_chosen = layout_override.direction
+    layout = CartoonLayout(panels=panels_chosen, direction=direction_chosen)
+    if panels_chosen == 1:
+        # Single-panel: scene already contains full char description and style
+        scene = str(content[0].get("scene", "")) if content else verdict_content
+        return CartoonConcept(
+            full_text=verdict_content,
+            image_prompt=scene,
+            iteration=0,
+            title=title,
+        ), layout
+    # Multi-panel: validate content length matches chosen panel count
+    if len(content) != panels_chosen:
+        raise ValueError(
+            f"expected {panels_chosen} items in content, got {len(content)}"
+        )
+    panel_concepts = [
+        PanelConcept(
+            scene=str(p["scene"]),
+            caption=str(p["caption"]),
+            beat=str(p.get("beat", "")),
+        )
+        for p in content
+    ]
+    return CartoonConcept(
+        full_text=verdict_content,
+        image_prompt="",
+        iteration=0,
+        panels=panel_concepts,
+        title=title,
+    ), layout
+
+
+def _parse_labelled_verdict(
+    verdict_content: str,
+    layout_override: CartoonLayout | None,
+    ctx: ParseContext | None,
+) -> tuple[CartoonConcept, CartoonLayout]:
+    header, blocks = _extract_panel_blocks(verdict_content)
+    reason = satirist_reply_check(verdict_content)
+    if reason:
+        raise ValueError(reason)
+    count = len(blocks)
+    declared = header.get("PANELS", "").strip()
+    if declared.isdigit() and int(declared) != count:
+        log_parse_issue(
+            ctx,
+            f"PANELS says {declared} but {count} PANEL block(s) found",
+            f"{count} panel(s)",
+            verdict_content,
+        )
+    if layout_override is not None:
+        if layout_override.panels != count:
+            raise ValueError(f"expected {layout_override.panels} panels, got {count}")
+        layout = layout_override
+    else:
+        direction = header.get("LAYOUT", "").strip().lower().strip("*. ")
+        if direction not in ("horizontal", "vertical"):
+            log_parse_issue(
+                ctx,
+                f"LAYOUT {header.get('LAYOUT', '')!r} not horizontal/vertical",
+                "horizontal",
+                verdict_content,
+            )
+            direction = "horizontal"
+        layout = CartoonLayout(panels=count, direction=direction)
+    title = header.get("TITLE", "").strip()
+    if count == 1:
+        # Single-panel: scene already contains full char description and style
+        if not blocks[0].get("CAPTION"):
+            log_parse_issue(ctx, "CAPTION missing", "empty caption", verdict_content)
+        return CartoonConcept(
+            full_text=verdict_content,
+            image_prompt=blocks[0]["SCENE"],
+            iteration=0,
+            title=title,
+        ), layout
+    panel_concepts = []
+    for number, block in enumerate(blocks, 1):
+        if "CAPTION" not in block:
+            log_parse_issue(
+                ctx, f"PANEL {number} CAPTION missing", "empty caption", verdict_content
+            )
+        panel_concepts.append(
+            PanelConcept(
+                scene=block["SCENE"],
+                caption=block.get("CAPTION", ""),
+                beat=block["BEAT"],
+            )
+        )
+    return CartoonConcept(
+        full_text=verdict_content,
+        image_prompt="",
+        iteration=0,
+        panels=panel_concepts,
+        title=title,
+    ), layout
 
 
 def _parse_verdict(
     verdict_content: str,
     layout_override: CartoonLayout | None,
+    ctx: ParseContext | None = None,
 ) -> tuple[CartoonConcept, CartoonLayout]:
-    clean = verdict_content.strip()
-    clean = re.sub(r"^```(?:json)?\s*", "", clean)
-    clean = re.sub(r"\s*```$", "", clean)
     try:
-        parsed = json.loads(clean)
-        panels_chosen = int(parsed.get("panels", 1))
-        direction_chosen = str(parsed.get("layout", "horizontal"))
-        content = parsed.get("content", [])
-        title = str(parsed.get("title", ""))
-        # Caller-specified override wins over Satirist's choice
-        if layout_override is not None:
-            panels_chosen = layout_override.panels
-            direction_chosen = layout_override.direction
-        layout = CartoonLayout(panels=panels_chosen, direction=direction_chosen)
-        if panels_chosen == 1:
-            # Single-panel: scene already contains full char description and style
-            scene = str(content[0].get("scene", "")) if content else verdict_content
-            return CartoonConcept(
-                full_text=verdict_content,
-                image_prompt=scene,
-                iteration=0,
-                title=title,
-            ), layout
-        # Multi-panel: validate content length matches chosen panel count
-        if len(content) != panels_chosen:
-            raise ValueError(
-                f"expected {panels_chosen} items in content, got {len(content)}"
-            )
-        panel_concepts = [
-            PanelConcept(
-                scene=str(p["scene"]),
-                caption=str(p["caption"]),
-                beat=str(p.get("beat", "")),
-            )
-            for p in content
-        ]
-        return CartoonConcept(
-            full_text=verdict_content,
-            image_prompt="",
-            iteration=0,
-            panels=panel_concepts,
-            title=title,
-        ), layout
+        if _JSON_START.match(verdict_content):
+            return _parse_json_verdict(verdict_content, layout_override)
+        return _parse_labelled_verdict(verdict_content, layout_override, ctx)
     except (json.JSONDecodeError, KeyError, ValueError, TypeError, IndexError) as exc:
-        logger.warning(
-            "satirist: verdict parse failed (%s) — falling back to single-panel", exc
+        log_parse_issue(
+            ctx,
+            f"verdict parse failed ({exc})",
+            "falling back to single-panel",
+            verdict_content,
         )
         # Fallback always produces something; uses raw verdict as the image prompt
         return CartoonConcept(
@@ -256,12 +401,32 @@ def run(
         system_prompt=_build_aggregator_prompt(brief),
     )
     panel = FairParallelPanel(
-        panelists=panelists, aggregator=aggregator, panel_name="Satirist/Co-Satirist"
+        panelists=panelists,
+        aggregator=aggregator,
+        panel_name="Satirist/Co-Satirist",
+        reply_check=satirist_reply_check,
+        format_reminder=_SATIRIST_FORMAT_REMINDER,
     )
     loop_output = panel.run(topic)
-    concept, layout = _parse_verdict(loop_output.verdict, layout_override)
+    # The aggregator's call is the last one the panel made; name it in parse logs.
+    ctx = None
+    if loop_output.telemetry and loop_output.telemetry.calls:
+        last = loop_output.telemetry.calls[-1]
+        ctx = ParseContext(
+            agent="Satirist/Co-Satirist",
+            role=aggregator.name,
+            round=loop_output.telemetry.iterations,
+            model=last.model,
+            stop_reason=last.stop_reason,
+            output_tokens=last.output_tokens,
+            max_tokens=aggregator.max_tokens,
+        )
+    concept, layout = _parse_verdict(loop_output.verdict, layout_override, ctx)
     if not concept.title:
-        # Fallback: Satirist omitted the title or JSON parse failed — use the topic
+        # Fallback: Satirist omitted the title or the parse failed — use the topic
+        log_parse_issue(
+            ctx, "TITLE missing", "the topic as the title", loop_output.verdict
+        )
         concept.title = topic
     logger.info(
         "satirist: concept produced — panels=%d layout=%s cultural_angle=%r",

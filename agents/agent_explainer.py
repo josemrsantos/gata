@@ -18,7 +18,7 @@ _WRITER_SYSTEM = (
     "- Use semantic structure: one <h1> heading and body paragraphs in <p> tags\n"
     "- No external resources: no CDN links, no <script src>, no <link rel=stylesheet>\n"
     "- No inline style attributes\n\n"
-    "Wrap your complete HTML output in <verdict>...</verdict> tags."
+    "Reply with the complete HTML page only — no explanation before or after it."
 )
 
 _EXPLAINER_AGGREGATOR_SYSTEM = (
@@ -35,9 +35,9 @@ _EXPLAINER_AGGREGATOR_SYSTEM = (
     "2. Pick the page that best satisfies all criteria. If multiple pages pass,"
     " prefer the most thorough explanation.\n"
     "3. Output a PICK: N line (N = the chosen page number), then the complete chosen"
-    " HTML page wrapped in <verdict>...</verdict> tags.\n\n"
-    "Do not add preamble. Do not modify the chosen HTML. Output only PICK: N and the"
-    " <verdict> block containing the verbatim HTML."
+    " HTML page on the lines after it.\n\n"
+    "Do not add preamble. Do not modify the chosen HTML. Output only the PICK: N"
+    " line and the verbatim HTML."
 )
 
 

@@ -305,7 +305,8 @@ JOKE TYPE: absurdist comparison
 
 Generates a cartoon concept from the enriched brief. Uses the **FairParallelPanel**
 protocol: three independent Panelists each propose a concept across two exchange rounds;
-Grok-4.3 (Aggregator) picks the strongest and wraps it in a `<verdict>` JSON block.
+Grok-4.3 (Aggregator) picks the strongest and writes `PICK: N` followed by the chosen
+concept as plain `LABEL: value` lines (Spec 058; no tags, no JSON).
 
 ```mermaid
 flowchart TD
@@ -314,7 +315,7 @@ flowchart TD
     P2["Panelist — Grok\ngrok-build-0.1"]
     P3["Panelist — Gemini\ngemini-2.5-flash"]
     AGG["Aggregator — Grok-4.3\npicks strongest concept"]
-    OUT["cartoon concept JSON\n(panels, layout, title, scenes)"]
+    OUT["cartoon concept (LABEL: value lines)\n(panels, layout, title, scenes)"]
 
     IN --> P1 & P2 & P3
     P1 --> AGG
@@ -323,8 +324,23 @@ flowchart TD
     AGG --> OUT
 ```
 
-The concept JSON follows the schema in `constitution.md §6`. The `title` field becomes
-the headline banner overlaid on the image.
+The concept follows the `LABEL: value` format in `constitution.md §6`:
+
+```text
+PANELS: 3
+LAYOUT: vertical
+TITLE: Pager Duty
+PANEL 1
+SCENE: ...
+CAPTION: ...
+BEAT: ...
+```
+
+The panel count is the number of `PANEL n` blocks. A missing `SCENE` (or an empty `BEAT`
+with 2+ panels) makes the reply unusable and triggers the single retry; a missing
+`TITLE`, `CAPTION` or `LAYOUT` falls back to the topic, an empty caption or horizontal,
+and is logged. The old JSON verdict is still accepted. The `TITLE` becomes the headline
+banner overlaid on the image.
 
 **Example**
 
@@ -945,7 +961,7 @@ Satirist, and Explainer (replaces `ParallelPanel` as of Spec 034), reused as-is 
 the newsletter Engagement Image Concept step (Spec 041), and by the LinkedIn Post
 agent's three sequential panel stages — domain classification, angle planning, and
 writing (Spec 042). Each new use is a single deliberation producing one text output
-(an image prompt, a domain-verdict JSON object, an angle set, or an article),
+(an image prompt, a set of domain-classification lines, an angle set, or an article),
 rather than a new bespoke protocol — including cases needing per-panelist-distinct
 context (each LinkedIn Post panelist's own research), met by varying each
 `PersonaConfig.system_prompt` rather than modifying this class.
@@ -957,7 +973,7 @@ context (each LinkedIn Post panelist's own research), met by varying each
 2. **Round 2–N** — each surviving panelist receives a composite prompt that includes its
    own round-1 response plus all peers' round-1 verdicts; they run in parallel again
 3. **Aggregation** — the aggregator receives each panelist's *final-round* verdict and
-   returns the best one via a `PICK: N` label plus its own `<verdict>` block
+   returns the best one via a `PICK: N` line followed by its own answer
 
 ```
 initial_input
@@ -970,13 +986,19 @@ initial_input
 **Key properties:**
 - Panelists run in true parallel threads via `concurrent.futures.ThreadPoolExecutor`
 - A panelist that times out (`panelist_timeout=60s` outer budget) or fails is dropped;
-  the run continues as long as at least one panelist survives. A response with an
-  opening `<verdict>` tag but no closing tag (a `max_tokens` truncation, not a
-  protocol violation) is recovered instead of dropped (Spec 052) — only a response
-  missing the opening tag entirely counts as a failure
-- Spec 057: a reply that is entirely valid JSON with no `<verdict>` tags is accepted as the
-  verdict (WARNING logged), and a reply with no usable verdict is retried once with a format
-  reminder (retry cost counted) before the panelist is dropped
+  the run continues as long as at least one panelist survives
+- Spec 058: replies are plain text — the whole reply is the answer, with no `<verdict>`
+  tags and no JSON. Replies are read by `llm/reply_parsing.py` (`unwrap_reply`,
+  `split_pick`, `parse_labelled`), which still accepts the legacy shapes from Specs 052/057
+  (a closed or unclosed `<verdict>` tag, a wholly-JSON reply) with a WARNING. Only an empty
+  reply, or one the agent's own `reply_check` rejects, is unusable; it gets one retry with
+  the agent's own `format_reminder` (retry cost counted) before the panelist is dropped. An
+  unusable aggregator reply gets the same single retry, and a second failure is used as it is
+  so the agent's own parser decides
+- Every parse failure or fallback is logged as a WARNING (persisted to `run.log`) naming
+  the agent, panelist/aggregator, round, the model that answered, the provider stop reason and
+  output tokens where exposed (so truncation is distinguishable from ignored formatting), the
+  failed field, the default applied, and the first 400 characters of the reply
 - Default: `iterations=2` (one round of peer sharing before aggregation)
 - Per-provider timeout (Spec 036): each provider in a fallback chain can have its own
   `timeout` field in `providers.yaml`; if it stalls, the next provider starts fresh
@@ -988,6 +1010,10 @@ initial_input
   alongside the peer verdicts. Defaults to `None`, so every caller above except
   LinkedIn Article Writing (which uses it to nudge a panelist that's over-
   citing one section) is unaffected.
+- Optional `reply_check` and `format_reminder` (Spec 058): `reply_check(reply)` returns
+  `None` when a reply is usable, else a short reason; the Satirist uses it to require a
+  `SCENE` per panel (and a `BEAT` with 2+ panels). `format_reminder` is the agent's own
+  retry message. Both default to "only an empty reply is unusable" and a generic reminder.
 
 ### ParallelPanel (legacy)
 

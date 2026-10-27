@@ -216,6 +216,9 @@ class TokenUsage:
     input_tokens: int
     output_tokens: int
     cost_usd: float
+    # Spec 058: provider stop/finish reason when exposed, so a truncated reply can be
+    # told apart from a reply that ignored the requested format.
+    stop_reason: str | None = None
 
 
 @dataclass

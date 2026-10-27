@@ -1,4 +1,5 @@
 import json
+import logging
 import threading
 from unittest.mock import MagicMock, patch
 
@@ -1509,6 +1510,94 @@ def test_classify_domains_panel_skips_entries_with_bad_reliability_value():
             ["a.com"], _panelist_providers(), [_provider("agg")]
         )
     assert result == {}
+
+
+# -- _classify_domains_panel plain lines (Spec 058, domain_classification) --
+
+
+def _classify(reply, domains):
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.return_value = _fake_loop_output(reply)
+        result, _ = alp._classify_domains_panel(
+            domains, _panelist_providers(), [_provider("agg")]
+        )
+    return result
+
+
+def test_domain_classification_parses_one_line_per_domain():
+    # Spec 058 FR-004: the canonical "domain: paywalled|free, high|low" lines must
+    # translate into the classification dict callers rely on.
+    result = _classify(
+        "nytimes.com: paywalled, high\nsome-blog.com: free, low",
+        ["nytimes.com", "some-blog.com"],
+    )
+    assert result == {
+        "nytimes.com": {"paywalled": True, "reliability": "high"},
+        "some-blog.com": {"paywalled": False, "reliability": "low"},
+    }
+
+
+def test_domain_classification_tolerates_bullets_case_spacing_and_order():
+    # Spec 058 FR-004/FR-005: bullets, bold, odd case, extra spaces and reversed word
+    # order must all read the same.
+    reply = (
+        "- nytimes.com:  Paywalled ,  HIGH\n"
+        "* **some-blog.com**: low, free\n"
+        "  other.org : FREE,high"
+    )
+    result = _classify(reply, ["nytimes.com", "some-blog.com", "other.org"])
+    assert result["nytimes.com"] == {"paywalled": True, "reliability": "high"}
+    assert result["some-blog.com"] == {"paywalled": False, "reliability": "low"}
+    assert result["other.org"] == {"paywalled": False, "reliability": "high"}
+
+
+def test_domain_classification_absent_domain_gets_default_and_is_named(caplog):
+    # Spec 058 FR-004/FR-007: a domain with no readable line stays unclassified
+    # (today's default) and the WARNING names that domain, not the whole panel.
+    with caplog.at_level(logging.WARNING):
+        result = _classify("a.com: free, high\nb.com: ???", ["a.com", "b.com"])
+    assert "b.com" not in result
+    assert result["a.com"] == {"paywalled": False, "reliability": "high"}
+    assert any("b.com" in r.getMessage() for r in caplog.records)
+
+
+def test_domain_classification_ignores_domains_that_were_not_asked_for():
+    # Spec 058: a line for a domain outside the requested list must not enter the
+    # cache, since prose lines can look like "word.word: text".
+    result = _classify("a.com: free, high\ne.g: paywalled, low", ["a.com"])
+    assert list(result) == ["a.com"]
+
+
+def test_domain_classification_legacy_json_is_still_accepted():
+    # Spec 058 FR-009: the pre-058 JSON reply keeps working.
+    result = _classify(
+        '{"a.com": {"paywalled": true, "reliability": "low"}}', ["a.com"]
+    )
+    assert result == {"a.com": {"paywalled": True, "reliability": "low"}}
+
+
+def test_domain_classification_prompts_have_no_tags_or_json():
+    # Spec 058 FR-001/FR-004: the prompts ask for plain lines, with no <verdict> tags
+    # and no JSON example.
+    for prompt in (
+        alp._DOMAIN_CLASSIFIER_SYSTEM,
+        alp._DOMAIN_CLASSIFIER_AGGREGATOR_SYSTEM,
+    ):
+        assert "<verdict>" not in prompt
+        assert "JSON" not in prompt
+    assert "paywalled" in alp._DOMAIN_CLASSIFIER_SYSTEM
+    assert "PICK:" in alp._DOMAIN_CLASSIFIER_AGGREGATOR_SYSTEM
+
+
+def test_domain_classification_panel_gets_its_own_format_reminder():
+    # Spec 058 FR-008a: the retry reminder must describe the one-line-per-domain format.
+    with patch("agents.agent_linkedin_post.FairParallelPanel") as mock_cls:
+        mock_cls.return_value.run.return_value = _fake_loop_output("a.com: free, high")
+        alp._classify_domains_panel(
+            ["a.com"], _panelist_providers(), [_provider("agg")]
+        )
+    reminder = mock_cls.call_args.kwargs["format_reminder"]
+    assert "one line per domain" in reminder
 
 
 # -- _assemble_article --

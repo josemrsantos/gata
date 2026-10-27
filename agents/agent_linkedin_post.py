@@ -28,6 +28,7 @@ from llm.gemini import GeminiProvider
 from llm.gemini import compute_cost as _gemini_compute_cost
 from llm.grok import _COST_PER_M as _GROK_COST_PER_M
 from llm.grok import GrokProvider
+from llm.reply_parsing import ParseContext, log_parse_issue
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +115,8 @@ _PLANNER_SYSTEM = (
     " distinct angles the article could explore — substantively different from"
     " each other (e.g. contrasting when something is the right approach vs. the"
     " wrong one), not just rephrasings of the same point.\n\n"
-    "Wrap your entire output in <verdict>...</verdict> tags. Inside, list each"
-    " angle exactly as:\nANGLE: <short title>\nFOCUS: <one-sentence description>\n"
+    "List each angle exactly as:\nANGLE: <short title>\n"
+    "FOCUS: <one-sentence description>\n"
     "(repeat for each angle proposed, 2-4 total, no other text)."
 )
 
@@ -134,9 +135,9 @@ _PLANNER_AGGREGATOR_SYSTEM = (
     " distinct angles. If the operator specified mandatory angles, every one of"
     " them MUST appear in your final set.\n"
     "Output a PICK: N line (N = the proposal number you selected as primary),"
-    " then the final angle set wrapped in <verdict>...</verdict>, in the same"
+    " then the final angle set on the lines after it, in the same"
     " ANGLE:/FOCUS: format as the proposals. Do not add preamble outside"
-    " PICK/verdict."
+    " the PICK line and the angles."
 )
 
 _WRITER_SYSTEM = (
@@ -159,8 +160,8 @@ _WRITER_SYSTEM = (
     " you had no research findings available, do not present any specific"
     " claim as researched fact — rely only on general knowledge and say so if"
     " that matters to your angle.\n\n"
-    "Wrap your entire output in <verdict>...</verdict> tags. Inside, produce five"
-    " marked sections, in this exact order, with no text before, between, or"
+    "Produce five marked sections, in this exact order, with no text before,"
+    " between, or"
     " after them other than the markers themselves:\n\n"
     "===TITLE===\n"
     "One punchy, professional article title. No leading # symbol.\n\n"
@@ -186,10 +187,10 @@ _WRITER_AGGREGATOR_SYSTEM = (
     " professional register, no jokes, no satire, covering every agreed angle,"
     " targeting roughly 500-800 words.\n"
     "Output a PICK: N line (N = the proposal number you selected as primary),"
-    " then the final article wrapped in <verdict>...</verdict>, using the exact"
+    " then the final article on the lines after it, using the exact"
     " same ===TITLE===/===EXECUTIVE_SUMMARY===/===BODY===/===COMMENT===/"
     "===NOTIFICATION=== marker format as the proposals. Do not add preamble"
-    " outside PICK/verdict."
+    " outside the PICK line and the article."
 )
 
 # Code-inserted, never LLM-authored — guarantees the disclosure is always present
@@ -787,12 +788,17 @@ _DOMAIN_CLASSIFIER_SYSTEM = (
     " highly reliable source — academic, government, or a well-established,"
     " editorially rigorous outlet — versus a minor/low-quality outlet, blog,"
     " or content farm?\n"
-    "Wrap your entire output in <verdict>...</verdict> tags containing ONLY a"
-    " JSON object, no other text, mapping each domain to its verdict, e.g.:\n"
-    '{"nytimes.com": {"paywalled": true, "reliability": "high"},'
-    ' "some-blog.com": {"paywalled": false, "reliability": "low"}}\n'
-    'reliability must be exactly "high" or "low". Include every domain you'
-    " were given, and no others."
+    "Reply with exactly one line per domain and no other text, in this form:\n"
+    "nytimes.com: paywalled, high\n"
+    "some-blog.com: free, low\n"
+    "After the colon write 'paywalled' or 'free', then 'high' or 'low' for"
+    " reliability. Include every domain you were given, and no others."
+)
+
+# Spec 058 FR-008a: the one retry names this agent's own format.
+_DOMAIN_CLASSIFIER_FORMAT_REMINDER = (
+    "Your last reply could not be used. Reply again with one line per domain, like"
+    " 'nytimes.com: paywalled, high' — 'paywalled' or 'free', then 'high' or 'low'."
 )
 
 _DOMAIN_CLASSIFIER_AGGREGATOR_SYSTEM = (
@@ -801,9 +807,47 @@ _DOMAIN_CLASSIFIER_AGGREGATOR_SYSTEM = (
     "Synthesise the most accurate final verdict per domain (majority view, or"
     " your own best judgment on disagreement).\n"
     "Output a PICK: N line (N = the proposal number you selected as primary),"
-    " then the final JSON wrapped in <verdict>...</verdict>, using the exact"
-    " same format as the proposals. Do not add preamble outside PICK/verdict."
+    " then one line per domain on the lines after it, using the exact same"
+    " format as the proposals. Do not add preamble outside the PICK line and"
+    " the domain lines."
 )
+
+_DOMAIN_LINE_RE = re.compile(
+    r"^[\s>*\-•#]*(?P<domain>[A-Za-z0-9][A-Za-z0-9.\-]*\.[A-Za-z]{2,})[\s*]*"
+    r"[:\-–—][\s*]*(?P<rest>.*)$"
+)
+
+
+def _parse_domain_lines(
+    raw: str, domains: list[str], ctx: ParseContext | None
+) -> dict[str, dict]:
+    # One "domain: paywalled|free, high|low" line per domain (Spec 058 FR-004); the
+    # two words may come in any order, in any case. Only requested domains are kept,
+    # and each one with no readable line is left unclassified and named in the log.
+    wanted = {d.lower(): d for d in domains}
+    found: dict[str, dict] = {}
+    for line in raw.splitlines():
+        match = _DOMAIN_LINE_RE.match(line)
+        if not match or match.group("domain").lower() not in wanted:
+            continue
+        rest = match.group("rest").lower()
+        paywall = set(re.findall(r"\b(paywalled|free)\b", rest))
+        reliability = set(re.findall(r"\b(high|low)\b", rest))
+        if len(paywall) != 1 or len(reliability) != 1:
+            continue
+        found[wanted[match.group("domain").lower()]] = {
+            "paywalled": paywall == {"paywalled"},
+            "reliability": reliability.pop(),
+        }
+    for domain in domains:
+        if domain not in found:
+            log_parse_issue(
+                ctx,
+                f"no readable classification line for {domain}",
+                "unclassified (default)",
+                raw,
+            )
+    return found
 
 
 def _classify_domains_panel(
@@ -845,6 +889,7 @@ def _classify_domains_panel(
         panel_name="Domain Classification",
         iterations=_DOMAIN_CLASSIFICATION_ITERATIONS,
         panelist_timeout=_DOMAIN_CLASSIFICATION_TIMEOUT_SECONDS,
+        format_reminder=_DOMAIN_CLASSIFIER_FORMAT_REMINDER,
     )
     domain_list = "\n".join(f"- {d}" for d in domains)
     try:
@@ -856,6 +901,22 @@ def _classify_domains_panel(
     raw = loop_output.verdict.strip()
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
+    if not raw.startswith("{"):
+        # Spec 058: the normal reply is one plain line per domain. The aggregator's
+        # call is the last one the panel made; name it in any parse log.
+        ctx = None
+        if telemetry.calls:
+            last = telemetry.calls[-1]
+            ctx = ParseContext(
+                agent="Domain Classification",
+                role=aggregator.name,
+                round=telemetry.iterations,
+                model=last.model,
+                stop_reason=last.stop_reason,
+                output_tokens=last.output_tokens,
+                max_tokens=aggregator.max_tokens,
+            )
+        return _parse_domain_lines(raw, domains, ctx), telemetry
     try:
         parsed = json.loads(raw)
     except (json.JSONDecodeError, TypeError):

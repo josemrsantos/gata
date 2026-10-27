@@ -66,6 +66,7 @@ what has already merged to `main`.
 | 055 | Single-audience default for `gata` — `gata "topic"` generates one cartoon for the built-in `uk-tech-engineers` audience (no audience guessing, no always-added UK); repeatable `--audience NAME` (community names, replaces the default) and `--infer-audiences` (restores the old behaviour); `newsletter_merge.py` defaults to the `uk-tech-engineers` folder | ✅ |
 | 056 | Image-prompt-only mode — `--image-prompt-only` skips image creation and evaluation and saves the exact Gemini request (header + separator + request, built by the same function a normal run uses) as `image_prompt.txt` per audience for manual use; warns when the Gata description is missing; constitution v1.5 (§2 exception) | ✅ |
 | 057 | Verdict tag tolerance — `_extract_proposer_verdict()` accepts a wholly-JSON reply with no `<verdict>` tags; `FairParallelPanel` retries an unusable panelist reply once before dropping it | ✅ |
+| 058 | Tag-free, JSON-free panel responses — panel replies are plain text, aggregator writes `PICK: N` + answer, Satirist uses `LABEL: value` lines, Domain Classification one line per domain; tolerant parsers (`llm/reply_parsing.py`) keep accepting the old tags/JSON; every parse failure logs agent, round, model, stop reason, field, default and a 400-character excerpt; constitution v1.6 (§3, §6) | ✅ |
 <!-- SPECKIT END -->
 
 LLM REVIEW PROTOCOL — approval gates. These are hard stops; nothing else is. Violating a gate is not acceptable.

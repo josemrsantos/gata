@@ -47,6 +47,17 @@ def _get_client() -> genai.Client:
     return _client
 
 
+def _finish_reason(response) -> str | None:
+    # Spec 058: the first candidate's finish reason (an enum such as MAX_TOKENS), as
+    # text; None when the response carries none, so logging never fails on it.
+    candidates = getattr(response, "candidates", None)
+    if not candidates:
+        return None
+    reason = getattr(candidates[0], "finish_reason", None)
+    name = getattr(reason, "name", reason)
+    return name if isinstance(name, str) else None
+
+
 def get_gemini_client() -> genai.Client:
     """Return the shared Gemini client, initialising it on first call."""
     return _get_client()
@@ -111,4 +122,5 @@ class GeminiProvider(LLMProvider):
             input_tokens=in_tok,
             output_tokens=out_tok,
             cost_usd=cost,
+            stop_reason=_finish_reason(response),
         )
