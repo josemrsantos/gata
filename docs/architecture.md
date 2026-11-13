@@ -1,4 +1,4 @@
-e# Gata — Architecture
+# Gata — Architecture
 
 Gata turns a plain-text topic into satirical cartoons tailored per audience, using a
 chain of specialised AI agents. Every agent is independently testable and wired together
